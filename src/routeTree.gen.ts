@@ -14,6 +14,7 @@ import { Route as NewRequestRouteImport } from './routes/new-request'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestsIdRouteImport } from './routes/requests.$id'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
 
 const SignupRoute = SignupRouteImport.update({
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequestsIdRoute = RequestsIdRouteImport.update({
+  id: '/requests/$id',
+  path: '/requests/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CorporationsIdRoute = CorporationsIdRouteImport.update({
   id: '/corporations/$id',
   path: '/corporations/$id',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/new-request': typeof NewRequestRoute
   '/signup': typeof SignupRoute
   '/corporations/$id': typeof CorporationsIdRoute
+  '/requests/$id': typeof RequestsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/new-request': typeof NewRequestRoute
   '/signup': typeof SignupRoute
   '/corporations/$id': typeof CorporationsIdRoute
+  '/requests/$id': typeof RequestsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/new-request': typeof NewRequestRoute
   '/signup': typeof SignupRoute
   '/corporations/$id': typeof CorporationsIdRoute
+  '/requests/$id': typeof RequestsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/new-request'
     | '/signup'
     | '/corporations/$id'
+    | '/requests/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/new-request'
     | '/signup'
     | '/corporations/$id'
+    | '/requests/$id'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/new-request'
     | '/signup'
     | '/corporations/$id'
+    | '/requests/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   NewRequestRoute: typeof NewRequestRoute
   SignupRoute: typeof SignupRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
+  RequestsIdRoute: typeof RequestsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/requests/$id': {
+      id: '/requests/$id'
+      path: '/requests/$id'
+      fullPath: '/requests/$id'
+      preLoaderRoute: typeof RequestsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/corporations/$id': {
       id: '/corporations/$id'
       path: '/corporations/$id'
@@ -162,7 +182,18 @@ const rootRouteChildren: RootRouteChildren = {
   NewRequestRoute: NewRequestRoute,
   SignupRoute: SignupRoute,
   CorporationsIdRoute: CorporationsIdRoute,
+  RequestsIdRoute: RequestsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
