@@ -626,6 +626,10 @@ function OfferCard({
               -{Math.round(((avg - o.pricePerHour) / avg) * 100)}% מהממוצע
             </div>
           )}
+          <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-border/60 bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            <Coins className="h-3 w-3 text-primary" />
+            +₪{PLATFORM_FEE_PER_HOUR} עמלה · סה״כ ₪{totalCorporationPays(o.pricePerHour)}
+          </div>
         </div>
       </div>
 
