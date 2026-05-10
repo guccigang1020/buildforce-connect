@@ -320,52 +320,69 @@ function RequestPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-3 md:p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-lg border border-border/60 bg-secondary/40 p-1">
-              <ToolbarBtn active={search.view === "cards"} onClick={() => setSearch({ view: "cards" })}>
-                <LayoutGrid className="h-4 w-4" /> כרטיסים
-              </ToolbarBtn>
-              <ToolbarBtn active={search.view === "table"} onClick={() => setSearch({ view: "table" })}>
-                <TableIcon className="h-4 w-4" /> טבלה
-              </ToolbarBtn>
+        <div className="sticky top-14 z-30 -mx-4 mt-8 border-y border-border/60 bg-background/85 px-4 py-3 backdrop-blur md:static md:top-auto md:z-auto md:mx-0 md:rounded-2xl md:border md:bg-card md:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg border border-border/60 bg-secondary/40 p-1">
+                <ToolbarBtn active={search.view === "cards"} onClick={() => setSearch({ view: "cards" })}>
+                  <LayoutGrid className="h-4 w-4" /> <span className="hidden sm:inline">כרטיסים</span>
+                </ToolbarBtn>
+                <ToolbarBtn active={search.view === "table"} onClick={() => setSearch({ view: "table" })}>
+                  <TableIcon className="h-4 w-4" /> <span className="hidden sm:inline">טבלה</span>
+                </ToolbarBtn>
+              </div>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-secondary/40 px-3 py-1.5 text-xs font-semibold lg:hidden">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    סינון
+                    {filtersActive && <span className="grid h-4 w-4 place-items-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">!</span>}
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[88vw] max-w-sm overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>סינון ומשקלות</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">{filtersPane}</div>
+                </SheetContent>
+              </Sheet>
             </div>
-            <div className="hidden h-6 w-px bg-border md:block" />
-            <div className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-3 py-1.5">
-              <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-              <select
-                value={search.sort}
-                onChange={(e) => setSearch({ sort: e.target.value as SortKey })}
-                className="bg-transparent text-xs font-semibold focus:outline-none"
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Filter className="hidden h-3.5 w-3.5 sm:inline" />
+              <span><span className="font-bold text-foreground">{sorted.length}</span>/{allOffers.length}</span>
+              <button
+                onClick={() => exportComparisonPdf(req, sorted)}
+                disabled={sorted.length === 0}
+                className="inline-flex items-center gap-1 rounded-md bg-gradient-primary px-2.5 py-1.5 text-[11px] font-bold text-primary-foreground shadow-elegant disabled:opacity-50"
+                title="ייצא PDF"
               >
-                <option value="score">ציון כולל מותאם</option>
-                <option value="price">מחיר (מהזול)</option>
-                <option value="rating">דירוג (מהגבוה)</option>
-                <option value="availability">זמינות (הקדם ביותר)</option>
-                <option value="response">זמן תגובה (המהיר)</option>
-                <option value="warranty">אחריות (הארוכה)</option>
-              </select>
+                <Download className="h-3.5 w-3.5" /> PDF
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Filter className="h-3.5 w-3.5" />
-            <span className="font-semibold">{sorted.length}</span> מתוך {allOffers.length} הצעות
+          <div className="-mx-1 mt-3 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
+            <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setSearch({ sort: opt.value })}
+                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                  search.sort === opt.value
+                    ? "border-primary bg-gradient-primary text-primary-foreground shadow-elegant"
+                    : "border-border/60 bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
             {filtersActive && (
               <button
                 onClick={() => setSearch({ verifiedOnly: false, insuredOnly: false, fullCrewOnly: false, maxPrice: undefined, minRating: undefined, minScore: undefined })}
-                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground hover:bg-muted/70"
+                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1.5 text-[11px] font-bold text-foreground hover:bg-muted/70"
               >
-                נקה סינון <X className="h-3 w-3" />
+                נקה <X className="h-3 w-3" />
               </button>
             )}
-            <button
-              onClick={() => exportComparisonPdf(req, sorted)}
-              disabled={sorted.length === 0}
-              className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-gradient-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02] disabled:opacity-50"
-              title="ייצא סיכום השוואה כ-PDF"
-            >
-              <Download className="h-3.5 w-3.5" /> ייצא PDF
-            </button>
           </div>
         </div>
 
