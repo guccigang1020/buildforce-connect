@@ -7,6 +7,7 @@ import {
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
   Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
   ShieldAlert, Lock, FileSignature, Coins,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
   totalCorporationPays, feePercent, commitmentFeeRevenue, circumventionPenalty,
   CIRCUMVENTION_PENALTY_MONTHS,
 } from "@/lib/commission-config";
+import { exportComparisonPdf } from "@/lib/export-pdf";
 
 type SortKey = "score" | "price" | "rating" | "availability" | "response" | "warranty";
 
@@ -267,6 +269,14 @@ function RequestPage() {
                 נקה סינון <X className="h-3 w-3" />
               </button>
             )}
+            <button
+              onClick={() => exportComparisonPdf(req, sorted)}
+              disabled={sorted.length === 0}
+              className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-gradient-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02] disabled:opacity-50"
+              title="ייצא סיכום השוואה כ-PDF"
+            >
+              <Download className="h-3.5 w-3.5" /> ייצא PDF
+            </button>
           </div>
         </div>
 
