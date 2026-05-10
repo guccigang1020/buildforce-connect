@@ -625,6 +625,19 @@ function ConfirmDialog({
   offer: EnrichedOffer; request: WorkforceRequest; onClose: () => void; whatsappHref: string;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  const handleConfirm = () => {
+    addSelection({
+      requestId: request.id,
+      requestTitle: `${request.count} ${request.role} · ${request.location}`,
+      corporationId: offer.corp.id,
+      corporationName: offer.corp.name,
+      pricePerHour: offer.pricePerHour,
+      count: request.count,
+      startDate: offer.startDate,
+      duration: request.duration,
+    });
+    setConfirmed(true);
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 p-4 backdrop-blur" onClick={onClose}>
       <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8" onClick={(e) => e.stopPropagation()}>
@@ -652,7 +665,7 @@ function ConfirmDialog({
             </div>
             <div className="mt-6 flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onClose}>ביטול</Button>
-              <Button className="flex-1 bg-gradient-primary text-primary-foreground" onClick={() => setConfirmed(true)}>
+              <Button className="flex-1 bg-gradient-primary text-primary-foreground" onClick={handleConfirm}>
                 אשר ובחר
               </Button>
             </div>
