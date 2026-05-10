@@ -82,6 +82,7 @@ export const Route = createFileRoute("/requests/$id")({
 });
 
 type EnrichedOffer = Offer & { corp: Corporation };
+type ScoredOffer = EnrichedOffer & { score: number; breakdown: Record<keyof Weights, number> };
 
 function RequestPage() {
   const { req } = Route.useLoaderData() as { req: WorkforceRequest };
@@ -401,19 +402,113 @@ function RequestPage() {
 
 /* ---------- helpers ---------- */
 
-function sortOffers(offers: EnrichedOffer[], key: SortKey): EnrichedOffer[] {
+function sortOffers(offers: ScoredOffer[], key: SortKey): ScoredOffer[] {
   const arr = [...offers];
   const dateVal = (s: string) => {
     const m = s.match(/(\d+)/);
     return m ? parseInt(m[1], 10) : 999;
   };
   switch (key) {
+    case "score": return arr.sort((a, b) => b.score - a.score);
     case "price": return arr.sort((a, b) => a.pricePerHour - b.pricePerHour);
     case "rating": return arr.sort((a, b) => b.corp.rating - a.corp.rating);
     case "availability": return arr.sort((a, b) => dateVal(a.startDate) - dateVal(b.startDate));
     case "response": return arr.sort((a, b) => a.responseTimeHours - b.responseTimeHours);
     case "warranty": return arr.sort((a, b) => b.warrantyDays - a.warrantyDays);
   }
+}
+
+function computeScores(offers: EnrichedOffer[], weights: Weights): ScoredOffer[] {
+  if (offers.length === 0) return [];
+  const dateVal = (s: string) => {
+    const m = s.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 999;
+  };
+  const norm = (val: number, min: number, max: number, lowerIsBetter: boolean) => {
+    if (max === min) return 1;
+    const t = (val - min) / (max - min);
+    return lowerIsBetter ? 1 - t : t;
+  };
+  const prices = offers.map((o) => o.pricePerHour);
+  const ratings = offers.map((o) => o.corp.rating);
+  const dates = offers.map((o) => dateVal(o.startDate));
+  const responses = offers.map((o) => o.responseTimeHours);
+  const warranties = offers.map((o) => o.warrantyDays);
+
+  const totalW = Math.max(1, weights.price + weights.rating + weights.availability + weights.response + weights.warranty);
+
+  return offers.map((o) => {
+    const breakdown: Record<keyof Weights, number> = {
+      price: norm(o.pricePerHour, Math.min(...prices), Math.max(...prices), true),
+      rating: norm(o.corp.rating, Math.min(...ratings), Math.max(...ratings), false),
+      availability: norm(dateVal(o.startDate), Math.min(...dates), Math.max(...dates), true),
+      response: norm(o.responseTimeHours, Math.min(...responses), Math.max(...responses), true),
+      warranty: norm(o.warrantyDays, Math.min(...warranties), Math.max(...warranties), false),
+    };
+    const weighted =
+      breakdown.price * weights.price +
+      breakdown.rating * weights.rating +
+      breakdown.availability * weights.availability +
+      breakdown.response * weights.response +
+      breakdown.warranty * weights.warranty;
+    return { ...o, score: Math.round((weighted / totalW) * 100), breakdown };
+  });
+}
+
+function WeightsPanel({ weights, onChange }: { weights: Weights; onChange: (w: Weights) => void }) {
+  const total = weights.price + weights.rating + weights.availability + weights.response + weights.warranty;
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-bold">משקלות לציון כולל</h3>
+        </div>
+        <button
+          onClick={() => onChange(DEFAULT_WEIGHTS)}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="h-3 w-3" /> איפוס
+        </button>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        קבע מה חשוב לך — הציון מתעדכן בזמן אמת. סה״כ: {total}
+      </p>
+      <div className="mt-4 space-y-3">
+        {WEIGHT_META.map((m) => (
+          <div key={m.key}>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-semibold">{m.label}</span>
+              <span className="text-muted-foreground">{m.hint} · <span className="font-bold text-foreground">{weights[m.key]}</span></span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={5}
+              value={weights[m.key]}
+              onChange={(e) => onChange({ ...weights, [m.key]: Number(e.target.value) })}
+              className="mt-1 w-full accent-primary"
+              aria-label={`משקל ${m.label}`}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ScoreBadge({ score, size = "md" }: { score: number; size?: "sm" | "md" }) {
+  const tone =
+    score >= 80 ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
+    score >= 60 ? "bg-primary/15 text-primary border-primary/30" :
+    "bg-amber-500/15 text-amber-400 border-amber-500/30";
+  const sz = size === "sm" ? "text-xs px-2 py-0.5" : "text-sm px-2.5 py-1";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border font-extrabold ${tone} ${sz}`}>
+      <Award className="h-3 w-3" /> {score}
+    </span>
+  );
 }
 
 function StatCard({ icon: Icon, label, value, accent }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; accent?: boolean }) {
