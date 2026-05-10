@@ -656,16 +656,17 @@ function Spec({ icon: Icon, label, value, good, bad }: { icon: React.ComponentTy
 function OffersTable({
   offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp,
 }: {
-  offers: EnrichedOffer[]; lowest: number; fastestResponse: number;
+  offers: ScoredOffer[]; lowest: number; fastestResponse: number;
   request: WorkforceRequest; selected: string | null;
   onSelect: (id: string) => void;
   reqForWhatsapp: { id: string; role: string; count: number; location: string; duration: string; startDate: string };
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-      <table className="w-full min-w-[760px] text-sm">
+      <table className="w-full min-w-[860px] text-sm">
         <thead className="bg-secondary/60 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
           <tr>
+            <th className="px-4 py-3 font-semibold">ציון</th>
             <th className="px-4 py-3 font-semibold">תאגיד</th>
             <th className="px-4 py-3 font-semibold">דירוג</th>
             <th className="px-4 py-3 font-semibold">מחיר/שעה</th>
@@ -686,6 +687,9 @@ function OffersTable({
                 key={o.corp.id}
                 className={`border-t border-border/60 transition-colors ${isSel ? "bg-primary/5" : "hover:bg-secondary/40"}`}
               >
+                <td className="px-4 py-3">
+                  <ScoreBadge score={o.score} size="sm" />
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="grid h-8 w-8 place-items-center rounded-md bg-gradient-primary text-xs font-bold text-primary-foreground">
