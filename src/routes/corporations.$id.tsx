@@ -118,7 +118,7 @@ function CorporationPage() {
               <h2 className="text-lg font-bold">אודות התאגיד</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{corp.description}</p>
               <div className="mt-6 flex flex-wrap gap-2">
-                {corp.specialties.map((s) => (
+                {corp.specialties.map((s: string) => (
                   <span key={s} className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">{s}</span>
                 ))}
               </div>
