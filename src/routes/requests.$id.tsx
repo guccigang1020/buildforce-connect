@@ -574,10 +574,11 @@ function FilterToggle({ label, icon: Icon, checked, onChange }: { label: string;
 }
 
 function OfferCard({
-  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref,
+  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref, contactUnlocked,
 }: {
   offer: ScoredOffer; request: WorkforceRequest; selected: boolean;
   isCheapest: boolean; avg: number; onSelect: () => void; whatsappHref: string;
+  contactUnlocked: boolean;
 }) {
   const fullCrew = o.availableWorkers >= request.count;
   return (
@@ -641,14 +642,23 @@ function OfferCard({
           <span className="hidden md:inline">ציון כולל: <span className="font-bold text-foreground">{o.score}/100</span></span>
         </div>
         <div className="flex gap-2">
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-[#25D366] px-3 text-xs font-bold text-white transition-transform hover:scale-[1.02]"
-          >
-            <MessageCircle className="h-4 w-4" /> WhatsApp
-          </a>
+          {contactUnlocked ? (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-[#25D366] px-3 text-xs font-bold text-white transition-transform hover:scale-[1.02]"
+            >
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </a>
+          ) : (
+            <span
+              title="פרטי קשר ייחשפו לאחר אישור בחירת ספק"
+              className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-md border border-border bg-muted/40 px-3 text-xs font-bold text-muted-foreground"
+            >
+              <Lock className="h-3.5 w-3.5" /> נחשף לאחר בחירה
+            </span>
+          )}
           <Button asChild variant="outline" size="sm">
             <Link to="/corporations/$id" params={{ id: o.corp.id }}>פרופיל</Link>
           </Button>
