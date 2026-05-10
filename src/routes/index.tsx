@@ -108,12 +108,14 @@ function Hero() {
             השוואה חכמה, דירוגים אמיתיים, ושליטה מלאה — בלי טלפונים ובלי זמן מבוזבז.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 h-12 px-7 text-base font-semibold">
-              פרסם בקשת כוח אדם
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 h-12 px-7 text-base font-semibold">
+              <Link to="/new-request">
+                פרסם בקשת כוח אדם
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-12 border-border bg-card/50 px-7 text-base backdrop-blur hover:bg-card">
-              איך זה עובד
+            <Button asChild size="lg" variant="outline" className="h-12 border-border bg-card/50 px-7 text-base backdrop-blur hover:bg-card">
+              <Link to="/" hash="how">איך זה עובד</Link>
             </Button>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
@@ -175,8 +177,10 @@ function Hero() {
               ))}
             </div>
 
-            <Button className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95">
-              השוואת הצעות מלאה
+            <Button asChild className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95">
+              <Link to="/requests/$id" params={{ id: SAMPLE_REQUEST.id }}>
+                השוואת הצעות מלאה
+              </Link>
             </Button>
           </div>
         </div>
@@ -312,15 +316,20 @@ function Corporations() {
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <SectionHeader eyebrow="תאגידים מאומתים" title="ספקים שעוברים בדיקה. שיעבדו בלי הפתעות." subtitle="כל תאגיד מסומן באישור BuildForce עבר בדיקת רישוי, ביטוח, ותקני בטיחות." />
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {corps.map((c) => (
-            <div key={c.name} className="hover-lift rounded-2xl border border-border/60 bg-card p-5">
+          {CORPORATIONS.map((c) => (
+            <Link
+              key={c.id}
+              to="/corporations/$id"
+              params={{ id: c.id }}
+              className="hover-lift block rounded-2xl border border-border/60 bg-card p-5"
+            >
               <div className="flex items-center gap-3">
                 <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
                   {c.name[0]}
                 </div>
                 <div>
                   <div className="flex items-center gap-1 text-sm font-bold">
-                    {c.name} <BadgeCheck className="h-4 w-4 text-primary" />
+                    {c.name} {c.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
@@ -340,7 +349,7 @@ function Corporations() {
               <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> זמין השבוע
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -401,9 +410,11 @@ function CTABanner() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
-            <Button size="lg" className="h-12 bg-gradient-primary px-7 text-base font-semibold text-primary-foreground shadow-elegant hover:opacity-95">
-              פרסם בקשה עכשיו
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button asChild size="lg" className="h-12 bg-gradient-primary px-7 text-base font-semibold text-primary-foreground shadow-elegant hover:opacity-95">
+              <Link to="/new-request">
+                פרסם בקשה עכשיו
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button size="lg" variant="outline" className="h-12 border-border bg-card/60 px-7 text-base hover:bg-card">
               <MessageCircle className="ml-2 h-4 w-4" /> דבר איתנו ב-WhatsApp
