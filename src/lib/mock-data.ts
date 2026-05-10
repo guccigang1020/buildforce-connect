@@ -199,3 +199,148 @@ export const CITIES = [
   "כפר סבא",
   "מודיעין",
 ];
+
+/* ---------- Notifications ---------- */
+export type Notification = {
+  id: string;
+  type: "new_offer" | "offer_accepted" | "message" | "request_closing" | "system";
+  title: string;
+  body: string;
+  requestId?: string;
+  corporationId?: string;
+  read: boolean;
+  timeAgo: string;
+};
+
+export const NOTIFICATIONS: Notification[] = [
+  {
+    id: "n1",
+    type: "new_offer",
+    title: "הצעה חדשה התקבלה",
+    body: "אורט בנייה הגישו הצעה לבקשה #BF-2847 — ₪205 לשעה",
+    requestId: "BF-2847",
+    corporationId: "ort",
+    read: false,
+    timeAgo: "לפני 12 דק׳",
+  },
+  {
+    id: "n2",
+    type: "new_offer",
+    title: "הצעה חדשה התקבלה",
+    body: "מצדה כוח אדם הגישו הצעה לבקשה #BF-2847 — ₪198 לשעה",
+    requestId: "BF-2847",
+    corporationId: "metzada",
+    read: false,
+    timeAgo: "לפני שעה",
+  },
+  {
+    id: "n3",
+    type: "message",
+    title: "הודעה חדשה ב-WhatsApp",
+    body: "אלקטרה מנפאואר שלחו הבהרה לגבי בקשה #BF-2851",
+    requestId: "BF-2851",
+    corporationId: "electra",
+    read: false,
+    timeAgo: "לפני 3 שעות",
+  },
+  {
+    id: "n4",
+    type: "request_closing",
+    title: "בקשה נסגרת בקרוב",
+    body: "בקשה #BF-2855 לא קיבלה הצעות. הארך את התקציב או הוסף פרטים.",
+    requestId: "BF-2855",
+    read: true,
+    timeAgo: "אתמול",
+  },
+  {
+    id: "n5",
+    type: "offer_accepted",
+    title: "הספק אישר את הבחירה",
+    body: "כוח אדם דניאל אישרו ויחלו עבודה ב-1 במאי לבקשה #BF-2810",
+    requestId: "BF-2810",
+    corporationId: "daniel",
+    read: true,
+    timeAgo: "לפני 3 שבועות",
+  },
+  {
+    id: "n6",
+    type: "system",
+    title: "ברוך הבא ל-BuildForce",
+    body: "פתחנו לך חשבון. כדאי להשלים את הפרופיל לקבלת הצעות מדויקות יותר.",
+    read: true,
+    timeAgo: "לפני חודש",
+  },
+];
+
+/* ---------- Selection History ---------- */
+export type SelectionRecord = {
+  id: string;
+  requestId: string;
+  requestTitle: string;
+  corporationId: string;
+  pricePerHour: number;
+  count: number;
+  startDate: string;
+  duration: string;
+  totalEstimate: number;
+  status: "in-progress" | "completed" | "cancelled";
+  selectedAt: string;
+  rating?: number;
+};
+
+export const SELECTION_HISTORY: SelectionRecord[] = [
+  {
+    id: "s1",
+    requestId: "BF-2810",
+    requestTitle: "5 טייחים · ירושלים",
+    corporationId: "daniel",
+    pricePerHour: 165,
+    count: 5,
+    startDate: "1 במאי",
+    duration: "2 חודשים",
+    totalEstimate: 290400,
+    status: "completed",
+    selectedAt: "10 באפריל",
+    rating: 5,
+  },
+  {
+    id: "s2",
+    requestId: "BF-2780",
+    requestTitle: "3 ברזלנים · ראשון לציון",
+    corporationId: "electra",
+    pricePerHour: 175,
+    count: 3,
+    startDate: "15 במרץ",
+    duration: "חודש",
+    totalEstimate: 92400,
+    status: "completed",
+    selectedAt: "5 במרץ",
+    rating: 4,
+  },
+  {
+    id: "s3",
+    requestId: "BF-2750",
+    requestTitle: "8 טפסנים · נתניה",
+    corporationId: "ort",
+    pricePerHour: 188,
+    count: 8,
+    startDate: "1 בפברואר",
+    duration: "4 חודשים",
+    totalEstimate: 529408,
+    status: "in-progress",
+    selectedAt: "20 בינואר",
+  },
+  {
+    id: "s4",
+    requestId: "BF-2700",
+    requestTitle: "2 רצפים · חולון",
+    corporationId: "metzada",
+    pricePerHour: 170,
+    count: 2,
+    startDate: "—",
+    duration: "3 שבועות",
+    totalEstimate: 0,
+    status: "cancelled",
+    selectedAt: "3 בינואר",
+  },
+];
