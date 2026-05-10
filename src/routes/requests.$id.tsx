@@ -6,6 +6,7 @@ import {
   ArrowLeft, MapPin, Calendar, Clock, Briefcase, BadgeCheck, Star,
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
   Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
+  ShieldAlert, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,11 +185,33 @@ function RequestPage() {
               </Button>
             </div>
           )}
+          {req.items && req.items.length > 0 && (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {req.items.map((it) => (
+                <div key={it.id} className="rounded-xl border border-border/60 bg-secondary/40 px-3 py-2 text-xs">
+                  <span className="font-bold text-foreground">{it.count} ×</span> {it.role} · <span className="text-primary font-semibold">{it.nationality}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {req.location}</span>
             <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4" /> התחלה {req.startDate}</span>
             <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4" /> {req.duration}</span>
+            {req.commitmentMonths && (
+              <span className="inline-flex items-center gap-2"><Lock className="h-4 w-4" /> התחייבות {req.commitmentMonths} חודשים</span>
+            )}
             {req.budget && <span className="inline-flex items-center gap-2"><Briefcase className="h-4 w-4" /> תקציב: {req.budget}</span>}
+          </div>
+        </div>
+
+        {/* Non-circumvention banner */}
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-bold text-foreground">התקשרות מוגנת:</span> כל הצעות המחיר, הצ׳אטים והבחירה מתועדים בפלטפורמה.
+            עקיפה (התקשרות ישירה מחוץ למערכת לאחר חשיפת ספק דרך BuildForce) מהווה הפרת תנאי שימוש למשך {req.commitmentMonths ?? 6} חודשים.
+            פרטי קשר מלאים נחשפים רק לאחר <span className="font-semibold text-foreground">אישור בחירת ספק</span>.
           </div>
         </div>
 
