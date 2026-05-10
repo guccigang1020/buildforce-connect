@@ -162,10 +162,10 @@ function DashboardPage() {
 
 /* ---------- Tabs ---------- */
 
-function OverviewTab({ notifs, setNotifs, setTab }: { notifs: Notification[]; setNotifs: (n: Notification[]) => void; setTab: (t: Tab) => void }) {
+function OverviewTab({ notifs, setNotifs, setTab, history }: { notifs: Notification[]; setNotifs: (n: Notification[]) => void; setTab: (t: Tab) => void; history: SelectionRecord[] }) {
   const active = REQUESTS.filter((r) => r.status === "active").slice(0, 3);
   const recentNotifs = notifs.slice(0, 4);
-  const inProgress = SELECTION_HISTORY.filter((s) => s.status === "in-progress").slice(0, 2);
+  const inProgress = history.filter((s) => s.status === "in-progress").slice(0, 2);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -232,13 +232,13 @@ function ActiveRequestsTab() {
   );
 }
 
-function HistoryTab() {
+function HistoryTab({ history }: { history: SelectionRecord[] }) {
   const [filter, setFilter] = useState<"all" | "in-progress" | "completed" | "cancelled">("all");
-  const filtered = SELECTION_HISTORY.filter((s) => filter === "all" || s.status === filter);
+  const filtered = history.filter((s) => filter === "all" || s.status === filter);
 
-  const totalSpent = SELECTION_HISTORY.filter((s) => s.status !== "cancelled").reduce((sum, s) => sum + s.totalEstimate, 0);
+  const totalSpent = history.filter((s) => s.status !== "cancelled").reduce((sum, s) => sum + s.totalEstimate, 0);
   const avgRating = (() => {
-    const rated = SELECTION_HISTORY.filter((s) => s.rating);
+    const rated = history.filter((s) => s.rating);
     if (!rated.length) return 0;
     return (rated.reduce((sum, s) => sum + (s.rating ?? 0), 0) / rated.length).toFixed(1);
   })();
@@ -246,7 +246,7 @@ function HistoryTab() {
   return (
     <div>
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3">
-        <MiniStat label="סה״כ פרויקטים" value={String(SELECTION_HISTORY.length)} />
+        <MiniStat label="סה״כ פרויקטים" value={String(history.length)} />
         <MiniStat label="הוצאה מצטברת" value={`₪${(totalSpent / 1000).toFixed(0)}K`} />
         <MiniStat label="דירוג ממוצע נתון" value={`${avgRating} ★`} />
       </div>
