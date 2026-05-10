@@ -823,7 +823,18 @@ function ConfirmDialog({
   offer: EnrichedOffer; request: WorkforceRequest; onClose: () => void; whatsappHref: string;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  const [signature, setSignature] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [months, setMonths] = useState<number>(request.commitmentMonths ?? 6);
+
+  const monthlyFee = request.count * HOURS_PER_MONTH * PLATFORM_FEE_PER_HOUR;
+  const totalFee = commitmentFeeRevenue(request.count, months);
+  const penalty = circumventionPenalty(request.count);
+  const monthlyContractor = request.count * HOURS_PER_MONTH * offer.pricePerHour;
+  const canSign = signature.trim().length >= 2 && agreed;
+
   const handleConfirm = () => {
+    if (!canSign) return;
     addSelection({
       requestId: request.id,
       requestTitle: `${request.count} ${request.role} · ${request.location}`,
@@ -833,38 +844,115 @@ function ConfirmDialog({
       count: request.count,
       startDate: offer.startDate,
       duration: request.duration,
+      commitmentMonths: months,
+      contractSignedBy: signature.trim(),
     });
     setConfirmed(true);
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 p-4 backdrop-blur" onClick={onClose}>
-      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-background/70 p-4 backdrop-blur" onClick={onClose}>
+      <div className="my-8 w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-elegant md:p-8" onClick={(e) => e.stopPropagation()}>
         {!confirmed ? (
           <>
             <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
-              <CheckCircle2 className="h-6 w-6" />
+              <FileSignature className="h-6 w-6" />
             </div>
-            <h3 className="mt-4 text-2xl font-extrabold">אישור בחירת ספק</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              לאחר אישור, הבקשה תיסגר להצעות נוספות והתאגיד יקבל הודעה לחתימה על הסכם דיגיטלי.
+            <h3 className="mt-4 text-2xl font-extrabold">חוזה התקשרות דיגיטלי</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              אישור סופי + חתימה. לאחר חתימה: הבקשה נסגרת, פרטי קשר נחשפים, והתאגיד מתחייב לתעריף.
             </p>
+
             <div className="mt-5 rounded-xl border border-border/60 bg-secondary/40 p-4">
               <div className="flex items-center gap-2">
                 <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">{offer.corp.name[0]}</div>
                 <div>
                   <div className="text-sm font-bold">{offer.corp.name}</div>
-                  <div className="text-xs text-muted-foreground">₪{offer.pricePerHour}/שעה · {request.count} עובדים · {request.duration}</div>
+                  <div className="text-xs text-muted-foreground">בקשה #{request.id}</div>
                 </div>
               </div>
-              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <div>סה״כ הערכה: <span className="font-bold text-foreground">₪{(offer.pricePerHour * request.count * 8 * 22).toLocaleString()}</span> לחודש (8 שעות × 22 ימים)</div>
-                <div>התחלה: <span className="font-bold text-foreground">{offer.startDate}</span></div>
+
+              <div className="mt-4 space-y-2 text-xs">
+                <Row k="תעריף לקבלן" v={`₪${offer.pricePerHour}/שעה × ${request.count} עובדים`} />
+                <Row k="עמלת פלטפורמה" v={`₪${PLATFORM_FEE_PER_HOUR}/שעה לעובד · ${feePercent(offer.pricePerHour).toFixed(1)}%`} accent />
+                <Row k="התחלה" v={offer.startDate} />
               </div>
             </div>
+
+            <div className="mt-4">
+              <Label className="mb-2 block text-xs font-semibold">תקופת התחייבות</Label>
+              <div className="flex flex-wrap gap-1">
+                {[1, 3, 6, 12, 24].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMonths(m)}
+                    className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      months === m
+                        ? "border-primary bg-primary/15 text-foreground"
+                        : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {m === 1 ? "חודש" : `${m} חודשים`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-center text-[11px]">
+              <div>
+                <div className="text-muted-foreground">לקבלן/חודש</div>
+                <div className="mt-0.5 text-sm font-extrabold">₪{monthlyContractor.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">עמלת פלטפורמה/חודש</div>
+                <div className="mt-0.5 text-sm font-extrabold text-primary">₪{monthlyFee.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">סה״כ עמלה {months}ח׳</div>
+                <div className="mt-0.5 text-sm font-extrabold">₪{totalFee.toLocaleString()}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-[11px] text-muted-foreground">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <div>
+                <span className="font-bold text-foreground">סעיף אי-עקיפה:</span> התקשרות ישירה מחוץ למערכת
+                במהלך {months} חודשי ההתחייבות מהווה הפרת חוזה ותחויב בקנס מוסכם של{" "}
+                <span className="font-bold text-foreground">₪{penalty.toLocaleString()}</span>{" "}
+                ({CIRCUMVENTION_PENALTY_MONTHS} חודשי עמלה).
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <Label className="mb-1 block text-xs font-semibold">חתימה דיגיטלית — שם מלא</Label>
+              <Input
+                value={signature}
+                onChange={(e) => setSignature(e.target.value)}
+                placeholder="שם פרטי ושם משפחה"
+                className="h-10"
+                maxLength={80}
+              />
+            </div>
+            <label className="mt-3 flex cursor-pointer items-start gap-2 text-[11px] text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span>
+                אני מאשר את תנאי ההתקשרות, מסכים לעמלת פלטפורמה של ₪{PLATFORM_FEE_PER_HOUR} לשעה לעובד,
+                ומתחייב לסעיף אי-עקיפה לכל אורך תקופת ההתחייבות.
+              </span>
+            </label>
+
             <div className="mt-6 flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onClose}>ביטול</Button>
-              <Button className="flex-1 bg-gradient-primary text-primary-foreground" onClick={handleConfirm}>
-                אשר ובחר
+              <Button
+                disabled={!canSign}
+                className="flex-1 bg-gradient-primary text-primary-foreground disabled:opacity-50"
+                onClick={handleConfirm}
+              >
+                <FileSignature className="ml-1 h-4 w-4" /> חתום ואשר
               </Button>
             </div>
           </>
@@ -873,9 +961,9 @@ function ConfirmDialog({
             <div className="grid h-14 w-14 place-items-center rounded-full bg-emerald-500/15">
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </div>
-            <h3 className="mt-4 text-2xl font-extrabold">הספק נבחר!</h3>
+            <h3 className="mt-4 text-2xl font-extrabold">החוזה נחתם!</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              {offer.corp.name} קיבלו הודעה. תוכל ליצור קשר ישיר ב-WhatsApp לתיאום פרטים אחרונים.
+              {offer.corp.name} קיבלו הודעה. פרטי הקשר נחשפו — תוכל לתאם פרטים אחרונים ב-WhatsApp.
             </p>
             <div className="mt-6 flex gap-2">
               <a
@@ -893,6 +981,15 @@ function ConfirmDialog({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">{k}</span>
+      <span className={`font-bold ${accent ? "text-primary" : "text-foreground"}`}>{v}</span>
     </div>
   );
 }
