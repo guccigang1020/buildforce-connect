@@ -84,6 +84,10 @@ export type Offer = {
   corporationId: string;
   pricePerHour: number;
   startDate: string;
+  availableWorkers: number;
+  responseTimeHours: number;
+  warrantyDays: number;
+  insurance: boolean;
   note?: string;
 };
 
@@ -115,9 +119,10 @@ export const REQUESTS: WorkforceRequest[] = [
     description:
       "פרויקט מגדל מגורים 28 קומות. נדרש צוות מנוסה בטפסנות מודולרית ויציקות בקנה מידה גדול.",
     offers: [
-      { corporationId: "daniel", pricePerHour: 185, startDate: "1 ביוני" },
-      { corporationId: "electra", pricePerHour: 192, startDate: "3 ביוני" },
-      { corporationId: "metzada", pricePerHour: 198, startDate: "5 ביוני" },
+      { corporationId: "daniel", pricePerHour: 185, startDate: "1 ביוני", availableWorkers: 7, responseTimeHours: 2, warrantyDays: 30, insurance: true, note: "צוות שעבד יחד 4 שנים. ניסיון מוכח במגדלי מגורים." },
+      { corporationId: "electra", pricePerHour: 192, startDate: "3 ביוני", availableWorkers: 7, responseTimeHours: 1, warrantyDays: 60, insurance: true, note: "אפשרות לתגבור עד 12 עובדים בשבוע השני." },
+      { corporationId: "metzada", pricePerHour: 198, startDate: "5 ביוני", availableWorkers: 5, responseTimeHours: 4, warrantyDays: 30, insurance: false, note: "צוות חלקי בלבד, יושלם תוך שבוע." },
+      { corporationId: "ort", pricePerHour: 205, startDate: "1 ביוני", availableWorkers: 7, responseTimeHours: 3, warrantyDays: 45, insurance: true, note: "צוות בכיר עם מנהל עבודה צמוד." },
     ],
   },
   {
@@ -132,8 +137,8 @@ export const REQUESTS: WorkforceRequest[] = [
     budget: "₪170-200 לשעה",
     description: "עבודות ברזל לפודיום של בניין מסחרי.",
     offers: [
-      { corporationId: "electra", pricePerHour: 178, startDate: "15 ביוני" },
-      { corporationId: "daniel", pricePerHour: 182, startDate: "16 ביוני" },
+      { corporationId: "electra", pricePerHour: 178, startDate: "15 ביוני", availableWorkers: 4, responseTimeHours: 2, warrantyDays: 30, insurance: true },
+      { corporationId: "daniel", pricePerHour: 182, startDate: "16 ביוני", availableWorkers: 4, responseTimeHours: 3, warrantyDays: 30, insurance: true },
     ],
   },
   {
