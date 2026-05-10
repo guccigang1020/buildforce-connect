@@ -551,7 +551,7 @@ function FilterToggle({ label, icon: Icon, checked, onChange }: { label: string;
 function OfferCard({
   offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref,
 }: {
-  offer: EnrichedOffer; request: WorkforceRequest; selected: boolean;
+  offer: ScoredOffer; request: WorkforceRequest; selected: boolean;
   isCheapest: boolean; avg: number; onSelect: () => void; whatsappHref: string;
 }) {
   const fullCrew = o.availableWorkers >= request.count;
@@ -561,11 +561,14 @@ function OfferCard({
         selected ? "border-primary bg-primary/5 shadow-elegant" : "border-border/60 bg-card hover:border-primary/40"
       }`}
     >
-      {isCheapest && (
-        <div className="absolute -top-3 right-5 inline-flex items-center gap-1 rounded-full bg-gradient-primary px-3 py-1 text-[10px] font-bold text-primary-foreground shadow-elegant">
-          <TrendingDown className="h-3 w-3" /> ההצעה הזולה ביותר
-        </div>
-      )}
+      <div className="absolute -top-3 right-5 flex items-center gap-2">
+        <ScoreBadge score={o.score} size="sm" />
+        {isCheapest && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-primary px-3 py-1 text-[10px] font-bold text-primary-foreground shadow-elegant">
+            <TrendingDown className="h-3 w-3" /> ההצעה הזולה ביותר
+          </span>
+        )}
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
@@ -607,7 +610,11 @@ function OfferCard({
       )}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4">
-        <div className="text-[11px] text-muted-foreground">אחריות {o.warrantyDays} ימים</div>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span>אחריות {o.warrantyDays} ימים</span>
+          <span className="hidden h-3 w-px bg-border md:block" />
+          <span className="hidden md:inline">ציון כולל: <span className="font-bold text-foreground">{o.score}/100</span></span>
+        </div>
         <div className="flex gap-2">
           <a
             href={whatsappHref}
