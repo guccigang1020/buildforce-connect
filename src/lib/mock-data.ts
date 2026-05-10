@@ -103,7 +103,30 @@ export type WorkforceRequest = {
   budget?: string;
   description?: string;
   offers: Offer[];
+  items?: RequestItem[];
+  commitmentMonths?: number;
 };
+
+export type RequestItem = {
+  id: string;
+  role: string;
+  nationality: string;
+  count: number;
+};
+
+export const NATIONALITIES = [
+  "הודים",
+  "תאילנדים",
+  "סרי לנקים",
+  "מולדובים",
+  "אוזבקים",
+  "נפאלים",
+  "אוקראינים",
+  "סינים",
+  "רומנים",
+  "פיליפינים",
+  "ללא העדפה",
+] as const;
 
 export const REQUESTS: WorkforceRequest[] = [
   {
