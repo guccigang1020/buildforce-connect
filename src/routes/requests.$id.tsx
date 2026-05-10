@@ -106,7 +106,7 @@ function RequestPage() {
   const fastestResponse = useMemo(() => Math.min(...allOffers.map((o) => o.responseTimeHours)), [allOffers]);
 
   const setSearch = (patch: Partial<typeof search>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }) });
+    navigate({ search: (prev: typeof search) => ({ ...prev, ...patch }) });
 
   const reqForWhatsapp = {
     id: req.id, role: req.role, count: req.count,
