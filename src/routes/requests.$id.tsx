@@ -6,7 +6,7 @@ import {
   ArrowLeft, MapPin, Calendar, Clock, Briefcase, BadgeCheck, Star,
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
   Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
-  ShieldAlert, Lock,
+  ShieldAlert, Lock, FileSignature, Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,11 @@ import {
 } from "@/lib/mock-data";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { addSelection, useSelectionForRequest } from "@/lib/selections-store";
+import {
+  PLATFORM_FEE_PER_HOUR, HOURS_PER_MONTH,
+  totalCorporationPays, feePercent, commitmentFeeRevenue, circumventionPenalty,
+  CIRCUMVENTION_PENALTY_MONTHS,
+} from "@/lib/commission-config";
 
 type SortKey = "score" | "price" | "rating" | "availability" | "response" | "warranty";
 
