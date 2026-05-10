@@ -6,6 +6,7 @@ import {
   ArrowLeft, MapPin, Calendar, Clock, Briefcase, BadgeCheck, Star,
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
   Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
+  ShieldAlert, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,11 +185,33 @@ function RequestPage() {
               </Button>
             </div>
           )}
+          {req.items && req.items.length > 0 && (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {req.items.map((it) => (
+                <div key={it.id} className="rounded-xl border border-border/60 bg-secondary/40 px-3 py-2 text-xs">
+                  <span className="font-bold text-foreground">{it.count} ×</span> {it.role} · <span className="text-primary font-semibold">{it.nationality}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {req.location}</span>
             <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4" /> התחלה {req.startDate}</span>
             <span className="inline-flex items-center gap-2"><Clock className="h-4 w-4" /> {req.duration}</span>
+            {req.commitmentMonths && (
+              <span className="inline-flex items-center gap-2"><Lock className="h-4 w-4" /> התחייבות {req.commitmentMonths} חודשים</span>
+            )}
             {req.budget && <span className="inline-flex items-center gap-2"><Briefcase className="h-4 w-4" /> תקציב: {req.budget}</span>}
+          </div>
+        </div>
+
+        {/* Non-circumvention banner */}
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-bold text-foreground">התקשרות מוגנת:</span> כל הצעות המחיר, הצ׳אטים והבחירה מתועדים בפלטפורמה.
+            עקיפה (התקשרות ישירה מחוץ למערכת לאחר חשיפת ספק דרך BuildForce) מהווה הפרת תנאי שימוש למשך {req.commitmentMonths ?? 6} חודשים.
+            פרטי קשר מלאים נחשפים רק לאחר <span className="font-semibold text-foreground">אישור בחירת ספק</span>.
           </div>
         </div>
 
@@ -366,6 +389,7 @@ function RequestPage() {
                     avg={avg}
                     onSelect={() => setSelected(o.corp.id)}
                     whatsappHref={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
+                    contactUnlocked={isAwarded && awarded?.corporationId === o.corp.id}
                   />
                 ))}
               </div>
@@ -380,6 +404,7 @@ function RequestPage() {
                 selected={selected}
                 onSelect={setSelected}
                 reqForWhatsapp={reqForWhatsapp}
+                awardedId={awarded?.corporationId ?? null}
               />
             )}
           </div>
@@ -549,10 +574,11 @@ function FilterToggle({ label, icon: Icon, checked, onChange }: { label: string;
 }
 
 function OfferCard({
-  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref,
+  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref, contactUnlocked,
 }: {
   offer: ScoredOffer; request: WorkforceRequest; selected: boolean;
   isCheapest: boolean; avg: number; onSelect: () => void; whatsappHref: string;
+  contactUnlocked: boolean;
 }) {
   const fullCrew = o.availableWorkers >= request.count;
   return (
@@ -616,14 +642,23 @@ function OfferCard({
           <span className="hidden md:inline">ציון כולל: <span className="font-bold text-foreground">{o.score}/100</span></span>
         </div>
         <div className="flex gap-2">
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-[#25D366] px-3 text-xs font-bold text-white transition-transform hover:scale-[1.02]"
-          >
-            <MessageCircle className="h-4 w-4" /> WhatsApp
-          </a>
+          {contactUnlocked ? (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-[#25D366] px-3 text-xs font-bold text-white transition-transform hover:scale-[1.02]"
+            >
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </a>
+          ) : (
+            <span
+              title="פרטי קשר ייחשפו לאחר אישור בחירת ספק"
+              className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-md border border-border bg-muted/40 px-3 text-xs font-bold text-muted-foreground"
+            >
+              <Lock className="h-3.5 w-3.5" /> נחשף לאחר בחירה
+            </span>
+          )}
           <Button asChild variant="outline" size="sm">
             <Link to="/corporations/$id" params={{ id: o.corp.id }}>פרופיל</Link>
           </Button>
@@ -654,12 +689,13 @@ function Spec({ icon: Icon, label, value, good, bad }: { icon: React.ComponentTy
 }
 
 function OffersTable({
-  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp,
+  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp, awardedId,
 }: {
   offers: ScoredOffer[]; lowest: number; fastestResponse: number;
   request: WorkforceRequest; selected: string | null;
   onSelect: (id: string) => void;
   reqForWhatsapp: { id: string; role: string; count: number; location: string; duration: string; startDate: string };
+  awardedId: string | null;
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
@@ -736,15 +772,24 @@ function OffersTable({
                 <td className="px-4 py-3 text-xs">{o.warrantyDays} ימים</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <a
-                      href={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="grid h-8 w-8 place-items-center rounded-md bg-[#25D366] text-white"
-                      title="WhatsApp"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </a>
+                    {awardedId === o.corp.id ? (
+                      <a
+                        href={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="grid h-8 w-8 place-items-center rounded-md bg-[#25D366] text-white"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span
+                        title="פרטי קשר ייחשפו לאחר אישור בחירת ספק"
+                        className="grid h-8 w-8 place-items-center rounded-md border border-border bg-muted/40 text-muted-foreground"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                      </span>
+                    )}
                     <Button
                       size="sm"
                       onClick={() => onSelect(o.corp.id)}
