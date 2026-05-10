@@ -309,6 +309,15 @@ export type SelectionRecord = {
   status: "in-progress" | "completed" | "cancelled";
   selectedAt: string;
   rating?: number;
+  commitmentMonths?: number;
+  platformFeePerHour?: number;
+  platformFeeTotal?: number;
+  contract?: {
+    signedBy: string;
+    signedAt: string;
+    commitmentMonths: number;
+    penaltyAmount: number;
+  };
 };
 
 export const SELECTION_HISTORY: SelectionRecord[] = [
