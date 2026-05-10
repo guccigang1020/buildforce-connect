@@ -18,6 +18,7 @@ import {
   type WorkforceRequest, type Offer, type Corporation,
 } from "@/lib/mock-data";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { addSelection, useSelectionForRequest } from "@/lib/selections-store";
 
 type SortKey = "price" | "rating" | "availability" | "response" | "warranty";
 
@@ -73,7 +74,8 @@ function RequestPage() {
   const { req } = Route.useLoaderData() as { req: WorkforceRequest };
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const [selected, setSelected] = useState<string | null>(null);
+  const awarded = useSelectionForRequest(req.id);
+  const [selected, setSelected] = useState<string | null>(awarded?.corporationId ?? null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const allOffers: EnrichedOffer[] = useMemo(
@@ -118,6 +120,7 @@ function RequestPage() {
     search.maxPrice !== undefined || search.minRating !== undefined;
 
   const selectedOffer = selected ? allOffers.find((o) => o.corp.id === selected) : null;
+  const isAwarded = Boolean(awarded);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -131,14 +134,38 @@ function RequestPage() {
         <div className="mt-6 rounded-3xl border border-border/60 bg-card p-6 shadow-card md:p-10">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">#{req.id}</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> פעילה
-            </span>
+            {isAwarded ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <CheckCircle2 className="h-3 w-3" /> ספק נבחר
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> פעילה
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">· פורסם {req.postedAt}</span>
           </div>
           <h1 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
             {req.count} {req.role} · {req.location}
           </h1>
+          {isAwarded && awarded && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
+                  {(getCorporation(awarded.corporationId)?.name ?? "?")[0]}
+                </div>
+                <div className="text-sm">
+                  <div className="font-bold">{getCorporation(awarded.corporationId)?.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    אושר ב-{awarded.selectedAt} · ₪{awarded.pricePerHour}/שעה · סה״כ ₪{awarded.totalEstimate.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard" search={{ tab: "history" }}>צפה בהיסטוריה</Link>
+              </Button>
+            </div>
+          )}
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> {req.location}</span>
             <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4" /> התחלה {req.startDate}</span>
