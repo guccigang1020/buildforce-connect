@@ -305,12 +305,6 @@ function WhyTrust() {
 
 /* ---------- VERIFIED CORPORATIONS ---------- */
 function Corporations() {
-  const corps = [
-    { name: "כוח אדם דניאל", workers: "1,240", rating: 4.9, regions: "מרכז · שפלה" },
-    { name: "אלקטרה מנפאואר", workers: "2,100", rating: 4.8, regions: "ארצי" },
-    { name: "מצדה כוח אדם", workers: "890", rating: 4.7, regions: "צפון · חיפה" },
-    { name: "אורט בנייה", workers: "650", rating: 4.8, regions: "ירושלים · דרום" },
-  ];
   return (
     <section id="corps" className="border-y border-border/60 bg-card/30 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
