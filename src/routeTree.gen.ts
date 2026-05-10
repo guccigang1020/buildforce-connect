@@ -14,6 +14,7 @@ import { Route as NewRequestRouteImport } from './routes/new-request'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CorporationsIdRoute = CorporationsIdRouteImport.update({
+  id: '/corporations/$id',
+  path: '/corporations/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/signup': typeof SignupRoute
+  '/corporations/$id': typeof CorporationsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/signup': typeof SignupRoute
+  '/corporations/$id': typeof CorporationsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/signup': typeof SignupRoute
+  '/corporations/$id': typeof CorporationsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/new-request' | '/signup'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/new-request'
+    | '/signup'
+    | '/corporations/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/new-request' | '/signup'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/new-request' | '/signup'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/new-request'
+    | '/signup'
+    | '/corporations/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/new-request'
+    | '/signup'
+    | '/corporations/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NewRequestRoute: typeof NewRequestRoute
   SignupRoute: typeof SignupRoute
+  CorporationsIdRoute: typeof CorporationsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/corporations/$id': {
+      id: '/corporations/$id'
+      path: '/corporations/$id'
+      fullPath: '/corporations/$id'
+      preLoaderRoute: typeof CorporationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NewRequestRoute: NewRequestRoute,
   SignupRoute: SignupRoute,
+  CorporationsIdRoute: CorporationsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
