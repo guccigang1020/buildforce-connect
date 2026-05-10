@@ -16,6 +16,7 @@ import {
   REQUESTS, getCorporation, NOTIFICATIONS, SELECTION_HISTORY,
   type Notification, type SelectionRecord,
 } from "@/lib/mock-data";
+import { useSelections, useExtraNotifications, getSelectionForRequest } from "@/lib/selections-store";
 
 type Tab = "overview" | "active" | "history" | "notifications";
 
@@ -39,21 +40,54 @@ function DashboardPage() {
   const navigate = Route.useNavigate();
   const tab = search.tab;
 
-  const [notifs, setNotifs] = useState<Notification[]>(NOTIFICATIONS);
+  const liveSelections = useSelections();
+  const extraNotifs = useExtraNotifications();
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+
+  const allNotifs: Notification[] = useMemo(() => {
+    const merged = [...extraNotifs, ...NOTIFICATIONS]
+      .filter((n) => !dismissed.has(n.id))
+      .map((n) => (readIds.has(n.id) ? { ...n, read: true } : n));
+    return merged;
+  }, [extraNotifs, dismissed, readIds]);
+
+  const setNotifs = (next: Notification[]) => {
+    // We support: mark-all-read, mark single read, dismiss
+    const newRead = new Set(readIds);
+    const newDismissed = new Set(dismissed);
+    const nextIds = new Set(next.map((n) => n.id));
+    for (const n of allNotifs) {
+      if (!nextIds.has(n.id)) newDismissed.add(n.id);
+    }
+    for (const n of next) {
+      if (n.read) newRead.add(n.id);
+    }
+    setReadIds(newRead);
+    setDismissed(newDismissed);
+  };
+  const notifs = allNotifs;
   const unreadCount = notifs.filter((n) => !n.read).length;
+
+  const mergedHistory: SelectionRecord[] = useMemo(
+    () => [...liveSelections, ...SELECTION_HISTORY],
+    [liveSelections],
+  );
 
   const setTab = (t: Tab) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, tab: t }) });
 
   const stats = useMemo(() => {
     const active = REQUESTS.filter((r) => r.status === "active");
+    const awardedIds = new Set(liveSelections.map((s) => s.requestId));
+    const stillOpen = active.filter((r) => !awardedIds.has(r.id));
     return [
-      { icon: Briefcase, label: "בקשות פעילות", value: String(active.length), trend: "+2 השבוע", color: "primary" as const },
-      { icon: MessageCircle, label: "הצעות פתוחות", value: String(active.reduce((s, r) => s + r.offers.length, 0)), trend: "+5 היום", color: "primary" as const },
-      { icon: CheckCircle2, label: "פרויקטים פעילים", value: String(SELECTION_HISTORY.filter((s) => s.status === "in-progress").length), color: "emerald" as const },
+      { icon: Briefcase, label: "בקשות פעילות", value: String(stillOpen.length), trend: "+2 השבוע", color: "primary" as const },
+      { icon: MessageCircle, label: "הצעות פתוחות", value: String(stillOpen.reduce((s, r) => s + r.offers.length, 0)), trend: "+5 היום", color: "primary" as const },
+      { icon: CheckCircle2, label: "פרויקטים פעילים", value: String(mergedHistory.filter((s) => s.status === "in-progress").length), color: "emerald" as const },
       { icon: TrendingUp, label: "חיסכון מצטבר", value: "₪48K", trend: "12% מתחת לשוק", color: "primary" as const },
     ];
-  }, []);
+  }, [liveSelections, mergedHistory]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -115,9 +149,9 @@ function DashboardPage() {
         </div>
 
         <div className="mt-6">
-          {tab === "overview" && <OverviewTab notifs={notifs} setNotifs={setNotifs} setTab={setTab} />}
+          {tab === "overview" && <OverviewTab notifs={notifs} setNotifs={setNotifs} setTab={setTab} history={mergedHistory} />}
           {tab === "active" && <ActiveRequestsTab />}
-          {tab === "history" && <HistoryTab />}
+          {tab === "history" && <HistoryTab history={mergedHistory} />}
           {tab === "notifications" && <NotificationsTab notifs={notifs} setNotifs={setNotifs} />}
         </div>
       </main>
@@ -128,10 +162,10 @@ function DashboardPage() {
 
 /* ---------- Tabs ---------- */
 
-function OverviewTab({ notifs, setNotifs, setTab }: { notifs: Notification[]; setNotifs: (n: Notification[]) => void; setTab: (t: Tab) => void }) {
+function OverviewTab({ notifs, setNotifs, setTab, history }: { notifs: Notification[]; setNotifs: (n: Notification[]) => void; setTab: (t: Tab) => void; history: SelectionRecord[] }) {
   const active = REQUESTS.filter((r) => r.status === "active").slice(0, 3);
   const recentNotifs = notifs.slice(0, 4);
-  const inProgress = SELECTION_HISTORY.filter((s) => s.status === "in-progress").slice(0, 2);
+  const inProgress = history.filter((s) => s.status === "in-progress").slice(0, 2);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -198,13 +232,13 @@ function ActiveRequestsTab() {
   );
 }
 
-function HistoryTab() {
+function HistoryTab({ history }: { history: SelectionRecord[] }) {
   const [filter, setFilter] = useState<"all" | "in-progress" | "completed" | "cancelled">("all");
-  const filtered = SELECTION_HISTORY.filter((s) => filter === "all" || s.status === filter);
+  const filtered = history.filter((s) => filter === "all" || s.status === filter);
 
-  const totalSpent = SELECTION_HISTORY.filter((s) => s.status !== "cancelled").reduce((sum, s) => sum + s.totalEstimate, 0);
+  const totalSpent = history.filter((s) => s.status !== "cancelled").reduce((sum, s) => sum + s.totalEstimate, 0);
   const avgRating = (() => {
-    const rated = SELECTION_HISTORY.filter((s) => s.rating);
+    const rated = history.filter((s) => s.rating);
     if (!rated.length) return 0;
     return (rated.reduce((sum, s) => sum + (s.rating ?? 0), 0) / rated.length).toFixed(1);
   })();
@@ -212,7 +246,7 @@ function HistoryTab() {
   return (
     <div>
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3">
-        <MiniStat label="סה״כ פרויקטים" value={String(SELECTION_HISTORY.length)} />
+        <MiniStat label="סה״כ פרויקטים" value={String(history.length)} />
         <MiniStat label="הוצאה מצטברת" value={`₪${(totalSpent / 1000).toFixed(0)}K`} />
         <MiniStat label="דירוג ממוצע נתון" value={`${avgRating} ★`} />
       </div>
@@ -357,6 +391,8 @@ function StatusBadge({ status }: { status: "active" | "closed" | "draft" }) {
 
 function RequestCard({ request: r, compact }: { request: typeof REQUESTS[number]; compact?: boolean }) {
   const best = r.offers[0] ? getCorporation(r.offers[0].corporationId) : null;
+  const awarded = getSelectionForRequest(r.id);
+  const awardedCorp = awarded ? getCorporation(awarded.corporationId) : null;
   return (
     <Link
       to="/requests/$id"
@@ -367,7 +403,13 @@ function RequestCard({ request: r, compact }: { request: typeof REQUESTS[number]
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">#{r.id}</span>
-            <StatusBadge status={r.status} />
+            {awarded ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <CheckCircle2 className="h-3 w-3" /> ספק נבחר
+              </span>
+            ) : (
+              <StatusBadge status={r.status} />
+            )}
             <span className="text-xs text-muted-foreground">· {r.postedAt}</span>
           </div>
           <h3 className={`mt-2 font-bold ${compact ? "text-lg" : "text-xl md:text-2xl"}`}>
@@ -384,7 +426,23 @@ function RequestCard({ request: r, compact }: { request: typeof REQUESTS[number]
           <div className="text-3xl font-extrabold text-primary">{r.offers.length}</div>
         </div>
       </div>
-      {best && !compact && (
+      {awardedCorp && !compact ? (
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-primary text-xs font-bold text-primary-foreground">{awardedCorp.name[0]}</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <span className="truncate">ספק נבחר: {awardedCorp.name}</span>
+                {awardedCorp.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                ₪{awarded?.pricePerHour}/שעה · אושר {awarded?.selectedAt}
+              </div>
+            </div>
+          </div>
+          <ArrowLeft className="h-5 w-5 text-primary" />
+        </div>
+      ) : best && !compact && (
         <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-secondary/40 p-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold">{best.name[0]}</div>
