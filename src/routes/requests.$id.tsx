@@ -415,6 +415,7 @@ function sortOffers(offers: ScoredOffer[], key: SortKey): ScoredOffer[] {
     case "availability": return arr.sort((a, b) => dateVal(a.startDate) - dateVal(b.startDate));
     case "response": return arr.sort((a, b) => a.responseTimeHours - b.responseTimeHours);
     case "warranty": return arr.sort((a, b) => b.warrantyDays - a.warrantyDays);
+    default: return arr;
   }
 }
 
