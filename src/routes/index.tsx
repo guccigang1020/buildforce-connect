@@ -1,49 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
-  HardHat, Hammer, Layers, PaintRoller, Wrench, Building2,
+  Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2,
-  Users, Clock, TrendingUp, BadgeCheck, Quote, Menu, X, Sparkles,
+  Users, Clock, TrendingUp, BadgeCheck, Quote, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import { CORPORATIONS } from "@/lib/mock-data";
+import { buildWhatsAppUrl, type RequestDetails } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
 /* ---------- WHATSAPP ---------- */
-type RequestDetails = {
-  id: string;
-  role: string;
-  count: number;
-  location: string;
-  duration: string;
-  startDate: string;
-};
-
 const SAMPLE_REQUEST: RequestDetails = {
   id: "BF-2847",
-  role: "קבלני טפסנות",
+  role: "טפסנים",
   count: 7,
   location: "תל אביב",
   duration: "3 חודשים",
   startDate: "1 ביוני",
 };
-
-function buildWhatsAppUrl(phone: string, supplierName: string, r: RequestDetails) {
-  const msg =
-    `שלום ${supplierName}, פנייה דרך BuildForce 👷\n\n` +
-    `מספר בקשה: ${r.id}\n` +
-    `תחום: ${r.role}\n` +
-    `כמות עובדים: ${r.count}\n` +
-    `מיקום: ${r.location}\n` +
-    `משך: ${r.duration}\n` +
-    `תאריך התחלה: ${r.startDate}\n\n` +
-    `אשמח לקבל פרטים והצעת מחיר. תודה!`;
-  const cleanPhone = phone.replace(/\D/g, "");
-  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
-}
 
 function WhatsAppButton({
   phone,
@@ -88,7 +69,7 @@ function WhatsAppButton({
 function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Nav />
+      <SiteNav />
       <Hero />
       <Stats />
       <HowItWorks />
@@ -97,61 +78,8 @@ function Home() {
       <Corporations />
       <Testimonials />
       <CTABanner />
-      <Footer />
+      <SiteFooter />
     </div>
-  );
-}
-
-/* ---------- NAV ---------- */
-function Nav() {
-  const [open, setOpen] = useState(false);
-  const links = [
-    { label: "איך זה עובד", href: "#how" },
-    { label: "תחומים", href: "#categories" },
-    { label: "תאגידים מאומתים", href: "#corps" },
-    { label: "לקוחות", href: "#testimonials" },
-  ];
-  return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
-        <a href="#" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
-            <HardHat className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-extrabold tracking-tight">
-            Build<span className="text-primary">Force</span>
-          </span>
-        </a>
-        <nav className="hidden items-center gap-8 md:flex">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              {l.label}
-            </a>
-          ))}
-        </nav>
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm">התחברות</Button>
-          <Button size="sm" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95">
-            פרסום בקשה
-          </Button>
-        </div>
-        <button onClick={() => setOpen(!open)} className="md:hidden text-foreground" aria-label="תפריט">
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-      {open && (
-        <div className="border-t border-border/60 bg-background md:hidden">
-          <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
-            {links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-                {l.label}
-              </a>
-            ))}
-            <Button className="mt-2 bg-gradient-primary text-primary-foreground">פרסום בקשה</Button>
-          </div>
-        </div>
-      )}
-    </header>
   );
 }
 
@@ -180,12 +108,14 @@ function Hero() {
             השוואה חכמה, דירוגים אמיתיים, ושליטה מלאה — בלי טלפונים ובלי זמן מבוזבז.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 h-12 px-7 text-base font-semibold">
-              פרסם בקשת כוח אדם
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 h-12 px-7 text-base font-semibold">
+              <Link to="/new-request">
+                פרסם בקשת כוח אדם
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-12 border-border bg-card/50 px-7 text-base backdrop-blur hover:bg-card">
-              איך זה עובד
+            <Button asChild size="lg" variant="outline" className="h-12 border-border bg-card/50 px-7 text-base backdrop-blur hover:bg-card">
+              <Link to="/" hash="how">איך זה עובד</Link>
             </Button>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
@@ -247,8 +177,10 @@ function Hero() {
               ))}
             </div>
 
-            <Button className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95">
-              השוואת הצעות מלאה
+            <Button asChild className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95">
+              <Link to="/requests/$id" params={{ id: SAMPLE_REQUEST.id }}>
+                השוואת הצעות מלאה
+              </Link>
             </Button>
           </div>
         </div>
@@ -373,26 +305,25 @@ function WhyTrust() {
 
 /* ---------- VERIFIED CORPORATIONS ---------- */
 function Corporations() {
-  const corps = [
-    { name: "כוח אדם דניאל", workers: "1,240", rating: 4.9, regions: "מרכז · שפלה" },
-    { name: "אלקטרה מנפאואר", workers: "2,100", rating: 4.8, regions: "ארצי" },
-    { name: "מצדה כוח אדם", workers: "890", rating: 4.7, regions: "צפון · חיפה" },
-    { name: "אורט בנייה", workers: "650", rating: 4.8, regions: "ירושלים · דרום" },
-  ];
   return (
     <section id="corps" className="border-y border-border/60 bg-card/30 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <SectionHeader eyebrow="תאגידים מאומתים" title="ספקים שעוברים בדיקה. שיעבדו בלי הפתעות." subtitle="כל תאגיד מסומן באישור BuildForce עבר בדיקת רישוי, ביטוח, ותקני בטיחות." />
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {corps.map((c) => (
-            <div key={c.name} className="hover-lift rounded-2xl border border-border/60 bg-card p-5">
+          {CORPORATIONS.map((c) => (
+            <Link
+              key={c.id}
+              to="/corporations/$id"
+              params={{ id: c.id }}
+              className="hover-lift block rounded-2xl border border-border/60 bg-card p-5"
+            >
               <div className="flex items-center gap-3">
                 <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
                   {c.name[0]}
                 </div>
                 <div>
                   <div className="flex items-center gap-1 text-sm font-bold">
-                    {c.name} <BadgeCheck className="h-4 w-4 text-primary" />
+                    {c.name} {c.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
@@ -412,7 +343,7 @@ function Corporations() {
               <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> זמין השבוע
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -473,9 +404,11 @@ function CTABanner() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
-            <Button size="lg" className="h-12 bg-gradient-primary px-7 text-base font-semibold text-primary-foreground shadow-elegant hover:opacity-95">
-              פרסם בקשה עכשיו
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button asChild size="lg" className="h-12 bg-gradient-primary px-7 text-base font-semibold text-primary-foreground shadow-elegant hover:opacity-95">
+              <Link to="/new-request">
+                פרסם בקשה עכשיו
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button size="lg" variant="outline" className="h-12 border-border bg-card/60 px-7 text-base hover:bg-card">
               <MessageCircle className="ml-2 h-4 w-4" /> דבר איתנו ב-WhatsApp
@@ -484,46 +417,6 @@ function CTABanner() {
         </div>
       </div>
     </section>
-  );
-}
-
-/* ---------- FOOTER ---------- */
-function Footer() {
-  return (
-    <footer className="border-t border-border/60 bg-card/40">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-4 md:px-6">
-        <div className="md:col-span-2">
-          <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary">
-              <HardHat className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-extrabold">Build<span className="text-primary">Force</span></span>
-          </div>
-          <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-            שוק כוח האדם החכם של ענף הבנייה בישראל. מחבר קבלנים ויזמים עם תאגידי כוח אדם מאומתים.
-          </p>
-        </div>
-        <div>
-          <div className="text-sm font-bold">הפלטפורמה</div>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li><a href="#how" className="hover:text-foreground">איך זה עובד</a></li>
-            <li><a href="#categories" className="hover:text-foreground">תחומים</a></li>
-            <li><a href="#corps" className="hover:text-foreground">תאגידים</a></li>
-          </ul>
-        </div>
-        <div>
-          <div className="text-sm font-bold">צור קשר</div>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>support@buildforce.co.il</li>
-            <li>03-000-0000</li>
-            <li>תל אביב, ישראל</li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-border/60 py-5 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} BuildForce. כל הזכויות שמורות.
-      </div>
-    </footer>
   );
 }
 
