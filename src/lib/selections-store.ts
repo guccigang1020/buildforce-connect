@@ -1,5 +1,11 @@
 import { useSyncExternalStore } from "react";
 import type { SelectionRecord, Notification } from "./mock-data";
+import {
+  PLATFORM_FEE_PER_HOUR,
+  HOURS_PER_MONTH,
+  commitmentFeeRevenue,
+  circumventionPenalty,
+} from "./commission-config";
 
 const SEL_KEY = "bf_selections_v1";
 const NOTIF_KEY = "bf_notifications_v1";
@@ -89,10 +95,14 @@ export type AddSelectionInput = {
   count: number;
   startDate: string;
   duration: string;
+  commitmentMonths?: number;
+  contractSignedBy?: string;
 };
 
 export function addSelection(input: AddSelectionInput): SelectionRecord {
-  const totalEstimate = input.pricePerHour * input.count * 8 * 22;
+  const months = Math.max(1, input.commitmentMonths ?? 1);
+  const totalEstimate = input.pricePerHour * input.count * HOURS_PER_MONTH * months;
+  const platformFeeTotal = commitmentFeeRevenue(input.count, months);
   const record: SelectionRecord = {
     id: `s-${Date.now()}`,
     requestId: input.requestId,
@@ -105,6 +115,17 @@ export function addSelection(input: AddSelectionInput): SelectionRecord {
     totalEstimate,
     status: "in-progress",
     selectedAt: new Date().toLocaleDateString("he-IL", { day: "numeric", month: "long" }),
+    commitmentMonths: months,
+    platformFeePerHour: PLATFORM_FEE_PER_HOUR,
+    platformFeeTotal,
+    contract: input.contractSignedBy
+      ? {
+          signedBy: input.contractSignedBy,
+          signedAt: new Date().toISOString(),
+          commitmentMonths: months,
+          penaltyAmount: circumventionPenalty(input.count),
+        }
+      : undefined,
   };
 
   const existing = readSelections().filter((s) => s.requestId !== input.requestId);
@@ -114,8 +135,8 @@ export function addSelection(input: AddSelectionInput): SelectionRecord {
   const notif: Notification = {
     id: `n-${Date.now()}`,
     type: "offer_accepted",
-    title: "ספק נבחר ואושר",
-    body: `בחרת את ${input.corporationName} לבקשה #${input.requestId} — ₪${input.pricePerHour}/שעה`,
+    title: input.contractSignedBy ? "חוזה נחתם וספק נבחר" : "ספק נבחר ואושר",
+    body: `${input.corporationName} · בקשה #${input.requestId} — ₪${input.pricePerHour}/שעה + ₪${PLATFORM_FEE_PER_HOUR} עמלה`,
     requestId: input.requestId,
     corporationId: input.corporationId,
     read: false,

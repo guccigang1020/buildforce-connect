@@ -6,7 +6,7 @@ import {
   Plus, Search, Filter, MapPin, Calendar, Users, ArrowLeft,
   TrendingUp, MessageCircle, Briefcase, CheckCircle2, Clock, BadgeCheck, Star,
   Bell, History, LayoutDashboard, Inbox, X, Sparkles, AlertCircle,
-  PlayCircle, XCircle, Mail,
+  PlayCircle, XCircle, Mail, Coins, FileSignature,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,15 @@ import {
   type Notification, type SelectionRecord,
 } from "@/lib/mock-data";
 import { useSelections, useExtraNotifications, getSelectionForRequest } from "@/lib/selections-store";
+import {
+  PLATFORM_FEE_PER_HOUR, HOURS_PER_MONTH,
+  monthlyFeeRevenue,
+} from "@/lib/commission-config";
 
-type Tab = "overview" | "active" | "history" | "notifications";
+type Tab = "overview" | "active" | "history" | "notifications" | "revenue";
 
 const searchSchema = z.object({
-  tab: fallback(z.enum(["overview", "active", "history", "notifications"]), "overview").default("overview"),
+  tab: fallback(z.enum(["overview", "active", "history", "notifications", "revenue"]), "overview").default("overview"),
 });
 
 export const Route = createFileRoute("/dashboard")({
@@ -145,6 +149,9 @@ function DashboardPage() {
             <TabBtn icon={Bell} active={tab === "notifications"} onClick={() => setTab("notifications")} badge={unreadCount}>
               התראות
             </TabBtn>
+            <TabBtn icon={Coins} active={tab === "revenue"} onClick={() => setTab("revenue")}>
+              הכנסות פלטפורמה
+            </TabBtn>
           </div>
         </div>
 
@@ -153,6 +160,7 @@ function DashboardPage() {
           {tab === "active" && <ActiveRequestsTab />}
           {tab === "history" && <HistoryTab history={mergedHistory} />}
           {tab === "notifications" && <NotificationsTab notifs={notifs} setNotifs={setNotifs} />}
+          {tab === "revenue" && <RevenueTab history={mergedHistory} />}
         </div>
       </main>
       <SiteFooter />
@@ -607,3 +615,99 @@ const NOTIF_COLOR: Record<Notification["type"], string> = {
   request_closing: "bg-amber-500/15 text-amber-400",
   system: "bg-muted text-muted-foreground",
 };
+
+/* ---------- Revenue Tab (Owner View — mock) ---------- */
+
+function RevenueTab({ history }: { history: SelectionRecord[] }) {
+  const active = history.filter((s) => s.status === "in-progress");
+  const totalWorkers = active.reduce((sum, s) => sum + s.count, 0);
+  const monthlyRevenue = monthlyFeeRevenue(totalWorkers);
+  const annualRun = monthlyRevenue * 12;
+  const lifetimeFees = history
+    .filter((s) => s.status !== "cancelled")
+    .reduce((sum, s) => {
+      const months = Math.max(1, s.commitmentMonths ?? 1);
+      return sum + (s.platformFeeTotal ?? PLATFORM_FEE_PER_HOUR * s.count * HOURS_PER_MONTH * months);
+    }, 0);
+  const signedContracts = history.filter((s) => s.contract).length;
+
+  // Group active selections by corporation
+  const byCorp = new Map<string, { workers: number; revenue: number }>();
+  for (const s of active) {
+    const e = byCorp.get(s.corporationId) ?? { workers: 0, revenue: 0 };
+    e.workers += s.count;
+    e.revenue += monthlyFeeRevenue(s.count);
+    byCorp.set(s.corporationId, e);
+  }
+  const rows = [...byCorp.entries()]
+    .map(([id, v]) => ({ corp: getCorporation(id), ...v }))
+    .filter((r) => r.corp)
+    .sort((a, b) => b.revenue - a.revenue);
+
+  return (
+    <div>
+      <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+        <div className="flex items-center gap-2">
+          <Coins className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-bold md:text-lg">הכנסות פלטפורמה (תצוגת בעלים)</h2>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          מודל עמלה: ₪{PLATFORM_FEE_PER_HOUR} לשעת עובד · {HOURS_PER_MONTH} שעות/חודש · נגבה מהתאגיד מעל תעריף הקבלן.
+        </p>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <MiniStat label="עובדים פעילים" value={String(totalWorkers)} />
+        <MiniStat label="הכנסה חודשית צפויה" value={`₪${monthlyRevenue.toLocaleString()}`} />
+        <MiniStat label="קצב שנתי (ARR)" value={`₪${(annualRun / 1000).toFixed(0)}K`} />
+        <MiniStat label="חוזים חתומים" value={String(signedContracts)} />
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
+        <h3 className="text-sm font-bold">הכנסה מצטברת מחוזים פעילים + שהושלמו</h3>
+        <div className="mt-2 text-3xl font-extrabold tracking-tight md:text-4xl">
+          ₪{lifetimeFees.toLocaleString()}
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          סך עמלות שנצברו לאורך כל ההתחייבויות (לא כולל בקשות שבוטלו).
+        </p>
+      </div>
+
+      <h3 className="mt-8 mb-3 text-base font-bold">פירוט לפי תאגיד (חוזים פעילים)</h3>
+      {rows.length === 0 ? (
+        <EmptyState icon={Coins} title="אין חוזים פעילים" desc="עמלות יוצגו כאן ברגע שיירשמו חוזים פעילים." />
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead className="bg-secondary/60 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-semibold">תאגיד</th>
+                <th className="px-4 py-3 font-semibold">עובדים</th>
+                <th className="px-4 py-3 font-semibold">שעות/חודש</th>
+                <th className="px-4 py-3 font-semibold">הכנסת עמלה/חודש</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.corp!.id} className="border-t border-border/60">
+                  <td className="px-4 py-3 font-semibold">{r.corp!.name}</td>
+                  <td className="px-4 py-3">{r.workers}</td>
+                  <td className="px-4 py-3">{r.workers * HOURS_PER_MONTH}</td>
+                  <td className="px-4 py-3 font-extrabold text-primary">₪{r.revenue.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="mt-6 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-[11px] text-muted-foreground">
+        <FileSignature className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+        <div>
+          <span className="font-bold text-foreground">הערה:</span> נתונים מבוססים על חוזים שנחתמו דרך הפלטפורמה.
+          ברגע שתעבור ל-Lovable Cloud + תשלומים, הסכומים יחויבו אוטומטית בסוף כל חודש.
+        </div>
+      </div>
+    </div>
+  );
+}

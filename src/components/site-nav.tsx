@@ -9,6 +9,7 @@ export function SiteNav() {
     { label: "איך זה עובד", to: "/" as const, hash: "how" },
     { label: "תאגידים", to: "/" as const, hash: "corps" },
     { label: "לוח בקרה", to: "/dashboard" as const },
+    { label: "לוח תאגיד", to: "/corporation-dashboard" as const },
     { label: "פרסום בקשה", to: "/new-request" as const },
   ];
   return (
