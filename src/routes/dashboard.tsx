@@ -6,7 +6,7 @@ import {
   Plus, Search, Filter, MapPin, Calendar, Users, ArrowLeft,
   TrendingUp, MessageCircle, Briefcase, CheckCircle2, Clock, BadgeCheck, Star,
   Bell, History, LayoutDashboard, Inbox, X, Sparkles, AlertCircle,
-  PlayCircle, XCircle, Mail,
+  PlayCircle, XCircle, Mail, Coins, FileSignature,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,15 @@ import {
   type Notification, type SelectionRecord,
 } from "@/lib/mock-data";
 import { useSelections, useExtraNotifications, getSelectionForRequest } from "@/lib/selections-store";
+import {
+  PLATFORM_FEE_PER_HOUR, HOURS_PER_MONTH,
+  monthlyFeeRevenue,
+} from "@/lib/commission-config";
 
-type Tab = "overview" | "active" | "history" | "notifications";
+type Tab = "overview" | "active" | "history" | "notifications" | "revenue";
 
 const searchSchema = z.object({
-  tab: fallback(z.enum(["overview", "active", "history", "notifications"]), "overview").default("overview"),
+  tab: fallback(z.enum(["overview", "active", "history", "notifications", "revenue"]), "overview").default("overview"),
 });
 
 export const Route = createFileRoute("/dashboard")({
