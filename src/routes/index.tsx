@@ -12,6 +12,79 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+/* ---------- WHATSAPP ---------- */
+type RequestDetails = {
+  id: string;
+  role: string;
+  count: number;
+  location: string;
+  duration: string;
+  startDate: string;
+};
+
+const SAMPLE_REQUEST: RequestDetails = {
+  id: "BF-2847",
+  role: "קבלני טפסנות",
+  count: 7,
+  location: "תל אביב",
+  duration: "3 חודשים",
+  startDate: "1 ביוני",
+};
+
+function buildWhatsAppUrl(phone: string, supplierName: string, r: RequestDetails) {
+  const msg =
+    `שלום ${supplierName}, פנייה דרך BuildForce 👷\n\n` +
+    `מספר בקשה: ${r.id}\n` +
+    `תחום: ${r.role}\n` +
+    `כמות עובדים: ${r.count}\n` +
+    `מיקום: ${r.location}\n` +
+    `משך: ${r.duration}\n` +
+    `תאריך התחלה: ${r.startDate}\n\n` +
+    `אשמח לקבל פרטים והצעת מחיר. תודה!`;
+  const cleanPhone = phone.replace(/\D/g, "");
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+}
+
+function WhatsAppButton({
+  phone,
+  supplierName,
+  request,
+  variant = "icon",
+}: {
+  phone: string;
+  supplierName: string;
+  request: RequestDetails;
+  variant?: "icon" | "full";
+}) {
+  const href = buildWhatsAppUrl(phone, supplierName, request);
+  if (variant === "full") {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`שלח הודעת WhatsApp ל${supplierName}`}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-bold text-white shadow-elegant transition-transform hover:scale-[1.02] hover:opacity-95"
+      >
+        <MessageCircle className="h-4 w-4" />
+        שלח ב-WhatsApp
+      </a>
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`שלח הודעת WhatsApp ל${supplierName}`}
+      title="שלח ב-WhatsApp"
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#25D366] text-white shadow-elegant transition-transform hover:scale-105 hover:opacity-95"
+    >
+      <MessageCircle className="h-5 w-5" />
+    </a>
+  );
+}
+
 function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
