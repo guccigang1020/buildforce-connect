@@ -13,6 +13,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as NewRequestRouteImport } from './routes/new-request'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CorporationDashboardRouteImport } from './routes/corporation-dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
@@ -37,6 +38,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CorporationDashboardRoute = CorporationDashboardRouteImport.update({
+  id: '/corporation-dashboard',
+  path: '/corporation-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const CorporationsIdRoute = CorporationsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/corporation-dashboard'
     | '/dashboard'
     | '/login'
     | '/new-request'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/corporation-dashboard'
     | '/dashboard'
     | '/login'
     | '/new-request'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/corporation-dashboard'
     | '/dashboard'
     | '/login'
     | '/new-request'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CorporationDashboardRoute: typeof CorporationDashboardRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   NewRequestRoute: typeof NewRequestRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/corporation-dashboard': {
+      id: '/corporation-dashboard'
+      path: '/corporation-dashboard'
+      fullPath: '/corporation-dashboard'
+      preLoaderRoute: typeof CorporationDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CorporationDashboardRoute: CorporationDashboardRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   NewRequestRoute: NewRequestRoute,
