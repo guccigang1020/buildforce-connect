@@ -689,12 +689,13 @@ function Spec({ icon: Icon, label, value, good, bad }: { icon: React.ComponentTy
 }
 
 function OffersTable({
-  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp,
+  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp, awardedId,
 }: {
   offers: ScoredOffer[]; lowest: number; fastestResponse: number;
   request: WorkforceRequest; selected: string | null;
   onSelect: (id: string) => void;
   reqForWhatsapp: { id: string; role: string; count: number; location: string; duration: string; startDate: string };
+  awardedId: string | null;
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
@@ -771,15 +772,24 @@ function OffersTable({
                 <td className="px-4 py-3 text-xs">{o.warrantyDays} ימים</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <a
-                      href={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="grid h-8 w-8 place-items-center rounded-md bg-[#25D366] text-white"
-                      title="WhatsApp"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </a>
+                    {awardedId === o.corp.id ? (
+                      <a
+                        href={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="grid h-8 w-8 place-items-center rounded-md bg-[#25D366] text-white"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span
+                        title="פרטי קשר ייחשפו לאחר אישור בחירת ספק"
+                        className="grid h-8 w-8 place-items-center rounded-md border border-border bg-muted/40 text-muted-foreground"
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                      </span>
+                    )}
                     <Button
                       size="sm"
                       onClick={() => onSelect(o.corp.id)}
