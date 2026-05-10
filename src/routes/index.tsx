@@ -142,26 +142,33 @@ function Hero() {
             <div className="mt-6 space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">הצעות שהתקבלו · 4</div>
               {[
-                { name: "כוח אדם דניאל בע״מ", price: "₪185", rating: 4.9, badge: true },
-                { name: "אלקטרה מנפאואר", price: "₪192", rating: 4.8, badge: true },
-                { name: "מצדה כוח אדם", price: "₪198", rating: 4.7, badge: false },
+                { name: "כוח אדם דניאל בע״מ", price: "₪185", rating: 4.9, badge: true, phone: "972541234567" },
+                { name: "אלקטרה מנפאואר", price: "₪192", rating: 4.8, badge: true, phone: "972542345678" },
+                { name: "מצדה כוח אדם", price: "₪198", rating: 4.7, badge: false, phone: "972543456789" },
               ].map((c, i) => (
-                <div key={i} className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary/40 p-3 transition-colors hover:border-primary/40">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-9 w-9 place-items-center rounded-lg bg-muted text-xs font-bold">{c.name[0]}</div>
-                    <div>
+                <div key={i} className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-secondary/40 p-3 transition-colors hover:border-primary/40">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold">{c.name[0]}</div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5 text-sm font-semibold">
-                        {c.name}
-                        {c.badge && <BadgeCheck className="h-4 w-4 text-primary" />}
+                        <span className="truncate">{c.name}</span>
+                        {c.badge && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
                       </div>
                     </div>
                   </div>
-                  <div className="text-left">
-                    <div className="text-base font-extrabold">{c.price}</div>
-                    <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-left">
+                      <div className="text-base font-extrabold">{c.price}</div>
+                      <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
+                    </div>
+                    <WhatsAppButton
+                      phone={c.phone}
+                      supplierName={c.name}
+                      request={SAMPLE_REQUEST}
+                    />
                   </div>
                 </div>
               ))}
