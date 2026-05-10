@@ -149,6 +149,9 @@ function DashboardPage() {
             <TabBtn icon={Bell} active={tab === "notifications"} onClick={() => setTab("notifications")} badge={unreadCount}>
               התראות
             </TabBtn>
+            <TabBtn icon={Coins} active={tab === "revenue"} onClick={() => setTab("revenue")}>
+              הכנסות פלטפורמה
+            </TabBtn>
           </div>
         </div>
 
@@ -157,6 +160,7 @@ function DashboardPage() {
           {tab === "active" && <ActiveRequestsTab />}
           {tab === "history" && <HistoryTab history={mergedHistory} />}
           {tab === "notifications" && <NotificationsTab notifs={notifs} setNotifs={setNotifs} />}
+          {tab === "revenue" && <RevenueTab history={mergedHistory} />}
         </div>
       </main>
       <SiteFooter />
