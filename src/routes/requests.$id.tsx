@@ -269,6 +269,14 @@ function RequestPage() {
                 נקה סינון <X className="h-3 w-3" />
               </button>
             )}
+            <button
+              onClick={() => exportComparisonPdf(req, sorted)}
+              disabled={sorted.length === 0}
+              className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-gradient-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02] disabled:opacity-50"
+              title="ייצא סיכום השוואה כ-PDF"
+            >
+              <Download className="h-3.5 w-3.5" /> ייצא PDF
+            </button>
           </div>
         </div>
 
