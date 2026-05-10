@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   ArrowLeft, MapPin, Calendar, Clock, Briefcase, BadgeCheck, Star,
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
-  Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award,
+  Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,16 +20,29 @@ import {
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { addSelection, useSelectionForRequest } from "@/lib/selections-store";
 
-type SortKey = "price" | "rating" | "availability" | "response" | "warranty";
+type SortKey = "score" | "price" | "rating" | "availability" | "response" | "warranty";
+
+type Weights = { price: number; rating: number; availability: number; response: number; warranty: number };
+
+const DEFAULT_WEIGHTS: Weights = { price: 40, rating: 20, availability: 15, response: 15, warranty: 10 };
+
+const WEIGHT_META: { key: keyof Weights; label: string; hint: string }[] = [
+  { key: "price", label: "מחיר", hint: "נמוך = טוב יותר" },
+  { key: "rating", label: "דירוג תאגיד", hint: "גבוה = טוב יותר" },
+  { key: "availability", label: "זמינות התחלה", hint: "מוקדם = טוב יותר" },
+  { key: "response", label: "זמן תגובה", hint: "מהיר = טוב יותר" },
+  { key: "warranty", label: "אחריות", hint: "ארוכה = טוב יותר" },
+];
 
 const searchSchema = z.object({
   view: fallback(z.enum(["cards", "table"]), "cards").default("cards"),
-  sort: fallback(z.enum(["price", "rating", "availability", "response", "warranty"]), "price").default("price"),
+  sort: fallback(z.enum(["score", "price", "rating", "availability", "response", "warranty"]), "score").default("score"),
   verifiedOnly: fallback(z.boolean(), false).default(false),
   insuredOnly: fallback(z.boolean(), false).default(false),
   fullCrewOnly: fallback(z.boolean(), false).default(false),
   maxPrice: fallback(z.number().optional(), undefined),
   minRating: fallback(z.number().optional(), undefined),
+  minScore: fallback(z.number().optional(), undefined),
 });
 
 export const Route = createFileRoute("/requests/$id")({
@@ -69,6 +82,7 @@ export const Route = createFileRoute("/requests/$id")({
 });
 
 type EnrichedOffer = Offer & { corp: Corporation };
+type ScoredOffer = EnrichedOffer & { score: number; breakdown: Record<keyof Weights, number> };
 
 function RequestPage() {
   const { req } = Route.useLoaderData() as { req: WorkforceRequest };
@@ -77,6 +91,7 @@ function RequestPage() {
   const awarded = useSelectionForRequest(req.id);
   const [selected, setSelected] = useState<string | null>(awarded?.corporationId ?? null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
 
   const allOffers: EnrichedOffer[] = useMemo(
     () =>
@@ -86,16 +101,19 @@ function RequestPage() {
     [req.offers],
   );
 
+  const scored = useMemo(() => computeScores(allOffers, weights), [allOffers, weights]);
+
   const filtered = useMemo(() => {
-    return allOffers.filter((o) => {
+    return scored.filter((o) => {
       if (search.verifiedOnly && !o.corp.verified) return false;
       if (search.insuredOnly && !o.insurance) return false;
       if (search.fullCrewOnly && o.availableWorkers < req.count) return false;
       if (search.maxPrice && o.pricePerHour > search.maxPrice) return false;
       if (search.minRating && o.corp.rating < search.minRating) return false;
+      if (search.minScore && o.score < search.minScore) return false;
       return true;
     });
-  }, [allOffers, search, req.count]);
+  }, [scored, search, req.count]);
 
   const sorted = useMemo(() => sortOffers(filtered, search.sort), [filtered, search.sort]);
 
@@ -117,7 +135,7 @@ function RequestPage() {
 
   const filtersActive =
     search.verifiedOnly || search.insuredOnly || search.fullCrewOnly ||
-    search.maxPrice !== undefined || search.minRating !== undefined;
+    search.maxPrice !== undefined || search.minRating !== undefined || search.minScore !== undefined;
 
   const selectedOffer = selected ? allOffers.find((o) => o.corp.id === selected) : null;
   const isAwarded = Boolean(awarded);
@@ -201,6 +219,7 @@ function RequestPage() {
                 onChange={(e) => setSearch({ sort: e.target.value as SortKey })}
                 className="bg-transparent text-xs font-semibold focus:outline-none"
               >
+                <option value="score">ציון כולל מותאם</option>
                 <option value="price">מחיר (מהזול)</option>
                 <option value="rating">דירוג (מהגבוה)</option>
                 <option value="availability">זמינות (הקדם ביותר)</option>
@@ -214,7 +233,7 @@ function RequestPage() {
             <span className="font-semibold">{sorted.length}</span> מתוך {allOffers.length} הצעות
             {filtersActive && (
               <button
-                onClick={() => setSearch({ verifiedOnly: false, insuredOnly: false, fullCrewOnly: false, maxPrice: undefined, minRating: undefined })}
+                onClick={() => setSearch({ verifiedOnly: false, insuredOnly: false, fullCrewOnly: false, maxPrice: undefined, minRating: undefined, minScore: undefined })}
                 className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground hover:bg-muted/70"
               >
                 נקה סינון <X className="h-3 w-3" />
@@ -227,6 +246,7 @@ function RequestPage() {
           {/* Filters sidebar */}
           <aside className="lg:col-span-1">
             <div className="space-y-4 lg:sticky lg:top-20">
+              <WeightsPanel weights={weights} onChange={setWeights} />
               <div className="rounded-2xl border border-border/60 bg-card p-5">
                 <h3 className="text-sm font-bold">סינון</h3>
                 <div className="mt-4 space-y-4">
@@ -275,6 +295,24 @@ function RequestPage() {
                           }`}
                         >
                           {r === 0 ? "הכל" : `${r}+`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-xs">ציון כולל מינימלי</Label>
+                    <div className="flex gap-1">
+                      {[0, 60, 75, 90].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSearch({ minScore: s === 0 ? undefined : s })}
+                          className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                            (search.minScore ?? 0) === s
+                              ? "border-primary bg-primary/15 text-foreground"
+                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                          }`}
+                        >
+                          {s === 0 ? "הכל" : `${s}+`}
                         </button>
                       ))}
                     </div>
@@ -364,19 +402,114 @@ function RequestPage() {
 
 /* ---------- helpers ---------- */
 
-function sortOffers(offers: EnrichedOffer[], key: SortKey): EnrichedOffer[] {
+function sortOffers(offers: ScoredOffer[], key: SortKey): ScoredOffer[] {
   const arr = [...offers];
   const dateVal = (s: string) => {
     const m = s.match(/(\d+)/);
     return m ? parseInt(m[1], 10) : 999;
   };
   switch (key) {
+    case "score": return arr.sort((a, b) => b.score - a.score);
     case "price": return arr.sort((a, b) => a.pricePerHour - b.pricePerHour);
     case "rating": return arr.sort((a, b) => b.corp.rating - a.corp.rating);
     case "availability": return arr.sort((a, b) => dateVal(a.startDate) - dateVal(b.startDate));
     case "response": return arr.sort((a, b) => a.responseTimeHours - b.responseTimeHours);
     case "warranty": return arr.sort((a, b) => b.warrantyDays - a.warrantyDays);
+    default: return arr;
   }
+}
+
+function computeScores(offers: EnrichedOffer[], weights: Weights): ScoredOffer[] {
+  if (offers.length === 0) return [];
+  const dateVal = (s: string) => {
+    const m = s.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 999;
+  };
+  const norm = (val: number, min: number, max: number, lowerIsBetter: boolean) => {
+    if (max === min) return 1;
+    const t = (val - min) / (max - min);
+    return lowerIsBetter ? 1 - t : t;
+  };
+  const prices = offers.map((o) => o.pricePerHour);
+  const ratings = offers.map((o) => o.corp.rating);
+  const dates = offers.map((o) => dateVal(o.startDate));
+  const responses = offers.map((o) => o.responseTimeHours);
+  const warranties = offers.map((o) => o.warrantyDays);
+
+  const totalW = Math.max(1, weights.price + weights.rating + weights.availability + weights.response + weights.warranty);
+
+  return offers.map((o) => {
+    const breakdown: Record<keyof Weights, number> = {
+      price: norm(o.pricePerHour, Math.min(...prices), Math.max(...prices), true),
+      rating: norm(o.corp.rating, Math.min(...ratings), Math.max(...ratings), false),
+      availability: norm(dateVal(o.startDate), Math.min(...dates), Math.max(...dates), true),
+      response: norm(o.responseTimeHours, Math.min(...responses), Math.max(...responses), true),
+      warranty: norm(o.warrantyDays, Math.min(...warranties), Math.max(...warranties), false),
+    };
+    const weighted =
+      breakdown.price * weights.price +
+      breakdown.rating * weights.rating +
+      breakdown.availability * weights.availability +
+      breakdown.response * weights.response +
+      breakdown.warranty * weights.warranty;
+    return { ...o, score: Math.round((weighted / totalW) * 100), breakdown };
+  });
+}
+
+function WeightsPanel({ weights, onChange }: { weights: Weights; onChange: (w: Weights) => void }) {
+  const total = weights.price + weights.rating + weights.availability + weights.response + weights.warranty;
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-bold">משקלות לציון כולל</h3>
+        </div>
+        <button
+          onClick={() => onChange(DEFAULT_WEIGHTS)}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="h-3 w-3" /> איפוס
+        </button>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        קבע מה חשוב לך — הציון מתעדכן בזמן אמת. סה״כ: {total}
+      </p>
+      <div className="mt-4 space-y-3">
+        {WEIGHT_META.map((m) => (
+          <div key={m.key}>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-semibold">{m.label}</span>
+              <span className="text-muted-foreground">{m.hint} · <span className="font-bold text-foreground">{weights[m.key]}</span></span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={5}
+              value={weights[m.key]}
+              onChange={(e) => onChange({ ...weights, [m.key]: Number(e.target.value) })}
+              className="mt-1 w-full accent-primary"
+              aria-label={`משקל ${m.label}`}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ScoreBadge({ score, size = "md" }: { score: number; size?: "sm" | "md" }) {
+  const tone =
+    score >= 80 ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
+    score >= 60 ? "bg-primary/15 text-primary border-primary/30" :
+    "bg-amber-500/15 text-amber-400 border-amber-500/30";
+  const sz = size === "sm" ? "text-xs px-2 py-0.5" : "text-sm px-2.5 py-1";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border font-extrabold ${tone} ${sz}`}>
+      <Award className="h-3 w-3" /> {score}
+    </span>
+  );
 }
 
 function StatCard({ icon: Icon, label, value, accent }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; accent?: boolean }) {
@@ -418,7 +551,7 @@ function FilterToggle({ label, icon: Icon, checked, onChange }: { label: string;
 function OfferCard({
   offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref,
 }: {
-  offer: EnrichedOffer; request: WorkforceRequest; selected: boolean;
+  offer: ScoredOffer; request: WorkforceRequest; selected: boolean;
   isCheapest: boolean; avg: number; onSelect: () => void; whatsappHref: string;
 }) {
   const fullCrew = o.availableWorkers >= request.count;
@@ -428,11 +561,14 @@ function OfferCard({
         selected ? "border-primary bg-primary/5 shadow-elegant" : "border-border/60 bg-card hover:border-primary/40"
       }`}
     >
-      {isCheapest && (
-        <div className="absolute -top-3 right-5 inline-flex items-center gap-1 rounded-full bg-gradient-primary px-3 py-1 text-[10px] font-bold text-primary-foreground shadow-elegant">
-          <TrendingDown className="h-3 w-3" /> ההצעה הזולה ביותר
-        </div>
-      )}
+      <div className="absolute -top-3 right-5 flex items-center gap-2">
+        <ScoreBadge score={o.score} size="sm" />
+        {isCheapest && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-primary px-3 py-1 text-[10px] font-bold text-primary-foreground shadow-elegant">
+            <TrendingDown className="h-3 w-3" /> ההצעה הזולה ביותר
+          </span>
+        )}
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
@@ -474,7 +610,11 @@ function OfferCard({
       )}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4">
-        <div className="text-[11px] text-muted-foreground">אחריות {o.warrantyDays} ימים</div>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+          <span>אחריות {o.warrantyDays} ימים</span>
+          <span className="hidden h-3 w-px bg-border md:block" />
+          <span className="hidden md:inline">ציון כולל: <span className="font-bold text-foreground">{o.score}/100</span></span>
+        </div>
         <div className="flex gap-2">
           <a
             href={whatsappHref}
@@ -516,16 +656,17 @@ function Spec({ icon: Icon, label, value, good, bad }: { icon: React.ComponentTy
 function OffersTable({
   offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp,
 }: {
-  offers: EnrichedOffer[]; lowest: number; fastestResponse: number;
+  offers: ScoredOffer[]; lowest: number; fastestResponse: number;
   request: WorkforceRequest; selected: string | null;
   onSelect: (id: string) => void;
   reqForWhatsapp: { id: string; role: string; count: number; location: string; duration: string; startDate: string };
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-      <table className="w-full min-w-[760px] text-sm">
+      <table className="w-full min-w-[860px] text-sm">
         <thead className="bg-secondary/60 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
           <tr>
+            <th className="px-4 py-3 font-semibold">ציון</th>
             <th className="px-4 py-3 font-semibold">תאגיד</th>
             <th className="px-4 py-3 font-semibold">דירוג</th>
             <th className="px-4 py-3 font-semibold">מחיר/שעה</th>
@@ -546,6 +687,9 @@ function OffersTable({
                 key={o.corp.id}
                 className={`border-t border-border/60 transition-colors ${isSel ? "bg-primary/5" : "hover:bg-secondary/40"}`}
               >
+                <td className="px-4 py-3">
+                  <ScoreBadge score={o.score} size="sm" />
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="grid h-8 w-8 place-items-center rounded-md bg-gradient-primary text-xs font-bold text-primary-foreground">
