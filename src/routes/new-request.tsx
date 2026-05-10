@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, MapPin, Calendar, Users,
-  Briefcase, FileText, Sparkles, ShieldCheck,
+  Briefcase, FileText, Sparkles, ShieldCheck, Plus, Trash2, Lock, Globe2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { ROLES, CITIES } from "@/lib/mock-data";
+import { ROLES, CITIES, NATIONALITIES, type RequestItem } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/new-request")({
   head: () => ({
@@ -23,48 +23,67 @@ export const Route = createFileRoute("/new-request")({
 });
 
 type FormState = {
-  role: string;
-  count: string;
+  items: RequestItem[];
   location: string;
   startDate: string;
   duration: string;
+  commitmentMonths: string;
   budget: string;
   description: string;
   contactName: string;
   contactPhone: string;
+  acceptTerms: boolean;
 };
 
 const STEPS = [
-  { n: 1, label: "תחום וכמות" },
+  { n: 1, label: "פריטי בקשה" },
   { n: 2, label: "מיקום ולו״ז" },
   { n: 3, label: "תקציב ופרטים" },
   { n: 4, label: "פרטי קשר" },
 ];
+
+const newItem = (): RequestItem => ({
+  id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  role: "",
+  nationality: "",
+  count: 1,
+});
 
 function NewRequestPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<FormState>({
-    role: "",
-    count: "",
+    items: [newItem()],
     location: "",
     startDate: "",
     duration: "",
+    commitmentMonths: "",
     budget: "",
     description: "",
     contactName: "",
     contactPhone: "",
+    acceptTerms: false,
   });
 
-  const update = (k: keyof FormState, v: string) =>
+  const update = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  const updateItem = (id: string, patch: Partial<RequestItem>) =>
+    setForm((f) => ({ ...f, items: f.items.map((it) => (it.id === id ? { ...it, ...patch } : it)) }));
+
+  const addItem = () => setForm((f) => ({ ...f, items: [...f.items, newItem()] }));
+  const removeItem = (id: string) =>
+    setForm((f) => ({ ...f, items: f.items.length > 1 ? f.items.filter((it) => it.id !== id) : f.items }));
+
+  const itemsValid = form.items.every((it) => it.role && it.nationality && it.count > 0);
+  const totalWorkers = form.items.reduce((s, it) => s + (Number(it.count) || 0), 0);
+
   const canNext = () => {
-    if (step === 1) return form.role && form.count;
-    if (step === 2) return form.location && form.startDate && form.duration;
+    if (step === 1) return itemsValid && form.items.length > 0;
+    if (step === 2) return form.location && form.startDate && form.duration && form.commitmentMonths;
     if (step === 3) return true;
-    if (step === 4) return form.contactName && form.contactPhone;
+    if (step === 4) return form.contactName && form.contactPhone && form.acceptTerms;
     return false;
   };
 
@@ -97,8 +116,8 @@ function NewRequestPage() {
                 setSubmitted(false);
                 setStep(1);
                 setForm({
-                  role: "", count: "", location: "", startDate: "", duration: "",
-                  budget: "", description: "", contactName: "", contactPhone: "",
+                  items: [newItem()], location: "", startDate: "", duration: "", commitmentMonths: "",
+                  budget: "", description: "", contactName: "", contactPhone: "", acceptTerms: false,
                 });
               }}
             >
@@ -157,30 +176,32 @@ function NewRequestPage() {
           <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card lg:col-span-2 md:p-8">
             {step === 1 && (
               <div className="space-y-6">
-                <StepHeader icon={Briefcase} title="איזה צוות אתה צריך?" subtitle="בחר תחום וכמות עובדים." />
-                <div>
-                  <Label className="mb-2 block">תחום התמחות</Label>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {ROLES.map((r) => (
-                      <button
-                        type="button"
-                        key={r}
-                        onClick={() => update("role", r)}
-                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
-                          form.role === r
-                            ? "border-primary bg-primary/15 text-foreground"
-                            : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                <StepHeader icon={Briefcase} title="איזה צוות אתה צריך?" subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות. ניתן לערבב כמה שורות." />
+                <div className="space-y-3">
+                  {form.items.map((it, idx) => (
+                    <ItemRow
+                      key={it.id}
+                      idx={idx + 1}
+                      item={it}
+                      onChange={(patch) => updateItem(it.id, patch)}
+                      onRemove={() => removeItem(it.id)}
+                      removable={form.items.length > 1}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
+                  >
+                    <Plus className="h-4 w-4" /> הוסף שורת בקשה נוספת
+                  </button>
+                </div>
+                {totalWorkers > 0 && (
+                  <div className="rounded-xl bg-secondary/40 p-3 text-xs text-muted-foreground">
+                    סה״כ <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על פני {form.items.length} שורות.
+                    התאגידים יגישו מחיר לשעה <span className="font-semibold text-foreground">לכל שורה בנפרד</span>.
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="count" className="mb-2 block">כמות עובדים</Label>
-                  <Input id="count" type="number" min="1" max="200" placeholder="לדוגמה: 7" value={form.count} onChange={(e) => update("count", e.target.value)} className="h-12 text-base" />
-                </div>
+                )}
               </div>
             )}
             {step === 2 && (
@@ -215,6 +236,28 @@ function NewRequestPage() {
                     <Input id="duration" placeholder="לדוגמה: 3 חודשים" value={form.duration} onChange={(e) => update("duration", e.target.value)} className="h-12" />
                   </div>
                 </div>
+                <div>
+                  <Label className="mb-2 block">משך התחייבות מינימלי לתאגיד (חודשים)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["1", "3", "6", "12", "24"].map((m) => (
+                      <button
+                        type="button"
+                        key={m}
+                        onClick={() => update("commitmentMonths", m)}
+                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition-all ${
+                          form.commitmentMonths === m
+                            ? "border-primary bg-primary/15 text-foreground"
+                            : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                        }`}
+                      >
+                        {m} חודשים
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    זו התקופה שאתה מתחייב להעסקה דרך הפלטפורמה. מגדיר ביטחון לתאגידים — ומחיר טוב יותר עבורך.
+                  </p>
+                </div>
               </div>
             )}
             {step === 3 && (
@@ -248,6 +291,18 @@ function NewRequestPage() {
                   <ShieldCheck className="mb-2 h-5 w-5 text-primary" />
                   הפרטים שלך מוגנים. נשלח אותם רק לתאגידים שתאשר באופן מפורש.
                 </div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.acceptTerms}
+                    onChange={(e) => update("acceptTerms", e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="text-muted-foreground">
+                    <span className="font-bold text-foreground">אני מתחייב לסעיף אי-עקיפה (Non-Circumvention):</span>
+                    {" "}כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך הפלטפורמה למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק. עקיפה ישירה של הפלטפורמה מהווה הפרת תנאי שימוש.
+                  </span>
+                </label>
               </div>
             )}
 
@@ -273,25 +328,96 @@ function NewRequestPage() {
           {/* Live preview */}
           <aside className="rounded-2xl border border-border/60 bg-card p-6 shadow-card md:p-7 lg:sticky lg:top-20 lg:h-fit">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">תצוגה מקדימה</div>
-            <h3 className="mt-2 text-lg font-bold">{form.role || "—"} · {form.count || "0"} עובדים</h3>
+            <h3 className="mt-2 text-lg font-bold">בקשה · {totalWorkers} עובדים</h3>
+            <div className="mt-3 space-y-2">
+              {form.items.map((it, i) => (
+                <div key={it.id} className="rounded-lg border border-border/60 bg-secondary/40 px-3 py-2 text-xs">
+                  <span className="font-bold text-foreground">{it.count || "?"} ×</span>{" "}
+                  {it.role || "—"} · <span className="text-primary">{it.nationality || "—"}</span>
+                  {!it.role && !it.nationality && <span className="text-muted-foreground">פריט {i + 1} ריק</span>}
+                </div>
+              ))}
+            </div>
             <ul className="mt-4 space-y-3 text-sm">
               <Row icon={MapPin} label="מיקום" value={form.location || "—"} />
               <Row icon={Calendar} label="התחלה" value={form.startDate || "—"} />
               <Row icon={Calendar} label="משך" value={form.duration || "—"} />
+              <Row icon={Lock} label="התחייבות" value={form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"} />
               <Row icon={Briefcase} label="תקציב" value={form.budget ? `₪${form.budget}` : "—"} />
             </ul>
             <div className="mt-6 rounded-xl bg-secondary/40 p-4 text-xs text-muted-foreground">
               <div className="font-semibold text-foreground">מה קורה אחרי הפרסום?</div>
               <ul className="mt-2 space-y-1.5">
                 <li>• הבקשה נשלחת לתאגידים מאומתים בלבד</li>
-                <li>• הצעות ראשונות תוך 4-24 שעות</li>
-                <li>• השוואה ובחירה ישירות מהלוח</li>
+                <li>• כל תאגיד מגיש מחיר נפרד לכל שורה</li>
+                <li>• פרטי קשר נחשפים רק אחרי בחירת ספק</li>
               </ul>
             </div>
           </aside>
         </form>
       </main>
       <SiteFooter />
+    </div>
+  );
+}
+
+function ItemRow({
+  idx, item, onChange, onRemove, removable,
+}: {
+  idx: number;
+  item: RequestItem;
+  onChange: (patch: Partial<RequestItem>) => void;
+  onRemove: () => void;
+  removable: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-xs font-bold text-muted-foreground">שורה {idx}</div>
+        {removable && (
+          <button type="button" onClick={onRemove} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive">
+            <Trash2 className="h-3 w-3" /> הסר
+          </button>
+        )}
+      </div>
+      <div className="grid gap-3 md:grid-cols-[1fr_1fr_120px]">
+        <div>
+          <Label className="mb-1.5 block text-[11px]">תחום</Label>
+          <select
+            value={item.role}
+            onChange={(e) => onChange({ role: e.target.value })}
+            className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
+          >
+            <option value="">בחר תחום…</option>
+            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+        <div>
+          <Label className="mb-1.5 block text-[11px]">
+            <Globe2 className="ml-1 inline h-3 w-3 text-primary" />
+            לאום עובדים
+          </Label>
+          <select
+            value={item.nationality}
+            onChange={(e) => onChange({ nationality: e.target.value })}
+            className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
+          >
+            <option value="">בחר לאום…</option>
+            {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
+        <div>
+          <Label className="mb-1.5 block text-[11px]">כמות</Label>
+          <Input
+            type="number"
+            min={1}
+            max={200}
+            value={item.count || ""}
+            onChange={(e) => onChange({ count: Math.max(1, Number(e.target.value) || 1) })}
+            className="h-11"
+          />
+        </div>
+      </div>
     </div>
   );
 }
