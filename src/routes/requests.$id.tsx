@@ -469,6 +469,30 @@ function RequestPage() {
         />
       )}
 
+      {/* Mobile sticky action bar — appears when a provider is selected */}
+      {selectedOffer && !isAwarded && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 shadow-elegant backdrop-blur lg:hidden">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
+              {selectedOffer.corp.name[0]}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-bold">{selectedOffer.corp.name}</div>
+              <div className="text-[11px] text-muted-foreground">
+                ₪{selectedOffer.pricePerHour}/שעה · {selectedOffer.startDate}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setConfirmOpen(true)}
+              className="bg-gradient-primary text-primary-foreground"
+            >
+              אשר בחירה
+            </Button>
+          </div>
+        </div>
+      )}
+
       <SiteFooter />
     </div>
   );
