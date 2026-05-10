@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   ArrowLeft, MapPin, Calendar, Clock, Briefcase, BadgeCheck, Star,
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
-  Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award,
+  Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,16 +20,29 @@ import {
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { addSelection, useSelectionForRequest } from "@/lib/selections-store";
 
-type SortKey = "price" | "rating" | "availability" | "response" | "warranty";
+type SortKey = "score" | "price" | "rating" | "availability" | "response" | "warranty";
+
+type Weights = { price: number; rating: number; availability: number; response: number; warranty: number };
+
+const DEFAULT_WEIGHTS: Weights = { price: 40, rating: 20, availability: 15, response: 15, warranty: 10 };
+
+const WEIGHT_META: { key: keyof Weights; label: string; hint: string }[] = [
+  { key: "price", label: "מחיר", hint: "נמוך = טוב יותר" },
+  { key: "rating", label: "דירוג תאגיד", hint: "גבוה = טוב יותר" },
+  { key: "availability", label: "זמינות התחלה", hint: "מוקדם = טוב יותר" },
+  { key: "response", label: "זמן תגובה", hint: "מהיר = טוב יותר" },
+  { key: "warranty", label: "אחריות", hint: "ארוכה = טוב יותר" },
+];
 
 const searchSchema = z.object({
   view: fallback(z.enum(["cards", "table"]), "cards").default("cards"),
-  sort: fallback(z.enum(["price", "rating", "availability", "response", "warranty"]), "price").default("price"),
+  sort: fallback(z.enum(["score", "price", "rating", "availability", "response", "warranty"]), "score").default("score"),
   verifiedOnly: fallback(z.boolean(), false).default(false),
   insuredOnly: fallback(z.boolean(), false).default(false),
   fullCrewOnly: fallback(z.boolean(), false).default(false),
   maxPrice: fallback(z.number().optional(), undefined),
   minRating: fallback(z.number().optional(), undefined),
+  minScore: fallback(z.number().optional(), undefined),
 });
 
 export const Route = createFileRoute("/requests/$id")({
@@ -77,6 +90,7 @@ function RequestPage() {
   const awarded = useSelectionForRequest(req.id);
   const [selected, setSelected] = useState<string | null>(awarded?.corporationId ?? null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
 
   const allOffers: EnrichedOffer[] = useMemo(
     () =>
@@ -86,16 +100,19 @@ function RequestPage() {
     [req.offers],
   );
 
+  const scored = useMemo(() => computeScores(allOffers, weights), [allOffers, weights]);
+
   const filtered = useMemo(() => {
-    return allOffers.filter((o) => {
+    return scored.filter((o) => {
       if (search.verifiedOnly && !o.corp.verified) return false;
       if (search.insuredOnly && !o.insurance) return false;
       if (search.fullCrewOnly && o.availableWorkers < req.count) return false;
       if (search.maxPrice && o.pricePerHour > search.maxPrice) return false;
       if (search.minRating && o.corp.rating < search.minRating) return false;
+      if (search.minScore && o.score < search.minScore) return false;
       return true;
     });
-  }, [allOffers, search, req.count]);
+  }, [scored, search, req.count]);
 
   const sorted = useMemo(() => sortOffers(filtered, search.sort), [filtered, search.sort]);
 
@@ -117,7 +134,7 @@ function RequestPage() {
 
   const filtersActive =
     search.verifiedOnly || search.insuredOnly || search.fullCrewOnly ||
-    search.maxPrice !== undefined || search.minRating !== undefined;
+    search.maxPrice !== undefined || search.minRating !== undefined || search.minScore !== undefined;
 
   const selectedOffer = selected ? allOffers.find((o) => o.corp.id === selected) : null;
   const isAwarded = Boolean(awarded);
@@ -201,6 +218,7 @@ function RequestPage() {
                 onChange={(e) => setSearch({ sort: e.target.value as SortKey })}
                 className="bg-transparent text-xs font-semibold focus:outline-none"
               >
+                <option value="score">ציון כולל מותאם</option>
                 <option value="price">מחיר (מהזול)</option>
                 <option value="rating">דירוג (מהגבוה)</option>
                 <option value="availability">זמינות (הקדם ביותר)</option>
@@ -214,7 +232,7 @@ function RequestPage() {
             <span className="font-semibold">{sorted.length}</span> מתוך {allOffers.length} הצעות
             {filtersActive && (
               <button
-                onClick={() => setSearch({ verifiedOnly: false, insuredOnly: false, fullCrewOnly: false, maxPrice: undefined, minRating: undefined })}
+                onClick={() => setSearch({ verifiedOnly: false, insuredOnly: false, fullCrewOnly: false, maxPrice: undefined, minRating: undefined, minScore: undefined })}
                 className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground hover:bg-muted/70"
               >
                 נקה סינון <X className="h-3 w-3" />
@@ -227,6 +245,7 @@ function RequestPage() {
           {/* Filters sidebar */}
           <aside className="lg:col-span-1">
             <div className="space-y-4 lg:sticky lg:top-20">
+              <WeightsPanel weights={weights} onChange={setWeights} />
               <div className="rounded-2xl border border-border/60 bg-card p-5">
                 <h3 className="text-sm font-bold">סינון</h3>
                 <div className="mt-4 space-y-4">
@@ -275,6 +294,24 @@ function RequestPage() {
                           }`}
                         >
                           {r === 0 ? "הכל" : `${r}+`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block text-xs">ציון כולל מינימלי</Label>
+                    <div className="flex gap-1">
+                      {[0, 60, 75, 90].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSearch({ minScore: s === 0 ? undefined : s })}
+                          className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                            (search.minScore ?? 0) === s
+                              ? "border-primary bg-primary/15 text-foreground"
+                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                          }`}
+                        >
+                          {s === 0 ? "הכל" : `${s}+`}
                         </button>
                       ))}
                     </div>
