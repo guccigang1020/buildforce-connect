@@ -456,6 +456,7 @@ function RequestPage() {
                 awardedId={awarded?.corporationId ?? null}
               />
             )}
+            {selectedOffer && !isAwarded && <div className="h-20 lg:hidden" aria-hidden />}
           </div>
         </div>
       </main>
