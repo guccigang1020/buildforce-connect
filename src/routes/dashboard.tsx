@@ -391,6 +391,8 @@ function StatusBadge({ status }: { status: "active" | "closed" | "draft" }) {
 
 function RequestCard({ request: r, compact }: { request: typeof REQUESTS[number]; compact?: boolean }) {
   const best = r.offers[0] ? getCorporation(r.offers[0].corporationId) : null;
+  const awarded = getSelectionForRequest(r.id);
+  const awardedCorp = awarded ? getCorporation(awarded.corporationId) : null;
   return (
     <Link
       to="/requests/$id"
@@ -401,7 +403,13 @@ function RequestCard({ request: r, compact }: { request: typeof REQUESTS[number]
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">#{r.id}</span>
-            <StatusBadge status={r.status} />
+            {awarded ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <CheckCircle2 className="h-3 w-3" /> ספק נבחר
+              </span>
+            ) : (
+              <StatusBadge status={r.status} />
+            )}
             <span className="text-xs text-muted-foreground">· {r.postedAt}</span>
           </div>
           <h3 className={`mt-2 font-bold ${compact ? "text-lg" : "text-xl md:text-2xl"}`}>
@@ -418,7 +426,23 @@ function RequestCard({ request: r, compact }: { request: typeof REQUESTS[number]
           <div className="text-3xl font-extrabold text-primary">{r.offers.length}</div>
         </div>
       </div>
-      {best && !compact && (
+      {awardedCorp && !compact ? (
+        <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-primary text-xs font-bold text-primary-foreground">{awardedCorp.name[0]}</div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <span className="truncate">ספק נבחר: {awardedCorp.name}</span>
+                {awardedCorp.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                ₪{awarded?.pricePerHour}/שעה · אושר {awarded?.selectedAt}
+              </div>
+            </div>
+          </div>
+          <ArrowLeft className="h-5 w-5 text-primary" />
+        </div>
+      ) : best && !compact && (
         <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-secondary/40 p-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold">{best.name[0]}</div>
