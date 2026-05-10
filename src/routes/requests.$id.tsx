@@ -388,81 +388,9 @@ function RequestPage() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-4">
           {/* Filters sidebar */}
-          <aside className="lg:col-span-1">
+          <aside className="hidden lg:col-span-1 lg:block">
             <div className="space-y-4 lg:sticky lg:top-20">
-              <WeightsPanel weights={weights} onChange={setWeights} />
-              <div className="rounded-2xl border border-border/60 bg-card p-5">
-                <h3 className="text-sm font-bold">סינון</h3>
-                <div className="mt-4 space-y-4">
-                  <FilterToggle
-                    label="תאגידים מאומתים בלבד"
-                    icon={ShieldCheck}
-                    checked={search.verifiedOnly}
-                    onChange={(v) => setSearch({ verifiedOnly: v })}
-                  />
-                  <FilterToggle
-                    label="עם ביטוח מלא"
-                    icon={ShieldCheck}
-                    checked={search.insuredOnly}
-                    onChange={(v) => setSearch({ insuredOnly: v })}
-                  />
-                  <FilterToggle
-                    label={`צוות מלא (${req.count} עובדים)`}
-                    icon={Users}
-                    checked={search.fullCrewOnly}
-                    onChange={(v) => setSearch({ fullCrewOnly: v })}
-                  />
-                  <div>
-                    <Label className="mb-2 block text-xs">מחיר מקסימלי לשעה (₪)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      placeholder="ללא הגבלה"
-                      value={search.maxPrice ?? ""}
-                      onChange={(e) =>
-                        setSearch({ maxPrice: e.target.value ? Number(e.target.value) : undefined })
-                      }
-                      className="h-10"
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2 block text-xs">דירוג מינימלי</Label>
-                    <div className="flex gap-1">
-                      {[0, 4, 4.5, 4.8].map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setSearch({ minRating: r === 0 ? undefined : r })}
-                          className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
-                            (search.minRating ?? 0) === r
-                              ? "border-primary bg-primary/15 text-foreground"
-                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
-                          }`}
-                        >
-                          {r === 0 ? "הכל" : `${r}+`}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="mb-2 block text-xs">ציון כולל מינימלי</Label>
-                    <div className="flex gap-1">
-                      {[0, 60, 75, 90].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => setSearch({ minScore: s === 0 ? undefined : s })}
-                          className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
-                            (search.minScore ?? 0) === s
-                              ? "border-primary bg-primary/15 text-foreground"
-                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
-                          }`}
-                        >
-                          {s === 0 ? "הכל" : `${s}+`}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {filtersPane}
 
               {selectedOffer && (
                 <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5">
