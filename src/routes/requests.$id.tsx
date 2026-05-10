@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { SiteNav } from "@/components/site-nav";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SiteFooter } from "@/components/site-footer";
 import {
   getRequest, getCorporation,
@@ -148,6 +149,94 @@ function RequestPage() {
   const selectedOffer = selected ? allOffers.find((o) => o.corp.id === selected) : null;
   const isAwarded = Boolean(awarded);
 
+  const filtersPane = (
+    <div className="space-y-4">
+      <WeightsPanel weights={weights} onChange={setWeights} />
+      <div className="rounded-2xl border border-border/60 bg-card p-5">
+        <h3 className="text-sm font-bold">סינון</h3>
+        <div className="mt-4 space-y-4">
+          <FilterToggle
+            label="תאגידים מאומתים בלבד"
+            icon={ShieldCheck}
+            checked={search.verifiedOnly}
+            onChange={(v) => setSearch({ verifiedOnly: v })}
+          />
+          <FilterToggle
+            label="עם ביטוח מלא"
+            icon={ShieldCheck}
+            checked={search.insuredOnly}
+            onChange={(v) => setSearch({ insuredOnly: v })}
+          />
+          <FilterToggle
+            label={`צוות מלא (${req.count} עובדים)`}
+            icon={Users}
+            checked={search.fullCrewOnly}
+            onChange={(v) => setSearch({ fullCrewOnly: v })}
+          />
+          <div>
+            <Label className="mb-2 block text-xs">מחיר מקסימלי לשעה (₪)</Label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              placeholder="ללא הגבלה"
+              value={search.maxPrice ?? ""}
+              onChange={(e) =>
+                setSearch({ maxPrice: e.target.value ? Number(e.target.value) : undefined })
+              }
+              className="h-11"
+            />
+          </div>
+          <div>
+            <Label className="mb-2 block text-xs">דירוג מינימלי</Label>
+            <div className="flex gap-1">
+              {[0, 4, 4.5, 4.8].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setSearch({ minRating: r === 0 ? undefined : r })}
+                  className={`flex-1 rounded-md border px-2 py-2 text-[11px] font-semibold transition-colors ${
+                    (search.minRating ?? 0) === r
+                      ? "border-primary bg-primary/15 text-foreground"
+                      : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  {r === 0 ? "הכל" : `${r}+`}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Label className="mb-2 block text-xs">ציון כולל מינימלי</Label>
+            <div className="flex gap-1">
+              {[0, 60, 75, 90].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSearch({ minScore: s === 0 ? undefined : s })}
+                  className={`flex-1 rounded-md border px-2 py-2 text-[11px] font-semibold transition-colors ${
+                    (search.minScore ?? 0) === s
+                      ? "border-primary bg-primary/15 text-foreground"
+                      : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  {s === 0 ? "הכל" : `${s}+`}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+    { value: "score", label: "ציון מותאם" },
+    { value: "price", label: "מחיר" },
+    { value: "rating", label: "דירוג" },
+    { value: "availability", label: "זמינות" },
+    { value: "response", label: "תגובה" },
+    { value: "warranty", label: "אחריות" },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
@@ -231,132 +320,77 @@ function RequestPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-3 md:p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-lg border border-border/60 bg-secondary/40 p-1">
-              <ToolbarBtn active={search.view === "cards"} onClick={() => setSearch({ view: "cards" })}>
-                <LayoutGrid className="h-4 w-4" /> כרטיסים
-              </ToolbarBtn>
-              <ToolbarBtn active={search.view === "table"} onClick={() => setSearch({ view: "table" })}>
-                <TableIcon className="h-4 w-4" /> טבלה
-              </ToolbarBtn>
+        <div className="sticky top-14 z-30 -mx-4 mt-8 border-y border-border/60 bg-background/85 px-4 py-3 backdrop-blur md:static md:top-auto md:z-auto md:mx-0 md:rounded-2xl md:border md:bg-card md:p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg border border-border/60 bg-secondary/40 p-1">
+                <ToolbarBtn active={search.view === "cards"} onClick={() => setSearch({ view: "cards" })}>
+                  <LayoutGrid className="h-4 w-4" /> <span className="hidden sm:inline">כרטיסים</span>
+                </ToolbarBtn>
+                <ToolbarBtn active={search.view === "table"} onClick={() => setSearch({ view: "table" })}>
+                  <TableIcon className="h-4 w-4" /> <span className="hidden sm:inline">טבלה</span>
+                </ToolbarBtn>
+              </div>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-secondary/40 px-3 py-1.5 text-xs font-semibold lg:hidden">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    סינון
+                    {filtersActive && <span className="grid h-4 w-4 place-items-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">!</span>}
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[88vw] max-w-sm overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>סינון ומשקלות</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">{filtersPane}</div>
+                </SheetContent>
+              </Sheet>
             </div>
-            <div className="hidden h-6 w-px bg-border md:block" />
-            <div className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-3 py-1.5">
-              <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-              <select
-                value={search.sort}
-                onChange={(e) => setSearch({ sort: e.target.value as SortKey })}
-                className="bg-transparent text-xs font-semibold focus:outline-none"
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Filter className="hidden h-3.5 w-3.5 sm:inline" />
+              <span><span className="font-bold text-foreground">{sorted.length}</span>/{allOffers.length}</span>
+              <button
+                onClick={() => exportComparisonPdf(req, sorted)}
+                disabled={sorted.length === 0}
+                className="inline-flex items-center gap-1 rounded-md bg-gradient-primary px-2.5 py-1.5 text-[11px] font-bold text-primary-foreground shadow-elegant disabled:opacity-50"
+                title="ייצא PDF"
               >
-                <option value="score">ציון כולל מותאם</option>
-                <option value="price">מחיר (מהזול)</option>
-                <option value="rating">דירוג (מהגבוה)</option>
-                <option value="availability">זמינות (הקדם ביותר)</option>
-                <option value="response">זמן תגובה (המהיר)</option>
-                <option value="warranty">אחריות (הארוכה)</option>
-              </select>
+                <Download className="h-3.5 w-3.5" /> PDF
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Filter className="h-3.5 w-3.5" />
-            <span className="font-semibold">{sorted.length}</span> מתוך {allOffers.length} הצעות
+          <div className="-mx-1 mt-3 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
+            <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setSearch({ sort: opt.value })}
+                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+                  search.sort === opt.value
+                    ? "border-primary bg-gradient-primary text-primary-foreground shadow-elegant"
+                    : "border-border/60 bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
             {filtersActive && (
               <button
                 onClick={() => setSearch({ verifiedOnly: false, insuredOnly: false, fullCrewOnly: false, maxPrice: undefined, minRating: undefined, minScore: undefined })}
-                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-foreground hover:bg-muted/70"
+                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1.5 text-[11px] font-bold text-foreground hover:bg-muted/70"
               >
-                נקה סינון <X className="h-3 w-3" />
+                נקה <X className="h-3 w-3" />
               </button>
             )}
-            <button
-              onClick={() => exportComparisonPdf(req, sorted)}
-              disabled={sorted.length === 0}
-              className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-gradient-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-elegant transition-transform hover:scale-[1.02] disabled:opacity-50"
-              title="ייצא סיכום השוואה כ-PDF"
-            >
-              <Download className="h-3.5 w-3.5" /> ייצא PDF
-            </button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-4">
           {/* Filters sidebar */}
-          <aside className="lg:col-span-1">
+          <aside className="hidden lg:col-span-1 lg:block">
             <div className="space-y-4 lg:sticky lg:top-20">
-              <WeightsPanel weights={weights} onChange={setWeights} />
-              <div className="rounded-2xl border border-border/60 bg-card p-5">
-                <h3 className="text-sm font-bold">סינון</h3>
-                <div className="mt-4 space-y-4">
-                  <FilterToggle
-                    label="תאגידים מאומתים בלבד"
-                    icon={ShieldCheck}
-                    checked={search.verifiedOnly}
-                    onChange={(v) => setSearch({ verifiedOnly: v })}
-                  />
-                  <FilterToggle
-                    label="עם ביטוח מלא"
-                    icon={ShieldCheck}
-                    checked={search.insuredOnly}
-                    onChange={(v) => setSearch({ insuredOnly: v })}
-                  />
-                  <FilterToggle
-                    label={`צוות מלא (${req.count} עובדים)`}
-                    icon={Users}
-                    checked={search.fullCrewOnly}
-                    onChange={(v) => setSearch({ fullCrewOnly: v })}
-                  />
-                  <div>
-                    <Label className="mb-2 block text-xs">מחיר מקסימלי לשעה (₪)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      placeholder="ללא הגבלה"
-                      value={search.maxPrice ?? ""}
-                      onChange={(e) =>
-                        setSearch({ maxPrice: e.target.value ? Number(e.target.value) : undefined })
-                      }
-                      className="h-10"
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2 block text-xs">דירוג מינימלי</Label>
-                    <div className="flex gap-1">
-                      {[0, 4, 4.5, 4.8].map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setSearch({ minRating: r === 0 ? undefined : r })}
-                          className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
-                            (search.minRating ?? 0) === r
-                              ? "border-primary bg-primary/15 text-foreground"
-                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
-                          }`}
-                        >
-                          {r === 0 ? "הכל" : `${r}+`}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="mb-2 block text-xs">ציון כולל מינימלי</Label>
-                    <div className="flex gap-1">
-                      {[0, 60, 75, 90].map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => setSearch({ minScore: s === 0 ? undefined : s })}
-                          className={`flex-1 rounded-md border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
-                            (search.minScore ?? 0) === s
-                              ? "border-primary bg-primary/15 text-foreground"
-                              : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
-                          }`}
-                        >
-                          {s === 0 ? "הכל" : `${s}+`}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {filtersPane}
 
               {selectedOffer && (
                 <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5">
@@ -422,6 +456,7 @@ function RequestPage() {
                 awardedId={awarded?.corporationId ?? null}
               />
             )}
+            {selectedOffer && !isAwarded && <div className="h-20 lg:hidden" aria-hidden />}
           </div>
         </div>
       </main>
@@ -433,6 +468,30 @@ function RequestPage() {
           onClose={() => setConfirmOpen(false)}
           whatsappHref={buildWhatsAppUrl(selectedOffer.corp.phone, selectedOffer.corp.name, reqForWhatsapp)}
         />
+      )}
+
+      {/* Mobile sticky action bar — appears when a provider is selected */}
+      {selectedOffer && !isAwarded && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 shadow-elegant backdrop-blur lg:hidden">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
+              {selectedOffer.corp.name[0]}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-bold">{selectedOffer.corp.name}</div>
+              <div className="text-[11px] text-muted-foreground">
+                ₪{selectedOffer.pricePerHour}/שעה · {selectedOffer.startDate}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => setConfirmOpen(true)}
+              className="bg-gradient-primary text-primary-foreground"
+            >
+              אשר בחירה
+            </Button>
+          </div>
+        </div>
       )}
 
       <SiteFooter />
