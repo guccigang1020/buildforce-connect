@@ -16,6 +16,7 @@ import {
   REQUESTS, getCorporation, NOTIFICATIONS, SELECTION_HISTORY,
   type Notification, type SelectionRecord,
 } from "@/lib/mock-data";
+import { useSelections, useExtraNotifications, getSelectionForRequest } from "@/lib/selections-store";
 
 type Tab = "overview" | "active" | "history" | "notifications";
 
@@ -39,21 +40,54 @@ function DashboardPage() {
   const navigate = Route.useNavigate();
   const tab = search.tab;
 
-  const [notifs, setNotifs] = useState<Notification[]>(NOTIFICATIONS);
+  const liveSelections = useSelections();
+  const extraNotifs = useExtraNotifications();
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+
+  const allNotifs: Notification[] = useMemo(() => {
+    const merged = [...extraNotifs, ...NOTIFICATIONS]
+      .filter((n) => !dismissed.has(n.id))
+      .map((n) => (readIds.has(n.id) ? { ...n, read: true } : n));
+    return merged;
+  }, [extraNotifs, dismissed, readIds]);
+
+  const setNotifs = (next: Notification[]) => {
+    // We support: mark-all-read, mark single read, dismiss
+    const newRead = new Set(readIds);
+    const newDismissed = new Set(dismissed);
+    const nextIds = new Set(next.map((n) => n.id));
+    for (const n of allNotifs) {
+      if (!nextIds.has(n.id)) newDismissed.add(n.id);
+    }
+    for (const n of next) {
+      if (n.read) newRead.add(n.id);
+    }
+    setReadIds(newRead);
+    setDismissed(newDismissed);
+  };
+  const notifs = allNotifs;
   const unreadCount = notifs.filter((n) => !n.read).length;
+
+  const mergedHistory: SelectionRecord[] = useMemo(
+    () => [...liveSelections, ...SELECTION_HISTORY],
+    [liveSelections],
+  );
 
   const setTab = (t: Tab) =>
     navigate({ search: (prev: typeof search) => ({ ...prev, tab: t }) });
 
   const stats = useMemo(() => {
     const active = REQUESTS.filter((r) => r.status === "active");
+    const awardedIds = new Set(liveSelections.map((s) => s.requestId));
+    const stillOpen = active.filter((r) => !awardedIds.has(r.id));
     return [
-      { icon: Briefcase, label: "בקשות פעילות", value: String(active.length), trend: "+2 השבוע", color: "primary" as const },
-      { icon: MessageCircle, label: "הצעות פתוחות", value: String(active.reduce((s, r) => s + r.offers.length, 0)), trend: "+5 היום", color: "primary" as const },
-      { icon: CheckCircle2, label: "פרויקטים פעילים", value: String(SELECTION_HISTORY.filter((s) => s.status === "in-progress").length), color: "emerald" as const },
+      { icon: Briefcase, label: "בקשות פעילות", value: String(stillOpen.length), trend: "+2 השבוע", color: "primary" as const },
+      { icon: MessageCircle, label: "הצעות פתוחות", value: String(stillOpen.reduce((s, r) => s + r.offers.length, 0)), trend: "+5 היום", color: "primary" as const },
+      { icon: CheckCircle2, label: "פרויקטים פעילים", value: String(mergedHistory.filter((s) => s.status === "in-progress").length), color: "emerald" as const },
       { icon: TrendingUp, label: "חיסכון מצטבר", value: "₪48K", trend: "12% מתחת לשוק", color: "primary" as const },
     ];
-  }, []);
+  }, [liveSelections, mergedHistory]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -115,9 +149,9 @@ function DashboardPage() {
         </div>
 
         <div className="mt-6">
-          {tab === "overview" && <OverviewTab notifs={notifs} setNotifs={setNotifs} setTab={setTab} />}
+          {tab === "overview" && <OverviewTab notifs={notifs} setNotifs={setNotifs} setTab={setTab} history={mergedHistory} />}
           {tab === "active" && <ActiveRequestsTab />}
-          {tab === "history" && <HistoryTab />}
+          {tab === "history" && <HistoryTab history={mergedHistory} />}
           {tab === "notifications" && <NotificationsTab notifs={notifs} setNotifs={setNotifs} />}
         </div>
       </main>
