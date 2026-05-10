@@ -1,49 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
-  HardHat, Hammer, Layers, PaintRoller, Wrench, Building2,
+  Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2,
-  Users, Clock, TrendingUp, BadgeCheck, Quote, Menu, X, Sparkles,
+  Users, Clock, TrendingUp, BadgeCheck, Quote, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import { CORPORATIONS } from "@/lib/mock-data";
+import { buildWhatsAppUrl, type RequestDetails } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
 /* ---------- WHATSAPP ---------- */
-type RequestDetails = {
-  id: string;
-  role: string;
-  count: number;
-  location: string;
-  duration: string;
-  startDate: string;
-};
-
 const SAMPLE_REQUEST: RequestDetails = {
   id: "BF-2847",
-  role: "קבלני טפסנות",
+  role: "טפסנים",
   count: 7,
   location: "תל אביב",
   duration: "3 חודשים",
   startDate: "1 ביוני",
 };
-
-function buildWhatsAppUrl(phone: string, supplierName: string, r: RequestDetails) {
-  const msg =
-    `שלום ${supplierName}, פנייה דרך BuildForce 👷\n\n` +
-    `מספר בקשה: ${r.id}\n` +
-    `תחום: ${r.role}\n` +
-    `כמות עובדים: ${r.count}\n` +
-    `מיקום: ${r.location}\n` +
-    `משך: ${r.duration}\n` +
-    `תאריך התחלה: ${r.startDate}\n\n` +
-    `אשמח לקבל פרטים והצעת מחיר. תודה!`;
-  const cleanPhone = phone.replace(/\D/g, "");
-  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
-}
 
 function WhatsAppButton({
   phone,
@@ -88,7 +69,7 @@ function WhatsAppButton({
 function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Nav />
+      <SiteNav />
       <Hero />
       <Stats />
       <HowItWorks />
@@ -97,61 +78,8 @@ function Home() {
       <Corporations />
       <Testimonials />
       <CTABanner />
-      <Footer />
+      <SiteFooter />
     </div>
-  );
-}
-
-/* ---------- NAV ---------- */
-function Nav() {
-  const [open, setOpen] = useState(false);
-  const links = [
-    { label: "איך זה עובד", href: "#how" },
-    { label: "תחומים", href: "#categories" },
-    { label: "תאגידים מאומתים", href: "#corps" },
-    { label: "לקוחות", href: "#testimonials" },
-  ];
-  return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
-        <a href="#" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
-            <HardHat className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-extrabold tracking-tight">
-            Build<span className="text-primary">Force</span>
-          </span>
-        </a>
-        <nav className="hidden items-center gap-8 md:flex">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              {l.label}
-            </a>
-          ))}
-        </nav>
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm">התחברות</Button>
-          <Button size="sm" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95">
-            פרסום בקשה
-          </Button>
-        </div>
-        <button onClick={() => setOpen(!open)} className="md:hidden text-foreground" aria-label="תפריט">
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-      {open && (
-        <div className="border-t border-border/60 bg-background md:hidden">
-          <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
-            {links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-                {l.label}
-              </a>
-            ))}
-            <Button className="mt-2 bg-gradient-primary text-primary-foreground">פרסום בקשה</Button>
-          </div>
-        </div>
-      )}
-    </header>
   );
 }
 
