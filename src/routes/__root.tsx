@@ -72,11 +72,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "BuildForce — שוק כוח האדם החכם לענף הבנייה" },
+      { name: "description", content: "פלטפורמה פרימיום למכרזי כוח אדם בבנייה. קבלנים ויזמים מקבלים הצעות מתאגידי כוח אדם מאומתים תוך שעות." },
+      { name: "author", content: "BuildForce" },
+      { property: "og:title", content: "BuildForce — שוק כוח האדם החכם לענף הבנייה" },
+      { property: "og:description", content: "מכרזי כוח אדם מאומתים לקבלנים ויזמים בישראל." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -85,6 +85,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap",
       },
     ],
   }),
@@ -96,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="he" dir="rtl" className="dark">
       <head>
         <HeadContent />
       </head>
