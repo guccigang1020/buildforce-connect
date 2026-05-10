@@ -389,6 +389,7 @@ function RequestPage() {
                     avg={avg}
                     onSelect={() => setSelected(o.corp.id)}
                     whatsappHref={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
+                    contactUnlocked={isAwarded && awarded?.corporationId === o.corp.id}
                   />
                 ))}
               </div>
@@ -403,6 +404,7 @@ function RequestPage() {
                 selected={selected}
                 onSelect={setSelected}
                 reqForWhatsapp={reqForWhatsapp}
+                awardedId={awarded?.corporationId ?? null}
               />
             )}
           </div>
