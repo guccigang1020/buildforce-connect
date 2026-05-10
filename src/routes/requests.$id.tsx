@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { getRequest, getCorporation } from "@/lib/mock-data";
+import { getRequest, getCorporation, type WorkforceRequest, type Offer, type Corporation } from "@/lib/mock-data";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/requests/$id")({
@@ -46,14 +46,15 @@ export const Route = createFileRoute("/requests/$id")({
 });
 
 function RequestPage() {
-  const { req } = Route.useLoaderData();
+  const { req } = Route.useLoaderData() as { req: WorkforceRequest };
   const [selected, setSelected] = useState<string | null>(null);
 
-  const offers = req.offers
-    .map((o) => ({ ...o, corp: getCorporation(o.corporationId) }))
-    .filter((o): o is typeof o & { corp: NonNullable<typeof o.corp> } => Boolean(o.corp));
+  type EnrichedOffer = Offer & { corp: Corporation };
+  const offers: EnrichedOffer[] = req.offers
+    .map((o: Offer) => ({ ...o, corp: getCorporation(o.corporationId) }))
+    .filter((o): o is EnrichedOffer => Boolean(o.corp));
 
-  const sortedByPrice = [...offers].sort((a, b) => a.pricePerHour - b.pricePerHour);
+  const sortedByPrice: EnrichedOffer[] = [...offers].sort((a, b) => a.pricePerHour - b.pricePerHour);
   const lowestPrice = sortedByPrice[0]?.pricePerHour;
   const avgPrice = offers.length
     ? Math.round(offers.reduce((s, o) => s + o.pricePerHour, 0) / offers.length)
