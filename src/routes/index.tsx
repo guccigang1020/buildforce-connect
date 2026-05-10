@@ -12,6 +12,79 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+/* ---------- WHATSAPP ---------- */
+type RequestDetails = {
+  id: string;
+  role: string;
+  count: number;
+  location: string;
+  duration: string;
+  startDate: string;
+};
+
+const SAMPLE_REQUEST: RequestDetails = {
+  id: "BF-2847",
+  role: "קבלני טפסנות",
+  count: 7,
+  location: "תל אביב",
+  duration: "3 חודשים",
+  startDate: "1 ביוני",
+};
+
+function buildWhatsAppUrl(phone: string, supplierName: string, r: RequestDetails) {
+  const msg =
+    `שלום ${supplierName}, פנייה דרך BuildForce 👷\n\n` +
+    `מספר בקשה: ${r.id}\n` +
+    `תחום: ${r.role}\n` +
+    `כמות עובדים: ${r.count}\n` +
+    `מיקום: ${r.location}\n` +
+    `משך: ${r.duration}\n` +
+    `תאריך התחלה: ${r.startDate}\n\n` +
+    `אשמח לקבל פרטים והצעת מחיר. תודה!`;
+  const cleanPhone = phone.replace(/\D/g, "");
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+}
+
+function WhatsAppButton({
+  phone,
+  supplierName,
+  request,
+  variant = "icon",
+}: {
+  phone: string;
+  supplierName: string;
+  request: RequestDetails;
+  variant?: "icon" | "full";
+}) {
+  const href = buildWhatsAppUrl(phone, supplierName, request);
+  if (variant === "full") {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`שלח הודעת WhatsApp ל${supplierName}`}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-bold text-white shadow-elegant transition-transform hover:scale-[1.02] hover:opacity-95"
+      >
+        <MessageCircle className="h-4 w-4" />
+        שלח ב-WhatsApp
+      </a>
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`שלח הודעת WhatsApp ל${supplierName}`}
+      title="שלח ב-WhatsApp"
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#25D366] text-white shadow-elegant transition-transform hover:scale-105 hover:opacity-95"
+    >
+      <MessageCircle className="h-5 w-5" />
+    </a>
+  );
+}
+
 function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -142,26 +215,33 @@ function Hero() {
             <div className="mt-6 space-y-3">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">הצעות שהתקבלו · 4</div>
               {[
-                { name: "כוח אדם דניאל בע״מ", price: "₪185", rating: 4.9, badge: true },
-                { name: "אלקטרה מנפאואר", price: "₪192", rating: 4.8, badge: true },
-                { name: "מצדה כוח אדם", price: "₪198", rating: 4.7, badge: false },
+                { name: "כוח אדם דניאל בע״מ", price: "₪185", rating: 4.9, badge: true, phone: "972541234567" },
+                { name: "אלקטרה מנפאואר", price: "₪192", rating: 4.8, badge: true, phone: "972542345678" },
+                { name: "מצדה כוח אדם", price: "₪198", rating: 4.7, badge: false, phone: "972543456789" },
               ].map((c, i) => (
-                <div key={i} className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary/40 p-3 transition-colors hover:border-primary/40">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-9 w-9 place-items-center rounded-lg bg-muted text-xs font-bold">{c.name[0]}</div>
-                    <div>
+                <div key={i} className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-secondary/40 p-3 transition-colors hover:border-primary/40">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold">{c.name[0]}</div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5 text-sm font-semibold">
-                        {c.name}
-                        {c.badge && <BadgeCheck className="h-4 w-4 text-primary" />}
+                        <span className="truncate">{c.name}</span>
+                        {c.badge && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
                       </div>
                     </div>
                   </div>
-                  <div className="text-left">
-                    <div className="text-base font-extrabold">{c.price}</div>
-                    <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-left">
+                      <div className="text-base font-extrabold">{c.price}</div>
+                      <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
+                    </div>
+                    <WhatsAppButton
+                      phone={c.phone}
+                      supplierName={c.name}
+                      request={SAMPLE_REQUEST}
+                    />
                   </div>
                 </div>
               ))}
