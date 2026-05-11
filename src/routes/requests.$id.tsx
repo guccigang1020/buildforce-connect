@@ -55,7 +55,7 @@ const searchSchema = z.object({
   maxPrice: fallback(z.number().optional(), undefined),
   minRating: fallback(z.number().optional(), undefined),
   minScore: fallback(z.number().optional(), undefined),
-});
+}).partial();
 
 export const Route = createFileRoute("/requests/$id")({
   validateSearch: zodValidator(searchSchema),
