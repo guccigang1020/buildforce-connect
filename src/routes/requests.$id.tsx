@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { SiteNav } from "@/components/site-nav";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SiteFooter } from "@/components/site-footer";
+import { AuctionPanel } from "@/components/auction-panel";
 import {
   getRequest, getCorporation,
   type WorkforceRequest, type Offer, type Corporation,
