@@ -97,7 +97,7 @@ function NewRequestPage() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      await submitRequest({
+      const result = await submitRequest({
         data: {
           location: form.location,
           startDate: form.startDate,
@@ -115,6 +115,9 @@ function NewRequestPage() {
         },
       });
       setSubmitted(true);
+      if (result?.id) {
+        setTimeout(() => navigate({ to: "/my-requests/$id", params: { id: result.id } }), 1200);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "שגיאה בפרסום הבקשה";
       toast.error(msg.includes("Unauthorized") ? "יש להתחבר כדי לפרסם בקשה" : msg);
