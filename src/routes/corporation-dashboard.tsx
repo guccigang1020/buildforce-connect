@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { REQUESTS, getCorporation } from "@/lib/mock-data";
 import { useSelections } from "@/lib/selections-store";
 import {
@@ -108,6 +109,8 @@ function CorporationDashboard() {
             </div>
           </div>
         </div>
+
+        <OpenTendersSection />
 
         <Section title={`הצעות פתוחות (${open.length})`}>
           {open.length === 0 ? (
