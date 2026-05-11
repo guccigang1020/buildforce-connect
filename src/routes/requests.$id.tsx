@@ -103,6 +103,7 @@ function RequestPage() {
   const [selected, setSelected] = useState<string | null>(awarded?.corporationId ?? null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
+  const [chatOpenFor, setChatOpenFor] = useState<string | null>(null);
 
   const allOffers: EnrichedOffer[] = useMemo(
     () =>
@@ -400,7 +401,16 @@ function RequestPage() {
                     <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                     <div className="text-sm font-bold">ספק נבחר</div>
                   </div>
-                  <div className="mt-3 text-base font-bold">{selectedOffer.corp.name}</div>
+                  <div className="mt-3 text-base font-bold">
+                    {isAwarded && awarded?.corporationId === selectedOffer.corp.id
+                      ? selectedOffer.corp.name
+                      : maskedCorpName(selectedOffer.corp.id)}
+                  </div>
+                  {!isAwarded && (
+                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <EyeOff className="h-3 w-3" /> זהות נחשפת לאחר חתימת חוזה
+                    </div>
+                  )}
                   <div className="mt-1 text-xs text-muted-foreground">
                     ₪{selectedOffer.pricePerHour}/שעה · {selectedOffer.startDate}
                   </div>
@@ -441,6 +451,8 @@ function RequestPage() {
                     onSelect={() => setSelected(o.corp.id)}
                     whatsappHref={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
                     contactUnlocked={isAwarded && awarded?.corporationId === o.corp.id}
+                    revealed={isAwarded && awarded?.corporationId === o.corp.id}
+                    onOpenChat={() => setChatOpenFor(o.corp.id)}
                   />
                 ))}
               </div>
@@ -456,6 +468,7 @@ function RequestPage() {
                 onSelect={setSelected}
                 reqForWhatsapp={reqForWhatsapp}
                 awardedId={awarded?.corporationId ?? null}
+                onOpenChat={(id) => setChatOpenFor(id)}
               />
             )}
             {selectedOffer && !isAwarded && <div className="h-20 lg:hidden" aria-hidden />}
@@ -477,10 +490,10 @@ function RequestPage() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 shadow-elegant backdrop-blur lg:hidden">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
-              {selectedOffer.corp.name[0]}
+              {maskedInitial(selectedOffer.corp.id)}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold">{selectedOffer.corp.name}</div>
+              <div className="truncate text-sm font-bold">{maskedCorpName(selectedOffer.corp.id)}</div>
               <div className="text-[11px] text-muted-foreground">
                 ₪{selectedOffer.pricePerHour}/שעה · {selectedOffer.startDate}
               </div>
@@ -494,6 +507,19 @@ function RequestPage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {chatOpenFor && (
+        <AnonChatDialog
+          requestId={req.id}
+          corpId={chatOpenFor}
+          corpDisplay={
+            isAwarded && awarded?.corporationId === chatOpenFor
+              ? (allOffers.find((o) => o.corp.id === chatOpenFor)?.corp.name ?? maskedCorpName(chatOpenFor))
+              : maskedCorpName(chatOpenFor)
+          }
+          onClose={() => setChatOpenFor(null)}
+        />
       )}
 
       <SiteFooter />
