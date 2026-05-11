@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteNav } from "@/components/site-nav";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ type AdminProfile = {
   books_cert_url: string | null;
   admin_notes: string | null;
   created_at: string;
+  email: string | null;
 };
 
 function AdminPage() {
@@ -264,6 +266,20 @@ function ReviewDialog({ profile, roles, onClose, onChange }: { profile: AdminPro
     if (error) {
       toast.error(error.message);
       return;
+    }
+    if (profile.email) {
+      try {
+        await sendTransactionalEmail({
+          templateName: status === "approved" ? "contractor-approved" : "contractor-rejected",
+          recipientEmail: profile.email,
+          idempotencyKey: `${status}-${profile.id}`,
+          templateData: status === "approved"
+            ? { name: profile.full_name }
+            : { name: profile.full_name, reason: notes || undefined },
+        });
+      } catch (e) {
+        console.warn("Email send failed (non-blocking)", e);
+      }
     }
     toast.success(status === "approved" ? "המשתמש אושר" : "המשתמש נדחה");
     onChange();
