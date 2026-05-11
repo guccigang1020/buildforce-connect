@@ -148,7 +148,7 @@ export function PlatformShowcase() {
         {/* Bottom CTA */}
         <div className="mt-24 text-center">
           <Link
-            to="/post"
+            to="/new-request"
             className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500 px-8 py-4 text-base font-extrabold text-white shadow-elegant transition-transform hover:scale-105"
           >
             פתח בקשה ותראה איך תאגידים נלחמים עליך

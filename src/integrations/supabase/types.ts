@@ -16,40 +16,67 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          admin_notes: string | null
           avatar_url: string | null
+          books_cert_url: string | null
+          business_id: string | null
+          business_name: string | null
           city: string | null
           company_name: string | null
+          contractor_classification: string | null
+          contractor_license_number: string | null
           created_at: string
           full_name: string
           id: string
+          insurance_doc_url: string | null
           is_verified: boolean
+          license_doc_url: string | null
           phone: string | null
           updated_at: string
           user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
         }
         Insert: {
+          admin_notes?: string | null
           avatar_url?: string | null
+          books_cert_url?: string | null
+          business_id?: string | null
+          business_name?: string | null
           city?: string | null
           company_name?: string | null
+          contractor_classification?: string | null
+          contractor_license_number?: string | null
           created_at?: string
           full_name: string
           id?: string
+          insurance_doc_url?: string | null
           is_verified?: boolean
+          license_doc_url?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
         }
         Update: {
+          admin_notes?: string | null
           avatar_url?: string | null
+          books_cert_url?: string | null
+          business_id?: string | null
+          business_name?: string | null
           city?: string | null
           company_name?: string | null
+          contractor_classification?: string | null
+          contractor_license_number?: string | null
           created_at?: string
           full_name?: string
           id?: string
+          insurance_doc_url?: string | null
           is_verified?: boolean
+          license_doc_url?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
         }
         Relationships: []
       }
@@ -89,6 +116,7 @@ export type Database = {
     }
     Enums: {
       app_role: "contractor" | "corporation" | "admin"
+      verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -217,6 +245,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["contractor", "corporation", "admin"],
+      verification_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
