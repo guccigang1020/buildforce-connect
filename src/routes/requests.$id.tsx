@@ -1105,6 +1105,26 @@ function ConfirmDialog({
             <p className="mt-2 text-sm text-muted-foreground">
               {offer.corp.name} קיבלו הודעה. פרטי הקשר נחשפו — תוכל לתאם פרטים אחרונים ב-WhatsApp.
             </p>
+            <div className="mt-4 rounded-xl border border-border/60 bg-secondary/40 p-3 text-[11px]">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" /> חתימה תועדה כראיה משפטית
+              </div>
+              <div className="mt-1 text-muted-foreground">
+                חתום בשם <span className="font-semibold text-foreground">{signature || "—"}</span> · {new Date().toLocaleString("he-IL")}
+                {typeof Intl !== "undefined" && (
+                  <> · אזור זמן: <span className="font-mono">{Intl.DateTimeFormat().resolvedOptions().timeZone}</span></>
+                )}
+                <div className="mt-1 truncate">
+                  דפדפן: <span className="font-mono">{typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 80) : "—"}…</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground">
+              <PhoneForwarded className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <span className="font-bold text-foreground">שיחות מנותבות דרך BuildForce:</span> כל שיחה ו-WhatsApp עובר דרך מספר וירטואלי של הפלטפורמה. כך אנחנו מתעדים, מאמתים ושומרים על ההתקשרות מוגנת.
+              </div>
+            </div>
             <div className="mt-6 flex gap-2">
               <a
                 href={whatsappHref}
