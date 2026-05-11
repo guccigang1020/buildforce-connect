@@ -676,13 +676,16 @@ function FilterToggle({ label, icon: Icon, checked, onChange }: { label: string;
 }
 
 function OfferCard({
-  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref, contactUnlocked,
+  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref, contactUnlocked, revealed, onOpenChat,
 }: {
   offer: ScoredOffer; request: WorkforceRequest; selected: boolean;
   isCheapest: boolean; avg: number; onSelect: () => void; whatsappHref: string;
-  contactUnlocked: boolean;
+  contactUnlocked: boolean; revealed: boolean; onOpenChat: () => void;
 }) {
   const fullCrew = o.availableWorkers >= request.count;
+  const displayName = revealed ? o.corp.name : maskedCorpName(o.corp.id);
+  const displayInitial = revealed ? o.corp.name[0] : maskedInitial(o.corp.id);
+  const displayRegions = revealed ? o.corp.regions : maskedRegions(o.corp.regions);
   return (
     <div
       className={`relative rounded-2xl border p-5 transition-all md:p-6 ${
@@ -700,18 +703,27 @@ function OfferCard({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
-            {o.corp.name[0]}
+            {displayInitial}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <Link to="/corporations/$id" params={{ id: o.corp.id }} className="text-base font-bold hover:underline">
-                {o.corp.name}
-              </Link>
+              {revealed ? (
+                <Link to="/corporations/$id" params={{ id: o.corp.id }} className="text-base font-bold hover:underline">
+                  {o.corp.name}
+                </Link>
+              ) : (
+                <span className="text-base font-bold">{displayName}</span>
+              )}
               {o.corp.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
+              {!revealed && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
+                  <EyeOff className="h-2.5 w-2.5" /> אנונימי
+                </span>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1"><Star className="h-3 w-3 fill-primary text-primary" /> {o.corp.rating} ({o.corp.reviews})</span>
-              <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {o.corp.regions}</span>
+              <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {displayRegions}</span>
             </div>
           </div>
         </div>
@@ -748,6 +760,16 @@ function OfferCard({
           <span className="hidden md:inline">ציון כולל: <span className="font-bold text-foreground">{o.score}/100</span></span>
         </div>
         <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onOpenChat}
+            className="gap-1.5"
+            title="צ׳אט אנונימי דרך BuildForce — שמות, טלפונים ולינקים נחסמים אוטומטית"
+          >
+            <MessageSquare className="h-4 w-4" /> צ׳אט מאובטח
+          </Button>
           {contactUnlocked ? (
             <a
               href={whatsappHref}
@@ -755,7 +777,7 @@ function OfferCard({
               rel="noopener noreferrer"
               className="inline-flex h-9 items-center gap-2 rounded-md bg-[#25D366] px-3 text-xs font-bold text-white transition-transform hover:scale-[1.02]"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp
+              <PhoneForwarded className="h-4 w-4" /> WhatsApp דרך BuildForce
             </a>
           ) : (
             <span
@@ -765,9 +787,11 @@ function OfferCard({
               <Lock className="h-3.5 w-3.5" /> נחשף לאחר בחירה
             </span>
           )}
-          <Button asChild variant="outline" size="sm">
-            <Link to="/corporations/$id" params={{ id: o.corp.id }}>פרופיל</Link>
-          </Button>
+          {revealed && (
+            <Button asChild variant="outline" size="sm">
+              <Link to="/corporations/$id" params={{ id: o.corp.id }}>פרופיל</Link>
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={onSelect}
