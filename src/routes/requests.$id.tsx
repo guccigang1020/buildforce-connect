@@ -316,6 +316,10 @@ function RequestPage() {
         </div>
 
         {/* Comparison stats */}
+        <div className="mt-6">
+          <AuctionPanel req={req} />
+        </div>
+
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard icon={TrendingDown} label="הצעה נמוכה" value={`₪${lowest}`} accent />
           <StatCard icon={Briefcase} label="ממוצע" value={`₪${avg}`} />
