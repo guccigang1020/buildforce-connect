@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { HardHat, Menu, X, LogOut, LayoutDashboard, User } from "lucide-react";
+import { HardHat, Menu, X, LogOut, LayoutDashboard, User, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
-  const { session, profile, signOut } = useAuth();
+  const { session, profile, signOut, hasRole } = useAuth();
   const navigate = useNavigate();
 
   const links = [
@@ -45,6 +45,11 @@ export function SiteNav() {
         <div className="hidden items-center gap-3 md:flex">
           {session ? (
             <>
+              {hasRole("admin") && (
+                <Button variant="ghost" size="sm" asChild className="gap-2">
+                  <Link to="/admin"><ShieldCheck className="h-4 w-4" /> אדמין</Link>
+                </Button>
+              )}
               <Button variant="ghost" size="sm" asChild className="gap-2">
                 <Link to="/dashboard"><LayoutDashboard className="h-4 w-4" />
                   {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
