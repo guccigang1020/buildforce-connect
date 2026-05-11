@@ -7,7 +7,7 @@ import {
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
   Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
   ShieldAlert, Lock, FileSignature, Coins,
-  Download,
+  Download, MessageSquare, Send, EyeOff, PhoneForwarded,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
   CIRCUMVENTION_PENALTY_MONTHS,
 } from "@/lib/commission-config";
 import { exportComparisonPdf } from "@/lib/export-pdf";
+import { maskedCorpName, maskedInitial, maskedRegions } from "@/lib/anonymize";
+import { useThread, sendMessage } from "@/lib/chat-store";
 
 type SortKey = "score" | "price" | "rating" | "availability" | "response" | "warranty";
 
@@ -101,6 +103,7 @@ function RequestPage() {
   const [selected, setSelected] = useState<string | null>(awarded?.corporationId ?? null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
+  const [chatOpenFor, setChatOpenFor] = useState<string | null>(null);
 
   const allOffers: EnrichedOffer[] = useMemo(
     () =>
@@ -398,7 +401,16 @@ function RequestPage() {
                     <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                     <div className="text-sm font-bold">ספק נבחר</div>
                   </div>
-                  <div className="mt-3 text-base font-bold">{selectedOffer.corp.name}</div>
+                  <div className="mt-3 text-base font-bold">
+                    {isAwarded && awarded?.corporationId === selectedOffer.corp.id
+                      ? selectedOffer.corp.name
+                      : maskedCorpName(selectedOffer.corp.id)}
+                  </div>
+                  {!isAwarded && (
+                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <EyeOff className="h-3 w-3" /> זהות נחשפת לאחר חתימת חוזה
+                    </div>
+                  )}
                   <div className="mt-1 text-xs text-muted-foreground">
                     ₪{selectedOffer.pricePerHour}/שעה · {selectedOffer.startDate}
                   </div>
@@ -439,6 +451,8 @@ function RequestPage() {
                     onSelect={() => setSelected(o.corp.id)}
                     whatsappHref={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
                     contactUnlocked={isAwarded && awarded?.corporationId === o.corp.id}
+                    revealed={isAwarded && awarded?.corporationId === o.corp.id}
+                    onOpenChat={() => setChatOpenFor(o.corp.id)}
                   />
                 ))}
               </div>
@@ -454,6 +468,7 @@ function RequestPage() {
                 onSelect={setSelected}
                 reqForWhatsapp={reqForWhatsapp}
                 awardedId={awarded?.corporationId ?? null}
+                onOpenChat={(id) => setChatOpenFor(id)}
               />
             )}
             {selectedOffer && !isAwarded && <div className="h-20 lg:hidden" aria-hidden />}
@@ -475,10 +490,10 @@ function RequestPage() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 py-3 shadow-elegant backdrop-blur lg:hidden">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
-              {selectedOffer.corp.name[0]}
+              {maskedInitial(selectedOffer.corp.id)}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold">{selectedOffer.corp.name}</div>
+              <div className="truncate text-sm font-bold">{maskedCorpName(selectedOffer.corp.id)}</div>
               <div className="text-[11px] text-muted-foreground">
                 ₪{selectedOffer.pricePerHour}/שעה · {selectedOffer.startDate}
               </div>
@@ -492,6 +507,19 @@ function RequestPage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {chatOpenFor && (
+        <AnonChatDialog
+          requestId={req.id}
+          corpId={chatOpenFor}
+          corpDisplay={
+            isAwarded && awarded?.corporationId === chatOpenFor
+              ? (allOffers.find((o) => o.corp.id === chatOpenFor)?.corp.name ?? maskedCorpName(chatOpenFor))
+              : maskedCorpName(chatOpenFor)
+          }
+          onClose={() => setChatOpenFor(null)}
+        />
       )}
 
       <SiteFooter />
@@ -648,13 +676,16 @@ function FilterToggle({ label, icon: Icon, checked, onChange }: { label: string;
 }
 
 function OfferCard({
-  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref, contactUnlocked,
+  offer: o, request, selected, isCheapest, avg, onSelect, whatsappHref, contactUnlocked, revealed, onOpenChat,
 }: {
   offer: ScoredOffer; request: WorkforceRequest; selected: boolean;
   isCheapest: boolean; avg: number; onSelect: () => void; whatsappHref: string;
-  contactUnlocked: boolean;
+  contactUnlocked: boolean; revealed: boolean; onOpenChat: () => void;
 }) {
   const fullCrew = o.availableWorkers >= request.count;
+  const displayName = revealed ? o.corp.name : maskedCorpName(o.corp.id);
+  const displayInitial = revealed ? o.corp.name[0] : maskedInitial(o.corp.id);
+  const displayRegions = revealed ? o.corp.regions : maskedRegions(o.corp.regions);
   return (
     <div
       className={`relative rounded-2xl border p-5 transition-all md:p-6 ${
@@ -672,18 +703,27 @@ function OfferCard({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
-            {o.corp.name[0]}
+            {displayInitial}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <Link to="/corporations/$id" params={{ id: o.corp.id }} className="text-base font-bold hover:underline">
-                {o.corp.name}
-              </Link>
+              {revealed ? (
+                <Link to="/corporations/$id" params={{ id: o.corp.id }} className="text-base font-bold hover:underline">
+                  {o.corp.name}
+                </Link>
+              ) : (
+                <span className="text-base font-bold">{displayName}</span>
+              )}
               {o.corp.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
+              {!revealed && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
+                  <EyeOff className="h-2.5 w-2.5" /> אנונימי
+                </span>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1"><Star className="h-3 w-3 fill-primary text-primary" /> {o.corp.rating} ({o.corp.reviews})</span>
-              <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {o.corp.regions}</span>
+              <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {displayRegions}</span>
             </div>
           </div>
         </div>
@@ -720,6 +760,16 @@ function OfferCard({
           <span className="hidden md:inline">ציון כולל: <span className="font-bold text-foreground">{o.score}/100</span></span>
         </div>
         <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onOpenChat}
+            className="gap-1.5"
+            title="צ׳אט אנונימי דרך BuildForce — שמות, טלפונים ולינקים נחסמים אוטומטית"
+          >
+            <MessageSquare className="h-4 w-4" /> צ׳אט מאובטח
+          </Button>
           {contactUnlocked ? (
             <a
               href={whatsappHref}
@@ -727,7 +777,7 @@ function OfferCard({
               rel="noopener noreferrer"
               className="inline-flex h-9 items-center gap-2 rounded-md bg-[#25D366] px-3 text-xs font-bold text-white transition-transform hover:scale-[1.02]"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp
+              <PhoneForwarded className="h-4 w-4" /> WhatsApp דרך BuildForce
             </a>
           ) : (
             <span
@@ -737,9 +787,11 @@ function OfferCard({
               <Lock className="h-3.5 w-3.5" /> נחשף לאחר בחירה
             </span>
           )}
-          <Button asChild variant="outline" size="sm">
-            <Link to="/corporations/$id" params={{ id: o.corp.id }}>פרופיל</Link>
-          </Button>
+          {revealed && (
+            <Button asChild variant="outline" size="sm">
+              <Link to="/corporations/$id" params={{ id: o.corp.id }}>פרופיל</Link>
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={onSelect}
@@ -767,13 +819,14 @@ function Spec({ icon: Icon, label, value, good, bad }: { icon: React.ComponentTy
 }
 
 function OffersTable({
-  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp, awardedId,
+  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp, awardedId, onOpenChat,
 }: {
   offers: ScoredOffer[]; lowest: number; fastestResponse: number;
   request: WorkforceRequest; selected: string | null;
   onSelect: (id: string) => void;
   reqForWhatsapp: { id: string; role: string; count: number; location: string; duration: string; startDate: string };
   awardedId: string | null;
+  onOpenChat: (id: string) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
@@ -796,6 +849,10 @@ function OffersTable({
           {offers.map((o) => {
             const isSel = selected === o.corp.id;
             const fullCrew = o.availableWorkers >= request.count;
+            const revealed = awardedId === o.corp.id;
+            const displayName = revealed ? o.corp.name : maskedCorpName(o.corp.id);
+            const displayInitial = revealed ? o.corp.name[0] : maskedInitial(o.corp.id);
+            const displayRegions = revealed ? o.corp.regions : "מוסתר";
             return (
               <tr
                 key={o.corp.id}
@@ -807,14 +864,21 @@ function OffersTable({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="grid h-8 w-8 place-items-center rounded-md bg-gradient-primary text-xs font-bold text-primary-foreground">
-                      {o.corp.name[0]}
+                      {displayInitial}
                     </div>
                     <div className="min-w-0">
-                      <Link to="/corporations/$id" params={{ id: o.corp.id }} className="flex items-center gap-1 font-semibold hover:underline">
-                        <span className="truncate">{o.corp.name}</span>
-                        {o.corp.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                      </Link>
-                      <div className="text-[10px] text-muted-foreground">{o.corp.regions}</div>
+                      {revealed ? (
+                        <Link to="/corporations/$id" params={{ id: o.corp.id }} className="flex items-center gap-1 font-semibold hover:underline">
+                          <span className="truncate">{displayName}</span>
+                          {o.corp.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </Link>
+                      ) : (
+                        <span className="flex items-center gap-1 font-semibold">
+                          <span className="truncate">{displayName}</span>
+                          {o.corp.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </span>
+                      )}
+                      <div className="text-[10px] text-muted-foreground">{displayRegions}</div>
                     </div>
                   </div>
                 </td>
@@ -850,15 +914,22 @@ function OffersTable({
                 <td className="px-4 py-3 text-xs">{o.warrantyDays} ימים</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => onOpenChat(o.corp.id)}
+                      title="צ׳אט אנונימי דרך BuildForce"
+                      className="grid h-8 w-8 place-items-center rounded-md border border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </button>
                     {awardedId === o.corp.id ? (
                       <a
                         href={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="grid h-8 w-8 place-items-center rounded-md bg-[#25D366] text-white"
-                        title="WhatsApp"
+                        title="WhatsApp דרך BuildForce"
                       >
-                        <MessageCircle className="h-4 w-4" />
+                        <PhoneForwarded className="h-4 w-4" />
                       </a>
                     ) : (
                       <span
@@ -1034,6 +1105,26 @@ function ConfirmDialog({
             <p className="mt-2 text-sm text-muted-foreground">
               {offer.corp.name} קיבלו הודעה. פרטי הקשר נחשפו — תוכל לתאם פרטים אחרונים ב-WhatsApp.
             </p>
+            <div className="mt-4 rounded-xl border border-border/60 bg-secondary/40 p-3 text-[11px]">
+              <div className="flex items-center gap-1.5 font-bold text-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" /> חתימה תועדה כראיה משפטית
+              </div>
+              <div className="mt-1 text-muted-foreground">
+                חתום בשם <span className="font-semibold text-foreground">{signature || "—"}</span> · {new Date().toLocaleString("he-IL")}
+                {typeof Intl !== "undefined" && (
+                  <> · אזור זמן: <span className="font-mono">{Intl.DateTimeFormat().resolvedOptions().timeZone}</span></>
+                )}
+                <div className="mt-1 truncate">
+                  דפדפן: <span className="font-mono">{typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 80) : "—"}…</span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-[11px] text-muted-foreground">
+              <PhoneForwarded className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <span className="font-bold text-foreground">שיחות מנותבות דרך BuildForce:</span> כל שיחה ו-WhatsApp עובר דרך מספר וירטואלי של הפלטפורמה. כך אנחנו מתעדים, מאמתים ושומרים על ההתקשרות מוגנת.
+              </div>
+            </div>
             <div className="mt-6 flex gap-2">
               <a
                 href={whatsappHref}
@@ -1059,6 +1150,97 @@ function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
     <div className="flex items-center justify-between gap-2">
       <span className="text-muted-foreground">{k}</span>
       <span className={`font-bold ${accent ? "text-primary" : "text-foreground"}`}>{v}</span>
+    </div>
+  );
+}
+
+/* ---------- Anonymous chat with auto-redaction ---------- */
+
+function AnonChatDialog({
+  requestId, corpId, corpDisplay, onClose,
+}: {
+  requestId: string; corpId: string; corpDisplay: string; onClose: () => void;
+}) {
+  const messages = useThread(requestId, corpId);
+  const [draft, setDraft] = useState("");
+  const [warning, setWarning] = useState<string[] | null>(null);
+
+  const handleSend = () => {
+    const text = draft.trim();
+    if (!text) return;
+    const m = sendMessage(requestId, corpId, "customer", text);
+    if (m.rawFlagged) setWarning(m.reasons); else setWarning(null);
+    setDraft("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 p-0 backdrop-blur sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        className="flex h-[85vh] w-full max-w-md flex-col rounded-t-3xl border border-border bg-card shadow-elegant sm:h-[600px] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
+              <MessageSquare className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold">{corpDisplay}</div>
+              <div className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3 text-primary" /> צ׳אט מוצפן · נחסמים: טלפון/אימייל/קישור
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-md hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          {messages.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-secondary/40 p-6 text-center text-xs text-muted-foreground">
+              עדיין אין הודעות.<br />
+              שיתוף פרטי קשר ישירים אסור — המערכת תחסום אותם אוטומטית.
+            </div>
+          )}
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                m.from === "customer"
+                  ? "ms-auto bg-gradient-primary text-primary-foreground"
+                  : "me-auto bg-secondary text-foreground"
+              }`}
+            >
+              <div className="whitespace-pre-wrap break-words">{m.text}</div>
+              <div className={`mt-1 text-[9px] ${m.from === "customer" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                {new Date(m.at).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                {m.rawFlagged && <span className="ms-1">· נחסם: {m.reasons.join(", ")}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {warning && (
+          <div className="border-t border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[11px] text-amber-400">
+            ⚠ ההודעה נשלחה אבל נחסמו ממנה: {warning.join(", ")}. שיתוף פרטי קשר נוגד את תנאי השימוש.
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 border-t border-border/60 p-3">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="הקלד הודעה (טלפונים/אימיילים יחסמו)…"
+            maxLength={500}
+            className="h-11"
+          />
+          <Button onClick={handleSend} disabled={!draft.trim()} className="bg-gradient-primary text-primary-foreground">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

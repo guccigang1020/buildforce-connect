@@ -317,6 +317,8 @@ export type SelectionRecord = {
     signedAt: string;
     commitmentMonths: number;
     penaltyAmount: number;
+    userAgent?: string;
+    timezone?: string;
   };
 };
 
