@@ -7,7 +7,7 @@ import {
   CheckCircle2, MessageCircle, TrendingDown, ShieldCheck, LayoutGrid,
   Table as TableIcon, Filter, ArrowUpDown, X, Users, Zap, Award, SlidersHorizontal, RotateCcw,
   ShieldAlert, Lock, FileSignature, Coins,
-  Download,
+  Download, MessageSquare, Send, EyeOff, PhoneForwarded,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
   CIRCUMVENTION_PENALTY_MONTHS,
 } from "@/lib/commission-config";
 import { exportComparisonPdf } from "@/lib/export-pdf";
+import { maskedCorpName, maskedInitial, maskedRegions } from "@/lib/anonymize";
+import { useThread, sendMessage } from "@/lib/chat-store";
 
 type SortKey = "score" | "price" | "rating" | "availability" | "response" | "warranty";
 
