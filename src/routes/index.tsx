@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { PlatformShowcase } from "@/components/platform-showcase";
 import { CORPORATIONS } from "@/lib/mock-data";
 import { buildWhatsAppUrl, type RequestDetails } from "@/lib/whatsapp";
 
@@ -73,6 +74,7 @@ function Home() {
       <Hero />
       <Stats />
       <HowItWorks />
+      <PlatformShowcase />
       <Categories />
       <WhyTrust />
       <Corporations />
