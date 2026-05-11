@@ -124,6 +124,8 @@ export function addSelection(input: AddSelectionInput): SelectionRecord {
           signedAt: new Date().toISOString(),
           commitmentMonths: months,
           penaltyAmount: circumventionPenalty(input.count),
+          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+          timezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
         }
       : undefined,
   };
