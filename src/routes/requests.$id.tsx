@@ -819,13 +819,14 @@ function Spec({ icon: Icon, label, value, good, bad }: { icon: React.ComponentTy
 }
 
 function OffersTable({
-  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp, awardedId,
+  offers, lowest, fastestResponse, request, selected, onSelect, reqForWhatsapp, awardedId, onOpenChat,
 }: {
   offers: ScoredOffer[]; lowest: number; fastestResponse: number;
   request: WorkforceRequest; selected: string | null;
   onSelect: (id: string) => void;
   reqForWhatsapp: { id: string; role: string; count: number; location: string; duration: string; startDate: string };
   awardedId: string | null;
+  onOpenChat: (id: string) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
@@ -848,6 +849,10 @@ function OffersTable({
           {offers.map((o) => {
             const isSel = selected === o.corp.id;
             const fullCrew = o.availableWorkers >= request.count;
+            const revealed = awardedId === o.corp.id;
+            const displayName = revealed ? o.corp.name : maskedCorpName(o.corp.id);
+            const displayInitial = revealed ? o.corp.name[0] : maskedInitial(o.corp.id);
+            const displayRegions = revealed ? o.corp.regions : "מוסתר";
             return (
               <tr
                 key={o.corp.id}
@@ -859,14 +864,21 @@ function OffersTable({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="grid h-8 w-8 place-items-center rounded-md bg-gradient-primary text-xs font-bold text-primary-foreground">
-                      {o.corp.name[0]}
+                      {displayInitial}
                     </div>
                     <div className="min-w-0">
-                      <Link to="/corporations/$id" params={{ id: o.corp.id }} className="flex items-center gap-1 font-semibold hover:underline">
-                        <span className="truncate">{o.corp.name}</span>
-                        {o.corp.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                      </Link>
-                      <div className="text-[10px] text-muted-foreground">{o.corp.regions}</div>
+                      {revealed ? (
+                        <Link to="/corporations/$id" params={{ id: o.corp.id }} className="flex items-center gap-1 font-semibold hover:underline">
+                          <span className="truncate">{displayName}</span>
+                          {o.corp.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </Link>
+                      ) : (
+                        <span className="flex items-center gap-1 font-semibold">
+                          <span className="truncate">{displayName}</span>
+                          {o.corp.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                        </span>
+                      )}
+                      <div className="text-[10px] text-muted-foreground">{displayRegions}</div>
                     </div>
                   </div>
                 </td>
@@ -902,15 +914,22 @@ function OffersTable({
                 <td className="px-4 py-3 text-xs">{o.warrantyDays} ימים</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => onOpenChat(o.corp.id)}
+                      title="צ׳אט אנונימי דרך BuildForce"
+                      className="grid h-8 w-8 place-items-center rounded-md border border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </button>
                     {awardedId === o.corp.id ? (
                       <a
                         href={buildWhatsAppUrl(o.corp.phone, o.corp.name, reqForWhatsapp)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="grid h-8 w-8 place-items-center rounded-md bg-[#25D366] text-white"
-                        title="WhatsApp"
+                        title="WhatsApp דרך BuildForce"
                       >
-                        <MessageCircle className="h-4 w-4" />
+                        <PhoneForwarded className="h-4 w-4" />
                       </a>
                     ) : (
                       <span
