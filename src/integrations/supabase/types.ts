@@ -101,6 +101,89 @@ export type Database = {
         }
         Relationships: []
       }
+      job_request_items: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          nationality: string
+          request_id: string
+          role: string
+        }
+        Insert: {
+          count: number
+          created_at?: string
+          id?: string
+          nationality: string
+          request_id: string
+          role: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          nationality?: string
+          request_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "job_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_requests: {
+        Row: {
+          budget: string | null
+          commitment_months: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          description: string | null
+          duration: string
+          id: string
+          location: string
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget?: string | null
+          commitment_months: string
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          description?: string | null
+          duration: string
+          id?: string
+          location: string
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget?: string | null
+          commitment_months?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          description?: string | null
+          duration?: string
+          id?: string
+          location?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           admin_notes: string | null
