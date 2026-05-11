@@ -113,6 +113,7 @@ export type Database = {
           contractor_classification: string | null
           contractor_license_number: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           insurance_doc_url: string | null
@@ -134,6 +135,7 @@ export type Database = {
           contractor_classification?: string | null
           contractor_license_number?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           insurance_doc_url?: string | null
@@ -155,6 +157,7 @@ export type Database = {
           contractor_classification?: string | null
           contractor_license_number?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           insurance_doc_url?: string | null
