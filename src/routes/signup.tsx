@@ -1,166 +1,196 @@
-import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-  HardHat, Mail, Lock, User, Building2, ArrowLeft, ShieldCheck, CheckCircle2,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
+import { UserPlus, Mail, Lock, User, Phone, Building2, MapPin, Loader2, HardHat, Briefcase } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SiteNav } from "@/components/site-nav";
+
+const signupSchema = z.object({
+  full_name: z.string().trim().min(2, "שם מלא נדרש").max(100),
+  email: z.string().trim().email("אימייל לא תקין").max(255),
+  phone: z.string().trim().min(9, "מספר טלפון לא תקין").max(20).regex(/^[0-9+\-\s()]+$/, "מספר טלפון לא תקין"),
+  password: z.string().min(6, "סיסמה לפחות 6 תווים").max(72),
+  company_name: z.string().trim().max(150).optional().or(z.literal("")),
+  city: z.string().trim().max(100).optional().or(z.literal("")),
+  role: z.enum(["contractor", "corporation"]),
+});
+
+type RoleChoice = "contractor" | "corporation";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({
-    meta: [
-      { title: "הרשמה — BuildForce" },
-      { name: "description", content: "פתיחת חשבון BuildForce חינם — קבלן או תאגיד." },
-    ],
-  }),
   component: SignupPage,
 });
 
-type Role = "contractor" | "corporation";
-
 function SignupPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<Role | null>(null);
+  const { session, loading } = useAuth();
+  const [role, setRole] = useState<RoleChoice>("contractor");
   const [form, setForm] = useState({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    password: "",
+    full_name: "", email: "", phone: "", password: "", company_name: "", city: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  useEffect(() => {
+    if (!loading && session) navigate({ to: "/dashboard" });
+  }, [loading, session, navigate]);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate({ to: role === "contractor" ? "/dashboard" : "/" });
+    const parsed = signupSchema.safeParse({ ...form, role });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "פרטים לא תקינים");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          full_name: parsed.data.full_name,
+          phone: parsed.data.phone,
+          company_name: parsed.data.company_name || null,
+          city: parsed.data.city || null,
+          role: parsed.data.role,
+        },
+      },
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error(error.message.includes("already") ? "המשתמש כבר רשום — נסה להתחבר" : error.message);
+      return;
+    }
+    toast.success("נרשמת בהצלחה! בדוק את האימייל לאישור החשבון.");
+    navigate({ to: "/login" });
+  };
+
+  const handleGoogle = async () => {
+    setSubmitting(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      setSubmitting(false);
+      toast.error("הרשמה עם Google נכשלה");
+      return;
+    }
+    if (result.redirected) return;
+    navigate({ to: "/dashboard" });
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <aside className="relative hidden overflow-hidden bg-card lg:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-background" />
-        <div className="absolute -top-32 -right-32 h-80 w-80 rounded-full bg-primary/30 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-        <div className="relative flex h-full flex-col justify-between p-12">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
-              <HardHat className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-extrabold">Build<span className="text-primary">Force</span></span>
-          </Link>
-          <div className="space-y-6">
-            <h2 className="text-4xl font-extrabold leading-tight">
-              הצטרף לפלטפורמה<br />
-              <span className="text-gradient-primary">המובילה בענף.</span>
-            </h2>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-primary" /> פתיחת חשבון חינם, ללא עמלה לקבלן</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-primary" /> אימות מלא של תאגידים</li>
-              <li className="flex items-center gap-3"><CheckCircle2 className="h-5 w-5 text-primary" /> דירוגים אמיתיים בלבד</li>
-            </ul>
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteNav />
+      <main className="mx-auto max-w-xl px-4 py-12">
+        <div className="text-center">
+          <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
+            <UserPlus className="h-6 w-6 text-primary-foreground" />
           </div>
-          <div className="text-xs text-muted-foreground">© {new Date().getFullYear()} BuildForce</div>
+          <h1 className="mt-4 text-3xl font-extrabold">הצטרף ל-BuildForce</h1>
+          <p className="mt-1 text-sm text-muted-foreground">פתח חשבון בחינם — תוך 2 דקות</p>
         </div>
-      </aside>
 
-      <main className="flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-md">
-          <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground lg:hidden">
-            <HardHat className="h-4 w-4" /> BuildForce
-          </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">פתיחת חשבון</h1>
-          <p className="mt-2 text-sm text-muted-foreground">כבר יש לך חשבון? <Link to="/login" className="font-semibold text-primary hover:underline">התחבר</Link></p>
-
-          {!role ? (
-            <div className="mt-8 space-y-3">
-              <div className="text-sm font-semibold">מי אתה?</div>
-              <RoleCard
-                icon={HardHat}
-                title="קבלן / יזם / חברת בנייה"
-                desc="פרסם בקשות וקבל הצעות מתאגידים מאומתים"
-                onClick={() => setRole("contractor")}
-              />
-              <RoleCard
-                icon={Building2}
-                title="תאגיד כוח אדם"
-                desc="קבל גישה לבקשות פעילות והגש הצעות תחרותיות"
-                onClick={() => setRole("corporation")}
-              />
+        <div className="mt-8 rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm shadow-elegant">
+          {/* Role picker */}
+          <div className="mb-5">
+            <Label className="mb-2 block">אני…</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <RoleCard active={role === "contractor"} onClick={() => setRole("contractor")}
+                icon={HardHat} title="קבלן / יזם" sub="פותח בקשות לפועלים" />
+              <RoleCard active={role === "corporation"} onClick={() => setRole("corporation")}
+                icon={Briefcase} title="תאגיד כוח אדם" sub="שולח הצעות לקבלנים" />
             </div>
-          ) : (
-            <form onSubmit={onSubmit} className="mt-8 space-y-5">
-              <button type="button" onClick={() => setRole(null)} className="text-xs font-semibold text-muted-foreground hover:text-foreground">
-                ← שינוי סוג חשבון ({role === "contractor" ? "קבלן" : "תאגיד"})
-              </button>
-              <div>
-                <Label htmlFor="name" className="mb-2 block">שם מלא</Label>
-                <div className="relative">
-                  <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="name" required value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="ישראל ישראלי" className="h-12 pr-9" maxLength={100} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="company" className="mb-2 block">{role === "contractor" ? "שם החברה / הקבלן" : "שם התאגיד"}</Label>
-                <div className="relative">
-                  <Building2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="company" required value={form.company} onChange={(e) => update("company", e.target.value)} placeholder="לדוגמה: דניאל בע״מ" className="h-12 pr-9" maxLength={150} />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="email" className="mb-2 block">אימייל</Label>
-                  <div className="relative">
-                    <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="email" type="email" required value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@co.il" className="h-12 pr-9" maxLength={255} />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="mb-2 block">טלפון</Label>
-                  <Input id="phone" type="tel" required value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="050-0000000" className="h-12" maxLength={20} />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="password" className="mb-2 block">סיסמה</Label>
-                <div className="relative">
-                  <Lock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="password" type="password" required value={form.password} onChange={(e) => update("password", e.target.value)} placeholder="לפחות 8 תווים" minLength={8} maxLength={128} className="h-12 pr-9" />
-                </div>
-              </div>
+          </div>
 
-              <Button type="submit" size="lg" className="h-12 w-full bg-gradient-primary text-base font-semibold text-primary-foreground shadow-elegant hover:opacity-95">
-                צור חשבון
-                <ArrowLeft className="mr-1 h-4 w-4" />
-              </Button>
+          <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={submitting}>
+            <GoogleIcon /> הרשמה עם Google
+          </Button>
 
-              <p className="text-center text-xs text-muted-foreground">
-                <ShieldCheck className="ml-1 inline h-3 w-3 text-primary" />
-                כל החשבונות עוברים אימות זהות לפני אישור.
-              </p>
-            </form>
-          )}
+          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> או <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Field id="full_name" label="שם מלא" icon={User} required value={form.full_name} onChange={update("full_name")} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field id="email" label="אימייל" type="email" icon={Mail} required value={form.email} onChange={update("email")} />
+              <Field id="phone" label="טלפון" type="tel" icon={Phone} required value={form.phone} onChange={update("phone")} placeholder="050-1234567" />
+            </div>
+            <Field id="password" label="סיסמה" type="password" icon={Lock} required value={form.password} onChange={update("password")} placeholder="לפחות 6 תווים" />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field id="company_name" label={role === "corporation" ? "שם התאגיד" : "שם החברה (אופציונלי)"} icon={Building2}
+                required={role === "corporation"} value={form.company_name} onChange={update("company_name")} />
+              <Field id="city" label="עיר" icon={MapPin} value={form.city} onChange={update("city")} />
+            </div>
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "צור חשבון"}
+            </Button>
+          </form>
         </div>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          כבר יש לך חשבון? <Link to="/login" className="font-bold text-primary hover:underline">התחבר</Link>
+        </p>
       </main>
     </div>
   );
 }
 
-function RoleCard({ icon: Icon, title, desc, onClick }: { icon: React.ComponentType<{ className?: string }>; title: string; desc: string; onClick: () => void }) {
+function RoleCard({ active, onClick, icon: Icon, title, sub }: {
+  active: boolean; onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>; title: string; sub: string;
+}) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-5 text-right transition-all hover:border-primary hover:shadow-elegant"
-    >
-      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary transition-colors group-hover:bg-gradient-primary group-hover:text-primary-foreground">
-        <Icon className="h-6 w-6" />
+    <button type="button" onClick={onClick}
+      className={`group rounded-2xl border p-4 text-right transition-all ${
+        active ? "border-primary bg-primary/10 shadow-elegant" : "border-border bg-card/40 hover:border-primary/50"
+      }`}>
+      <div className={`mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl ${
+        active ? "bg-gradient-primary text-primary-foreground" : "bg-secondary text-foreground"
+      }`}>
+        <Icon className="h-4 w-4" />
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-base font-bold">{title}</div>
-        <div className="mt-1 text-sm text-muted-foreground">{desc}</div>
-      </div>
-      <ArrowLeft className="mt-3 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:-translate-x-1 group-hover:text-primary" />
+      <div className="text-sm font-extrabold">{title}</div>
+      <div className="text-[11px] text-muted-foreground">{sub}</div>
     </button>
+  );
+}
+
+function Field({
+  id, label, icon: Icon, type = "text", required, value, onChange, placeholder,
+}: {
+  id: string; label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  type?: string; required?: boolean;
+  value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}{required && <span className="ms-1 text-destructive">*</span>}</Label>
+      <div className="relative">
+        <Icon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input id={id} type={type} required={required} value={value} onChange={onChange}
+          className="pr-10" placeholder={placeholder} />
+      </div>
+    </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg className="ms-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#EA4335" d="M12 11v3.6h5.1c-.2 1.4-1.6 4-5.1 4-3 0-5.5-2.5-5.5-5.6S8.9 7.4 12 7.4c1.7 0 2.9.7 3.5 1.3l2.4-2.3C16.4 5 14.4 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.7 0-.5-.1-.9-.1-1.3H12z"/>
+    </svg>
   );
 }
