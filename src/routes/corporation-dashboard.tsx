@@ -110,6 +110,8 @@ function CorporationDashboard() {
           </div>
         </div>
 
+        <OpenTendersSection />
+
         <Section title={`הצעות פתוחות (${open.length})`}>
           {open.length === 0 ? (
             <Empty title="אין הצעות פתוחות" />
