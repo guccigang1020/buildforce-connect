@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getRequest } from '@tanstack/react-start/server'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { sendTransactionalEmailServer } from '@/lib/email/send.server'
 
 const itemSchema = z.object({
   role: z.string().min(1),
@@ -78,35 +79,91 @@ export const createJobRequest = createServerFn({ method: 'POST' })
     const totalWorkers = data.items.reduce((s, it) => s + it.count, 0)
     const categories = Array.from(new Set(data.items.map((i) => i.role))).join(', ')
 
-    const req2 = getRequest()
-    const authHeader = req2?.headers.get('authorization') ?? ''
-    const origin = req2?.headers.get('origin') || req2?.headers.get('host')
-    const baseUrl = process.env.SITE_URL
-      || (origin?.startsWith('http') ? origin : origin ? `https://${origin}` : 'https://buildforceprime.com')
-
     await Promise.allSettled(
       recipients.map((r) =>
-        fetch(`${baseUrl}/lovable/email/transactional/send`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: authHeader,
+        sendTransactionalEmailServer({
+          templateName: 'new-job-request',
+          recipientEmail: r.email!,
+          idempotencyKey: `new-job-request-${req.id}-${r.user_id}`,
+          templateData: {
+            category: categories,
+            workersCount: totalWorkers,
+            city: data.location,
+            startDate: data.startDate,
+            requestId: req.id,
           },
-          body: JSON.stringify({
-            templateName: 'new-job-request',
-            recipientEmail: r.email,
-            idempotencyKey: `new-job-request-${req.id}-${r.user_id}`,
-            templateData: {
-              category: categories,
-              workersCount: totalWorkers,
-              city: data.location,
-              startDate: data.startDate,
-              requestId: req.id,
-            },
-          }),
-        }).catch(() => null),
+        }),
       ),
     )
 
     return { id: req.id, notified: recipients.length }
+  })
+
+export const listMyJobRequests = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context
+    // Owner-scoped (RLS allows authenticated to view all, but we filter to owned for "my")
+    const { data, error } = await supabase
+      .from('job_requests')
+      .select('id, location, start_date, duration, status, created_at, deadline_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return { requests: data ?? [] }
+  })
+
+export const listOpenJobRequests = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context
+    const { data, error } = await supabase
+      .from('job_requests')
+      .select('id, location, start_date, duration, commitment_months, budget, created_at, deadline_at')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(100)
+    if (error) throw new Error(error.message)
+    return { requests: data ?? [] }
+  })
+
+export const getJobRequestWithOffers = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context
+    const { data: req, error: rErr } = await supabase
+      .from('job_requests')
+      .select('*')
+      .eq('id', data.id)
+      .single()
+    if (rErr || !req) throw new Error('בקשה לא נמצאה')
+
+    const { data: items } = await supabase
+      .from('job_request_items')
+      .select('*')
+      .eq('request_id', data.id)
+
+    const { data: offers } = await supabase
+      .from('job_offers')
+      .select('*')
+      .eq('request_id', data.id)
+      .order('price_per_hour', { ascending: true })
+
+    const isOwner = req.user_id === userId
+    return { request: req, items: items ?? [], offers: offers ?? [], isOwner }
+  })
+
+export const closeJobRequest = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context
+    const { error } = await supabase
+      .from('job_requests')
+      .update({ status: 'closed' })
+      .eq('id', data.id)
+      .eq('user_id', userId)
+    if (error) throw new Error(error.message)
+    return { ok: true }
   })

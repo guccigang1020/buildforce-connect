@@ -101,6 +101,104 @@ export type Database = {
         }
         Relationships: []
       }
+      job_awards: {
+        Row: {
+          awarded_at: string
+          awarded_by: string
+          corporation_id: string
+          id: string
+          offer_id: string
+          request_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          awarded_by: string
+          corporation_id: string
+          id?: string
+          offer_id: string
+          request_id: string
+        }
+        Update: {
+          awarded_at?: string
+          awarded_by?: string
+          corporation_id?: string
+          id?: string
+          offer_id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_awards_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "job_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_awards_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "job_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_offers: {
+        Row: {
+          available_workers: number
+          corporation_id: string
+          created_at: string
+          id: string
+          insurance: boolean
+          note: string | null
+          price_per_hour: number
+          request_id: string
+          response_time_hours: number
+          start_date: string
+          status: string
+          updated_at: string
+          warranty_days: number
+        }
+        Insert: {
+          available_workers: number
+          corporation_id: string
+          created_at?: string
+          id?: string
+          insurance?: boolean
+          note?: string | null
+          price_per_hour: number
+          request_id: string
+          response_time_hours?: number
+          start_date: string
+          status?: string
+          updated_at?: string
+          warranty_days?: number
+        }
+        Update: {
+          available_workers?: number
+          corporation_id?: string
+          created_at?: string
+          id?: string
+          insurance?: boolean
+          note?: string | null
+          price_per_hour?: number
+          request_id?: string
+          response_time_hours?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          warranty_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_offers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "job_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_request_items: {
         Row: {
           count: number
@@ -136,6 +234,41 @@ export type Database = {
           },
         ]
       }
+      job_request_messages: {
+        Row: {
+          body: string
+          corporation_id: string
+          created_at: string
+          id: string
+          request_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          corporation_id: string
+          created_at?: string
+          id?: string
+          request_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          corporation_id?: string
+          created_at?: string
+          id?: string
+          request_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_request_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "job_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_requests: {
         Row: {
           budget: string | null
@@ -143,6 +276,7 @@ export type Database = {
           contact_name: string
           contact_phone: string
           created_at: string
+          deadline_at: string | null
           description: string | null
           duration: string
           id: string
@@ -158,6 +292,7 @@ export type Database = {
           contact_name: string
           contact_phone: string
           created_at?: string
+          deadline_at?: string | null
           description?: string | null
           duration: string
           id?: string
@@ -173,6 +308,7 @@ export type Database = {
           contact_name?: string
           contact_phone?: string
           created_at?: string
+          deadline_at?: string | null
           description?: string | null
           duration?: string
           id?: string

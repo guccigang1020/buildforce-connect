@@ -3,6 +3,9 @@ import { template as welcome } from './welcome'
 import { template as contractorApproved } from './contractor-approved'
 import { template as contractorRejected } from './contractor-rejected'
 import { template as newJobRequest } from './new-job-request'
+import { template as offerSubmitted } from './offer-submitted'
+import { template as offerAwarded } from './offer-awarded'
+import { template as offerRejected } from './offer-rejected'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -26,4 +29,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'contractor-approved': contractorApproved,
   'contractor-rejected': contractorRejected,
   'new-job-request': newJobRequest,
+  'offer-submitted': offerSubmitted,
+  'offer-awarded': offerAwarded,
+  'offer-rejected': offerRejected,
 }

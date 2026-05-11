@@ -20,6 +20,7 @@ import { Route as CorporationDashboardRouteImport } from './routes/corporation-d
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
+import { Route as MyRequestsIdRouteImport } from './routes/my-requests.$id'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -84,6 +85,11 @@ const RequestsIdRoute = RequestsIdRouteImport.update({
   path: '/requests/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyRequestsIdRoute = MyRequestsIdRouteImport.update({
+  id: '/my-requests/$id',
+  path: '/my-requests/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
     | '/lovable/email/auth/preview'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  MyRequestsIdRoute: typeof MyRequestsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-requests/$id': {
+      id: '/my-requests/$id'
+      path: '/my-requests/$id'
+      fullPath: '/my-requests/$id'
+      preLoaderRoute: typeof MyRequestsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -431,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  MyRequestsIdRoute: MyRequestsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
