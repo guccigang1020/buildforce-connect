@@ -348,8 +348,8 @@ function NewRequestPage() {
                   <ArrowLeft className="mr-1 h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={!canNext()} className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50">
-                  פרסם בקשה
+                <Button type="submit" disabled={!canNext() || submitting} className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50">
+                  {submitting ? "שולח..." : "פרסם בקשה"}
                   <CheckCircle2 className="mr-1 h-4 w-4" />
                 </Button>
               )}
