@@ -1133,3 +1133,94 @@ function Row({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
     </div>
   );
 }
+
+/* ---------- Anonymous chat with auto-redaction ---------- */
+
+function AnonChatDialog({
+  requestId, corpId, corpDisplay, onClose,
+}: {
+  requestId: string; corpId: string; corpDisplay: string; onClose: () => void;
+}) {
+  const messages = useThread(requestId, corpId);
+  const [draft, setDraft] = useState("");
+  const [warning, setWarning] = useState<string[] | null>(null);
+
+  const handleSend = () => {
+    const text = draft.trim();
+    if (!text) return;
+    const m = sendMessage(requestId, corpId, "customer", text);
+    if (m.rawFlagged) setWarning(m.reasons); else setWarning(null);
+    setDraft("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/70 p-0 backdrop-blur sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        className="flex h-[85vh] w-full max-w-md flex-col rounded-t-3xl border border-border bg-card shadow-elegant sm:h-[600px] sm:rounded-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground">
+              <MessageSquare className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold">{corpDisplay}</div>
+              <div className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3 text-primary" /> צ׳אט מוצפן · נחסמים: טלפון/אימייל/קישור
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-md hover:bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          {messages.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-secondary/40 p-6 text-center text-xs text-muted-foreground">
+              עדיין אין הודעות.<br />
+              שיתוף פרטי קשר ישירים אסור — המערכת תחסום אותם אוטומטית.
+            </div>
+          )}
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                m.from === "customer"
+                  ? "ms-auto bg-gradient-primary text-primary-foreground"
+                  : "me-auto bg-secondary text-foreground"
+              }`}
+            >
+              <div className="whitespace-pre-wrap break-words">{m.text}</div>
+              <div className={`mt-1 text-[9px] ${m.from === "customer" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                {new Date(m.at).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                {m.rawFlagged && <span className="ms-1">· נחסם: {m.reasons.join(", ")}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {warning && (
+          <div className="border-t border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[11px] text-amber-400">
+            ⚠ ההודעה נשלחה אבל נחסמו ממנה: {warning.join(", ")}. שיתוף פרטי קשר נוגד את תנאי השימוש.
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 border-t border-border/60 p-3">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="הקלד הודעה (טלפונים/אימיילים יחסמו)…"
+            maxLength={500}
+            className="h-11"
+          />
+          <Button onClick={handleSend} disabled={!draft.trim()} className="bg-gradient-primary text-primary-foreground">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
