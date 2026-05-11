@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NewRequestRouteImport } from './routes/new-request'
@@ -28,6 +29,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/new-request': typeof NewRequestRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/requests/$id': typeof RequestsIdRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/new-request': typeof NewRequestRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/requests/$id': typeof RequestsIdRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/new-request': typeof NewRequestRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/requests/$id': typeof RequestsIdRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/new-request'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
     | '/requests/$id'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/new-request'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
     | '/requests/$id'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/new-request'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
     | '/requests/$id'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   NewRequestRoute: typeof NewRequestRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   RequestsIdRoute: typeof RequestsIdRoute
@@ -269,6 +282,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   NewRequestRoute: NewRequestRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   RequestsIdRoute: RequestsIdRoute,
