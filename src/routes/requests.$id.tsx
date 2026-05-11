@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { SiteNav } from "@/components/site-nav";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SiteFooter } from "@/components/site-footer";
+import { AuctionPanel } from "@/components/auction-panel";
 import {
   getRequest, getCorporation,
   type WorkforceRequest, type Offer, type Corporation,
@@ -315,6 +316,10 @@ function RequestPage() {
         </div>
 
         {/* Comparison stats */}
+        <div className="mt-6">
+          <AuctionPanel req={req} />
+        </div>
+
         <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard icon={TrendingDown} label="הצעה נמוכה" value={`₪${lowest}`} accent />
           <StatCard icon={Briefcase} label="ממוצע" value={`₪${avg}`} />
