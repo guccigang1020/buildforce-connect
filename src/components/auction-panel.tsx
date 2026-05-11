@@ -26,7 +26,13 @@ export function AuctionPanel({ req }: { req: WorkforceRequest }) {
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/10 via-background to-background p-5 shadow-elegant md:p-7">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/.18),transparent_55%)]" />
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(circle at top right, color-mix(in oklab, var(--primary) 22%, transparent), transparent 55%)",
+        }}
+      />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
