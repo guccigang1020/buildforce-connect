@@ -192,14 +192,14 @@ function Sparkline({ points }: { points: number[] }) {
     <svg viewBox={`0 0 ${w} ${h}`} className="mt-3 h-20 w-full">
       <defs>
         <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={area} fill="url(#sparkFill)" />
-      <path d={path} fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={last[0]} cy={last[1]} r="5" fill="hsl(var(--primary))" />
-      <circle cx={last[0]} cy={last[1]} r="9" fill="hsl(var(--primary))" opacity="0.25">
+      <path d={path} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={last[0]} cy={last[1]} r="5" fill="var(--primary)" />
+      <circle cx={last[0]} cy={last[1]} r="9" fill="var(--primary)" opacity="0.25">
         <animate attributeName="r" values="6;12;6" dur="1.6s" repeatCount="indefinite" />
         <animate attributeName="opacity" values="0.4;0;0.4" dur="1.6s" repeatCount="indefinite" />
       </circle>
