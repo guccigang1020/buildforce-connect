@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { createJobRequest } from "@/lib/job-requests.functions";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, MapPin, Calendar, Users,
   Briefcase, FileText, Sparkles, ShieldCheck, Plus, Trash2, Lock, Globe2,
@@ -53,6 +56,8 @@ function NewRequestPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submitRequest = useServerFn(createJobRequest);
   const [form, setForm] = useState<FormState>({
     items: [newItem()],
     location: "",
@@ -87,9 +92,35 @@ function NewRequestPage() {
     return false;
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await submitRequest({
+        data: {
+          location: form.location,
+          startDate: form.startDate,
+          duration: form.duration,
+          commitmentMonths: form.commitmentMonths,
+          budget: form.budget,
+          description: form.description,
+          contactName: form.contactName,
+          contactPhone: form.contactPhone,
+          items: form.items.map((it) => ({
+            role: it.role,
+            nationality: it.nationality,
+            count: Number(it.count) || 0,
+          })),
+        },
+      });
+      setSubmitted(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "שגיאה בפרסום הבקשה";
+      toast.error(msg.includes("Unauthorized") ? "יש להתחבר כדי לפרסם בקשה" : msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
