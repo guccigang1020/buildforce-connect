@@ -300,3 +300,43 @@ function GoogleIcon() {
     </svg>
   );
 }
+
+function FileField({
+  id, label, icon: Icon, required, file, onFile, accept,
+}: {
+  id: string; label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  required?: boolean;
+  file: File | null;
+  onFile: (f: File | null) => void;
+  accept?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}{required && <span className="ms-1 text-destructive">*</span>}</Label>
+      <label htmlFor={id}
+        className={`flex items-center gap-3 rounded-xl border border-dashed px-3 py-2.5 cursor-pointer transition-colors ${
+          file ? "border-emerald-500/60 bg-emerald-500/5" : "border-border bg-card/40 hover:border-primary/50"
+        }`}>
+        {file ? (
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+        ) : (
+          <Upload className="h-4 w-4 text-muted-foreground" />
+        )}
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="flex-1 truncate text-xs">
+          {file ? file.name : "בחר קובץ (PDF / תמונה, עד 5MB)"}
+        </span>
+        <input id={id} type="file" accept={accept} className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null;
+            if (f && f.size > 5 * 1024 * 1024) {
+              alert("הקובץ גדול מ-5MB");
+              return;
+            }
+            onFile(f);
+          }} />
+      </label>
+    </div>
+  );
+}
