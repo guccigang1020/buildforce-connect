@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
+import { getRequest } from '@tanstack/react-start/server'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 
@@ -77,7 +78,11 @@ export const createJobRequest = createServerFn({ method: 'POST' })
     const totalWorkers = data.items.reduce((s, it) => s + it.count, 0)
     const categories = Array.from(new Set(data.items.map((i) => i.role))).join(', ')
 
-    const baseUrl = process.env.SITE_URL || 'https://buildforceprime.com'
+    const req2 = getRequest()
+    const authHeader = req2?.headers.get('authorization') ?? ''
+    const origin = req2?.headers.get('origin') || req2?.headers.get('host')
+    const baseUrl = process.env.SITE_URL
+      || (origin?.startsWith('http') ? origin : origin ? `https://${origin}` : 'https://buildforceprime.com')
 
     await Promise.allSettled(
       recipients.map((r) =>
@@ -85,7 +90,7 @@ export const createJobRequest = createServerFn({ method: 'POST' })
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''}`,
+            Authorization: authHeader,
           },
           body: JSON.stringify({
             templateName: 'new-job-request',
