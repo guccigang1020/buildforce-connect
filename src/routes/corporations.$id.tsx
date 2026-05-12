@@ -54,7 +54,6 @@ function CorporationPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const activeRequests = REQUESTS.filter((r) => r.status === "active").slice(0, 3);
-  const sampleRequest = activeRequests[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
