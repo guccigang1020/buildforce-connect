@@ -33,6 +33,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksCloseExpiredRequestsRouteImport } from './routes/api/public/hooks/close-expired-requests'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -157,6 +158,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCloseExpiredRequestsRoute =
+  ApiPublicHooksCloseExpiredRequestsRouteImport.update({
+    id: '/api/public/hooks/close-expired-requests',
+    path: '/api/public/hooks/close-expired-requests',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -204,6 +212,7 @@ export interface FileRoutesByTo {
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -231,6 +240,7 @@ export interface FileRoutesById {
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -311,6 +323,7 @@ export interface FileRouteTypes {
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -338,6 +351,7 @@ export interface RootRouteChildren {
   MyRequestsIdRoute: typeof MyRequestsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksCloseExpiredRequestsRoute: typeof ApiPublicHooksCloseExpiredRequestsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -515,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/close-expired-requests': {
+      id: '/api/public/hooks/close-expired-requests'
+      path: '/api/public/hooks/close-expired-requests'
+      fullPath: '/api/public/hooks/close-expired-requests'
+      preLoaderRoute: typeof ApiPublicHooksCloseExpiredRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -538,6 +559,8 @@ const rootRouteChildren: RootRouteChildren = {
   MyRequestsIdRoute: MyRequestsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksCloseExpiredRequestsRoute:
+    ApiPublicHooksCloseExpiredRequestsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
