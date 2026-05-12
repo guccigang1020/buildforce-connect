@@ -154,8 +154,11 @@ export const listMyJobRequests = createServerFn({ method: 'POST' })
 export const listOpenJobRequests = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context
-    const { data, error } = await supabase
+    void context
+    // Use admin client: marketplace listing must work for any authenticated
+    // corp, even before they've submitted an offer. Only safe columns are
+    // selected — contact_name/contact_phone are never returned here.
+    const { data, error } = await supabaseAdmin
       .from('job_requests')
       .select('id, location, start_date, duration, commitment_months, budget, created_at, deadline_at')
       .eq('status', 'open')
@@ -169,26 +172,33 @@ export const getJobRequestWithOffers = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context
-    const { data: req, error: rErr } = await supabase
+    const { userId } = context
+    // Admin client: corp may not yet have an offer (RLS would block).
+    // We redact sensitive fields below for non-owners.
+    const { data: req, error: rErr } = await supabaseAdmin
       .from('job_requests')
       .select('*')
       .eq('id', data.id)
       .single()
     if (rErr || !req) throw new Error('בקשה לא נמצאה')
 
-    const { data: items } = await supabase
-      .from('job_request_items')
-      .select('*')
-      .eq('request_id', data.id)
-
-    const { data: offers } = await supabase
-      .from('job_offers')
-      .select('*')
-      .eq('request_id', data.id)
-      .order('price_per_hour', { ascending: true })
-
     const isOwner = req.user_id === userId
+
+    // Only owners (and admins, via separate admin tooling) can see contact info
+    if (!isOwner) {
+      req.contact_name = ''
+      req.contact_phone = ''
+    }
+
+    const [{ data: items }, { data: offers }] = await Promise.all([
+      supabaseAdmin.from('job_request_items').select('*').eq('request_id', data.id),
+      supabaseAdmin
+        .from('job_offers')
+        .select('*')
+        .eq('request_id', data.id)
+        .order('price_per_hour', { ascending: true }),
+    ])
+
     return { request: req, items: items ?? [], offers: offers ?? [], isOwner }
   })
 
