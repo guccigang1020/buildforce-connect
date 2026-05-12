@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2,
-  Users, Clock, TrendingUp, BadgeCheck, Sparkles, Lock, FileCheck2, Headphones,
+  Users, Clock, TrendingUp, BadgeCheck, Lock, FileCheck2, Headphones,
   TrendingDown, Gavel, Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
