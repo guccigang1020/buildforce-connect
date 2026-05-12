@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -34,6 +35,11 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/signup'
+    | '/terms'
     | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/signup'
+    | '/terms'
     | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/signup'
+    | '/terms'
     | '/unsubscribe'
     | '/corporations/$id'
     | '/email/unsubscribe'
@@ -293,6 +305,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -469,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
