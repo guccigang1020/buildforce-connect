@@ -103,14 +103,52 @@ export const listMyJobRequests = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context
-    // Owner-scoped (RLS allows authenticated to view all, but we filter to owned for "my")
     const { data, error } = await supabase
       .from('job_requests')
       .select('id, location, start_date, duration, status, created_at, deadline_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
-    return { requests: data ?? [] }
+    const requests = data ?? []
+    if (requests.length === 0) return { requests: [] }
+
+    const ids = requests.map((r) => r.id)
+    const [{ data: offers }, { data: items }] = await Promise.all([
+      supabase
+        .from('job_offers')
+        .select('request_id, price_per_hour, status')
+        .in('request_id', ids),
+      supabase
+        .from('job_request_items')
+        .select('request_id, count, role')
+        .in('request_id', ids),
+    ])
+
+    const offersByReq = new Map<string, { total: number; min: number | null }>()
+    for (const o of offers ?? []) {
+      const cur = offersByReq.get(o.request_id) ?? { total: 0, min: null as number | null }
+      cur.total += 1
+      const price = Number(o.price_per_hour)
+      cur.min = cur.min == null ? price : Math.min(cur.min, price)
+      offersByReq.set(o.request_id, cur)
+    }
+    const itemsByReq = new Map<string, { workers: number; roles: string[] }>()
+    for (const it of items ?? []) {
+      const cur = itemsByReq.get(it.request_id) ?? { workers: 0, roles: [] as string[] }
+      cur.workers += it.count ?? 0
+      if (it.role && !cur.roles.includes(it.role)) cur.roles.push(it.role)
+      itemsByReq.set(it.request_id, cur)
+    }
+
+    return {
+      requests: requests.map((r) => ({
+        ...r,
+        offers_count: offersByReq.get(r.id)?.total ?? 0,
+        min_price: offersByReq.get(r.id)?.min ?? null,
+        workers_count: itemsByReq.get(r.id)?.workers ?? 0,
+        roles: itemsByReq.get(r.id)?.roles ?? [],
+      })),
+    }
   })
 
 export const listOpenJobRequests = createServerFn({ method: 'POST' })
