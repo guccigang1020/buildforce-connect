@@ -101,11 +101,22 @@ export const listMyOffers = createServerFn({ method: 'GET' })
     const { supabase, userId } = context
     const { data: offers, error } = await supabase
       .from('job_offers')
-      .select('id, request_id, price_per_hour, available_workers, start_date, status, created_at, updated_at, job_requests(location, start_date, duration)')
+      .select('id, request_id, price_per_hour, available_workers, start_date, status, created_at, updated_at')
       .eq('corporation_id', userId)
       .order('updated_at', { ascending: false })
     if (error) throw new Error(error.message)
-    return { offers: offers ?? [] }
+    const reqIds = Array.from(new Set((offers ?? []).map((o) => o.request_id)))
+    let requestsById = new Map<string, { location: string; start_date: string; duration: string }>()
+    if (reqIds.length > 0) {
+      const { data: reqs } = await supabase
+        .from('job_requests')
+        .select('id, location, start_date, duration')
+        .in('id', reqIds)
+      requestsById = new Map((reqs ?? []).map((r) => [r.id, { location: r.location, start_date: r.start_date, duration: r.duration }]))
+    }
+    return {
+      offers: (offers ?? []).map((o) => ({ ...o, request: requestsById.get(o.request_id) ?? null })),
+    }
   })
 
 export const awardOffer = createServerFn({ method: 'POST' })
