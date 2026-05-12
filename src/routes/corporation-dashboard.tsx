@@ -12,6 +12,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
+import { WorkforceInventorySection } from "@/components/corporation/workforce-inventory-section";
 import { useAuth } from "@/hooks/use-auth";
 import { listMyOffers } from "@/lib/job-offers.functions";
 import {
@@ -119,6 +120,7 @@ function CorporationDashboard() {
 
       <OpenTendersSection />
       <MyOffersSection />
+      {isCorporation && <WorkforceInventorySection />}
     </Shell>
   );
 }
