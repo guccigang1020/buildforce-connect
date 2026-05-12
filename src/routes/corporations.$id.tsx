@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   BadgeCheck, Star, MapPin, Users, Calendar, ShieldCheck,
-  MessageCircle, ArrowLeft, CheckCircle2, Briefcase, Quote,
+  ArrowLeft, CheckCircle2, Briefcase, Quote, Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { getCorporation, REQUESTS } from "@/lib/mock-data";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/corporations/$id")({
   loader: ({ params }) => {
@@ -55,7 +54,6 @@ function CorporationPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const activeRequests = REQUESTS.filter((r) => r.status === "active").slice(0, 3);
-  const sampleRequest = activeRequests[0];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -93,16 +91,9 @@ function CorporationPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                {sampleRequest && (
-                  <a
-                    href={buildWhatsAppUrl(corp.phone, corp.name, sampleRequest)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#25D366] px-5 text-sm font-bold text-white shadow-elegant transition-transform hover:scale-[1.02]"
-                  >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp
-                  </a>
-                )}
+                <span className="inline-flex h-11 items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-4 text-xs font-semibold text-primary">
+                  <Lock className="h-3.5 w-3.5" /> תקשורת מאובטחת בלבד דרך הפלטפורמה
+                </span>
                 <Button onClick={() => setShowOfferForm(true)} size="lg" className="h-11 bg-gradient-primary text-primary-foreground shadow-elegant">
                   הגש הצעה
                 </Button>
@@ -169,7 +160,7 @@ function CorporationPage() {
                   <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-400" />
                   <div>
                     <div className="font-bold text-foreground">ההצעה נשלחה בהצלחה</div>
-                    <p className="mt-1 text-sm text-muted-foreground">הקבלן יקבל הודעה ויוכל להגיב ישירות. תקבל עדכון ב-WhatsApp ובלוח הבקרה.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">הקבלן יקבל הודעה ויוכל להגיב ישירות. תקבל עדכון במייל ובלוח הבקרה.</p>
                   </div>
                 </div>
               </section>
@@ -207,7 +198,7 @@ function CorporationPage() {
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 {[
                   { quote: "צוות מקצועי שהגיע בזמן ועמד בכל היעדים. אעבוד איתם שוב בלי היסוס.", name: "אבי ש׳", rating: 5 },
-                  { quote: "מחיר תחרותי ושירות יוצא דופן. תקשורת ב-WhatsApp הייתה זמינה לאורך כל הפרויקט.", name: "רונן מ׳", rating: 5 },
+                  { quote: "מחיר תחרותי ושירות יוצא דופן. הצ׳אט המאובטח בפלטפורמה היה זמין לאורך כל הפרויקט.", name: "רונן מ׳", rating: 5 },
                 ].map((t, i) => (
                   <div key={i} className="relative rounded-xl border border-border/60 bg-secondary/40 p-5">
                     <Quote className="absolute left-4 top-4 h-7 w-7 text-primary/15" />

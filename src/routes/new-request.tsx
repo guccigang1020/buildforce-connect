@@ -137,7 +137,7 @@ function NewRequestPage() {
           <h1 className="mt-6 text-3xl font-extrabold md:text-4xl">הבקשה פורסמה בהצלחה</h1>
           <p className="mt-3 max-w-md text-muted-foreground">
             תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך
-            ב-WhatsApp ובלוח הבקרה.
+            במייל ובלוח הבקרה.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant">
