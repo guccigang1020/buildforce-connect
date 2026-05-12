@@ -1,22 +1,22 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
-  Briefcase, TrendingUp, Trophy, Clock, BadgeCheck, Building2,
-  CheckCircle2, XCircle, Coins, ArrowLeft,
+  Briefcase, TrendingUp, Trophy, Building2, BadgeCheck,
+  ArrowLeft, Coins, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
-import { REQUESTS, getCorporation } from "@/lib/mock-data";
-import { useSelections } from "@/lib/selections-store";
+import { useAuth } from "@/hooks/use-auth";
+import { listMyOffers } from "@/lib/job-offers.functions";
 import {
-  PLATFORM_FEE_PER_HOUR, HOURS_PER_MONTH,
-  totalCorporationPays, monthlyContractorPay, monthlyFeeRevenue,
+  PLATFORM_FEE_PER_HOUR, HOURS_PER_MONTH, monthlyFeeRevenue,
 } from "@/lib/commission-config";
-
-const DEFAULT_CORP = "electra";
 
 export const Route = createFileRoute("/corporation-dashboard")({
   head: () => ({
@@ -29,114 +29,105 @@ export const Route = createFileRoute("/corporation-dashboard")({
 });
 
 function CorporationDashboard() {
-  const [corpId, setCorpId] = useState<string>(DEFAULT_CORP);
-  const corp = getCorporation(corpId);
-  const selections = useSelections();
+  const { user, profile, hasRole, loading } = useAuth();
+  const navigate = useNavigate();
 
-  const myOffers = useMemo(
-    () =>
-      REQUESTS.flatMap((r) =>
-        r.offers.filter((o) => o.corporationId === corpId).map((o) => ({ req: r, offer: o })),
-      ),
-    [corpId],
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/login", replace: true });
+  }, [loading, user, navigate]);
+
+  const fetchMine = useServerFn(listMyOffers);
+  const { data, isLoading } = useQuery({
+    queryKey: ["my-job-offers"],
+    queryFn: () => fetchMine({ data: {} as never }),
+    enabled: Boolean(user),
+  });
+
+  const offers = data?.offers ?? [];
+
+  const stats = useMemo(() => {
+    const open = offers.filter((o) => o.status === "submitted").length;
+    const won = offers.filter((o) => o.status === "awarded").length;
+    const lost = offers.filter((o) => o.status === "rejected").length;
+    const decided = won + lost;
+    const winRate = decided > 0 ? Math.round((won / decided) * 100) : 0;
+    const monthlyFee = offers
+      .filter((o) => o.status === "awarded")
+      .reduce((s, o) => s + monthlyFeeRevenue(o.available_workers ?? 0), 0);
+    return { open, won, winRate, monthlyFee, totalActiveWorkers: offers.filter((o) => o.status === "awarded").reduce((s, o) => s + (o.available_workers ?? 0), 0) };
+  }, [offers]);
+
+  if (loading || !user) {
+    return (
+      <Shell>
+        <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+      </Shell>
+    );
+  }
+
+  const isCorporation = hasRole("corporation");
+  const isApproved = profile?.is_verified;
+
+  return (
+    <Shell>
+      <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3 w-3 rotate-180" /> חזרה ללוח הראשי
+      </Link>
+
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-primary">לוח תאגיד</div>
+          <h1 className="mt-1 flex items-center gap-3 text-3xl font-extrabold tracking-tight md:text-4xl">
+            <Building2 className="h-7 w-7 text-primary" />
+            {profile?.company_name || profile?.full_name || "התאגיד שלי"}
+            {isApproved && <BadgeCheck className="h-6 w-6 text-primary" />}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {profile?.city || ""}{!isApproved ? " · ממתין לאימות אדמין" : ""}
+          </p>
+        </div>
+      </div>
+
+      {!isCorporation && (
+        <div className="mt-6 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 text-sm">
+          חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין כדי להפעיל את התפקיד.
+        </div>
+      )}
+      {isCorporation && !isApproved && (
+        <div className="mt-6 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5 text-sm">
+          חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.
+        </div>
+      )}
+
+      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+        <KPI icon={Briefcase} label="הצעות פתוחות" value={isLoading ? "…" : String(stats.open)} />
+        <KPI icon={Trophy} label="זכיות" value={isLoading ? "…" : String(stats.won)} accent />
+        <KPI icon={TrendingUp} label="שיעור הצלחה" value={isLoading ? "…" : `${stats.winRate}%`} />
+        <KPI icon={Coins} label="עמלת פלטפורמה/חודש" value={isLoading ? "…" : `₪${stats.monthlyFee.toLocaleString()}`} />
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+        <div className="flex items-start gap-3">
+          <Coins className="mt-0.5 h-5 w-5 text-primary" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-bold text-foreground">חיוב חודשי צפוי:</span>{" "}
+            <span className="text-base font-extrabold text-foreground">₪{stats.monthlyFee.toLocaleString()}</span>{" "}
+            (₪{PLATFORM_FEE_PER_HOUR} לשעת עובד · {HOURS_PER_MONTH} שעות/חודש · {stats.totalActiveWorkers} עובדים פעילים)
+          </div>
+        </div>
+      </div>
+
+      <OpenTendersSection />
+      <MyOffersSection />
+    </Shell>
   );
+}
 
-  const wonRequestIds = new Set(
-    selections.filter((s) => s.corporationId === corpId).map((s) => s.requestId),
-  );
-  const won = myOffers.filter((x) => wonRequestIds.has(x.req.id));
-  const open = myOffers.filter((x) => x.req.status === "active" && !wonRequestIds.has(x.req.id));
-  const lost = myOffers.filter((x) => x.req.status === "closed" && !wonRequestIds.has(x.req.id));
-
-  const decided = won.length + lost.length;
-  const winRate = decided > 0 ? Math.round((won.length / decided) * 100) : 0;
-
-  const monthlyContractor = won.reduce(
-    (sum, x) => sum + monthlyContractorPay(x.req.count, x.offer.pricePerHour),
-    0,
-  );
-  const monthlyFee = won.reduce((sum, x) => sum + monthlyFeeRevenue(x.req.count), 0);
-
-  if (!corp) return null;
-
+function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-14">
-        <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-3 w-3 rotate-180" /> חזרה ללוח הראשי
-        </Link>
-
-        <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-primary">לוח תאגיד</div>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight md:text-4xl flex items-center gap-3">
-              <Building2 className="h-7 w-7 text-primary" />
-              {corp.name}
-              {corp.verified && <BadgeCheck className="h-6 w-6 text-primary" />}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {corp.workers} עובדים · {corp.regions} · דירוג {corp.rating}★
-            </p>
-          </div>
-          <select
-            value={corpId}
-            onChange={(e) => setCorpId(e.target.value)}
-            className="h-10 rounded-md border border-border bg-card px-3 text-sm font-semibold"
-          >
-            {["daniel", "electra", "metzada", "ort"].map((id) => {
-              const c = getCorporation(id);
-              return <option key={id} value={id}>{c?.name}</option>;
-            })}
-          </select>
-        </div>
-
-        <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <KPI icon={Briefcase} label="הצעות פתוחות" value={String(open.length)} />
-          <KPI icon={Trophy} label="זכיות" value={String(won.length)} accent />
-          <KPI icon={TrendingUp} label="שיעור הצלחה" value={`${winRate}%`} />
-          <KPI icon={Coins} label="עמלת פלטפורמה/חודש" value={`₪${monthlyFee.toLocaleString()}`} />
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5">
-          <div className="flex items-start gap-3">
-            <Coins className="mt-0.5 h-5 w-5 text-primary" />
-            <div className="text-xs text-muted-foreground">
-              <span className="font-bold text-foreground">חיוב חודשי צפוי:</span>{" "}
-              <span className="text-base font-extrabold text-foreground">₪{monthlyFee.toLocaleString()}</span>{" "}
-              (₪{PLATFORM_FEE_PER_HOUR} לשעת עובד · {HOURS_PER_MONTH} שעות/חודש ·{" "}
-              {won.reduce((s, x) => s + x.req.count, 0)} עובדים פעילים).
-              הכנסה לתאגיד מהפרויקטים הפעילים: <span className="font-bold text-foreground">₪{monthlyContractor.toLocaleString()}</span>/חודש.
-            </div>
-          </div>
-        </div>
-
-        <OpenTendersSection />
-
-        <MyOffersSection />
-
-        <Section title={`הצעות פתוחות (${open.length})`}>
-          {open.length === 0 ? (
-            <Empty title="אין הצעות פתוחות" />
-          ) : (
-            open.map((x) => <OfferRow key={x.req.id} req={x.req} price={x.offer.pricePerHour} status="open" />)
-          )}
-        </Section>
-
-        <Section title={`זכיות (${won.length})`}>
-          {won.length === 0 ? (
-            <Empty title="עדיין לא זכית בבקשות" />
-          ) : (
-            won.map((x) => <OfferRow key={x.req.id} req={x.req} price={x.offer.pricePerHour} status="won" />)
-          )}
-        </Section>
-
-        {lost.length > 0 && (
-          <Section title={`לא נבחרו (${lost.length})`}>
-            {lost.map((x) => <OfferRow key={x.req.id} req={x.req} price={x.offer.pricePerHour} status="lost" />)}
-          </Section>
-        )}
-      </main>
+      <main className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-14">{children}</main>
       <SiteFooter />
     </div>
   );
@@ -151,60 +142,5 @@ function KPI({ icon: Icon, label, value, accent }: { icon: React.ComponentType<{
       <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
       <div className="mt-1 text-xs text-muted-foreground">{label}</div>
     </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-10">
-      <h2 className="mb-3 text-base font-bold md:text-lg">{title}</h2>
-      <div className="space-y-3">{children}</div>
-    </div>
-  );
-}
-
-function Empty({ title }: { title: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-      {title}
-    </div>
-  );
-}
-
-function OfferRow({ req, price, status }: { req: typeof REQUESTS[number]; price: number; status: "open" | "won" | "lost" }) {
-  const total = totalCorporationPays(price);
-  return (
-    <Link
-      to="/requests/$id"
-      params={{ id: req.id }}
-      className="hover-lift flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 md:p-5"
-    >
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-muted-foreground">#{req.id}</span>
-          {status === "open" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">
-              <Clock className="h-3 w-3" /> ממתין להחלטה
-            </span>
-          )}
-          {status === "won" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-              <CheckCircle2 className="h-3 w-3" /> זכית
-            </span>
-          )}
-          {status === "lost" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-              <XCircle className="h-3 w-3" /> לא נבחרת
-            </span>
-          )}
-        </div>
-        <div className="mt-1 text-sm font-bold md:text-base">{req.count} {req.role} · {req.location}</div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">התחלה {req.startDate} · {req.duration}</div>
-      </div>
-      <div className="text-left text-xs">
-        <div className="text-base font-extrabold">₪{price}/שעה</div>
-        <div className="text-[10px] text-muted-foreground">+₪{PLATFORM_FEE_PER_HOUR} עמלה · ₪{total} סה״כ</div>
-      </div>
-    </Link>
   );
 }
