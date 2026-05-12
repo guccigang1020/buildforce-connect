@@ -415,8 +415,10 @@ function CTABanner() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-12 border-border bg-card/60 px-7 text-base hover:bg-card">
-              <MessageCircle className="ml-2 h-4 w-4" /> דבר איתנו ב-WhatsApp
+            <Button asChild size="lg" variant="outline" className="h-12 border-border bg-card/60 px-7 text-base hover:bg-card">
+              <a href="mailto:support@buildforceprime.com" aria-label="צור קשר עם הצוות במייל">
+                <Mail className="ml-2 h-4 w-4" /> צור קשר עם הצוות
+              </a>
             </Button>
           </div>
         </div>
