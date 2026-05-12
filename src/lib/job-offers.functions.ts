@@ -95,6 +95,19 @@ export const listOffersForRequest = createServerFn({ method: 'POST' })
     return { offers: offers ?? [] }
   })
 
+export const listMyOffers = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context
+    const { data: offers, error } = await supabase
+      .from('job_offers')
+      .select('id, request_id, price_per_hour, available_workers, start_date, status, created_at, updated_at, job_requests(location, start_date, duration)')
+      .eq('corporation_id', userId)
+      .order('updated_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return { offers: offers ?? [] }
+  })
+
 export const awardOffer = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ offerId: z.string().uuid() }).parse(d))
