@@ -171,6 +171,13 @@ export type Database = {
             referencedRelation: "job_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "job_awards_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "public_job_requests"
+            referencedColumns: ["id"]
+          },
         ]
       }
       job_offers: {
@@ -227,6 +234,13 @@ export type Database = {
             referencedRelation: "job_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "job_offers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "public_job_requests"
+            referencedColumns: ["id"]
+          },
         ]
       }
       job_request_items: {
@@ -262,6 +276,13 @@ export type Database = {
             referencedRelation: "job_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "job_request_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "public_job_requests"
+            referencedColumns: ["id"]
+          },
         ]
       }
       job_request_messages: {
@@ -295,6 +316,13 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "job_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_request_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "public_job_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -466,7 +494,93 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_job_requests: {
+        Row: {
+          budget: string | null
+          commitment_months: string | null
+          created_at: string | null
+          deadline_at: string | null
+          description: string | null
+          duration: string | null
+          id: string | null
+          location: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          budget?: string | null
+          commitment_months?: string | null
+          created_at?: string | null
+          deadline_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string | null
+          location?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          budget?: string | null
+          commitment_months?: string | null
+          created_at?: string | null
+          deadline_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string | null
+          location?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          business_name: string | null
+          city: string | null
+          company_name: string | null
+          contractor_classification: string | null
+          full_name: string | null
+          is_verified: boolean | null
+          user_id: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          business_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_classification?: string | null
+          full_name?: string | null
+          is_verified?: boolean | null
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Update: {
+          avatar_url?: string | null
+          business_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_classification?: string | null
+          full_name?: string | null
+          is_verified?: boolean | null
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
