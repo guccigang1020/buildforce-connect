@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       corporation_workforce: {
         Row: {
           corporation_id: string
@@ -229,6 +265,39 @@ export type Database = {
           },
         ]
       }
+      job_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          direction: string
+          id: string
+          ratee_id: string
+          rater_id: string
+          request_id: string
+          score: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          direction: string
+          id?: string
+          ratee_id: string
+          rater_id: string
+          request_id: string
+          score: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          ratee_id?: string
+          rater_id?: string
+          request_id?: string
+          score?: number
+        }
+        Relationships: []
+      }
       job_request_items: {
         Row: {
           count: number
@@ -419,6 +488,48 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          bucket: string
+          count: number
+          id: string
+          key: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          id?: string
+          key: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
+          id?: string
+          key?: string
+        }
+        Relationships: []
+      }
+      reminder_log: {
+        Row: {
+          id: string
+          kind: string
+          request_id: string
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          request_id: string
+          sent_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          request_id?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -469,6 +580,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: { _key: string; _max: number; _window_seconds: number }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -483,6 +598,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _entity_type: string
+          _metadata?: Json
+        }
+        Returns: string
       }
       move_to_dlq: {
         Args: {
