@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      corporation_workforce: {
+        Row: {
+          corporation_id: string
+          count: number
+          created_at: string
+          id: string
+          nationality: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          corporation_id: string
+          count?: number
+          created_at?: string
+          id?: string
+          nationality: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          corporation_id?: string
+          count?: number
+          created_at?: string
+          id?: string
+          nationality?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
