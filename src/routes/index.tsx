@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import {
   Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2,
-  Users, Clock, TrendingUp, BadgeCheck, Sparkles, Lock, FileCheck2, Headphones,
+  Users, Clock, TrendingUp, BadgeCheck, Lock, FileCheck2, Headphones,
+  TrendingDown, Gavel, Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
@@ -73,6 +74,7 @@ function Home() {
       <SiteNav />
       <Hero />
       <TrustBar />
+      <CompetitionAdvantage />
       <HowItWorks />
       <PlatformShowcase />
       <Categories />
@@ -92,22 +94,24 @@ function Hero() {
       <div className="absolute inset-0">
         <img src={heroImg} alt="אתר בנייה" className="h-full w-full object-cover opacity-40" width={1920} height={1080} />
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+        <div className="pointer-events-none absolute -top-32 right-1/3 h-[480px] w-[480px] rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 left-1/4 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 md:px-6 md:py-28 lg:grid-cols-12 lg:py-36">
         <div className="lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" />
-            פלטפורמה חדשה · גישה מוקדמת לקבלנים נבחרים
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary shadow-elegant animate-fade-in">
+            <Gavel className="h-3.5 w-3.5" />
+            מכרז חי · תאגידים נלחמים על העבודה שלך
           </div>
-          <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
-            כוח האדם הנכון.<br />
-            <span className="text-gradient-primary">במחיר הנכון.</span><br />
-            תוך שעות.
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl animate-fade-in">
+            הם נלחמים.<br />
+            <span className="text-gradient-primary">אתה מרוויח.</span><br />
+            במחיר הכי נמוך.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            פרסם בקשה אחת, קבל הצעות תחרותיות מתאגידי כוח אדם מאומתים בלבד.
-            השוואה חכמה, דירוגים אמיתיים, ושליטה מלאה — בלי טלפונים ובלי זמן מבוזבז.
+            פרסם בקשה אחת — תאגידי כוח אדם מאומתים מתחרים על הזכות לעבוד איתך.
+            כל הצעה חדשה דוחפת את המחיר למטה. שקיפות מלאה, החלטה אצלך, ללא עמלה לקבלן.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 h-12 px-7 text-base font-semibold">
@@ -129,9 +133,13 @@ function Hero() {
 
         {/* Sample request card */}
         <div className="lg:col-span-5">
-          <div className="glass-card relative rounded-2xl p-6 shadow-card">
-            <div className="absolute -top-3 right-6 rounded-full bg-gradient-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-elegant">
-              בקשה פעילה
+          <div className="glass-card relative rounded-2xl p-6 shadow-card ring-1 ring-primary/20 animate-fade-in">
+            <div className="absolute -top-3 right-6 inline-flex items-center gap-1.5 rounded-full bg-gradient-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-elegant">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+              </span>
+              מכרז חי
             </div>
             <div className="flex items-start justify-between">
               <div>
@@ -144,14 +152,22 @@ function Hero() {
               </div>
             </div>
 
+            <div className="mt-5 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700">
+              <span className="inline-flex items-center gap-1.5"><TrendingDown className="h-3.5 w-3.5" /> המחיר ירד ב-7% מאז הפרסום</span>
+              <span className="text-emerald-700/80">חיסכון: ₪14/שעה</span>
+            </div>
+
             <div className="mt-6 space-y-3">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">הצעות שהתקבלו · 4</div>
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span>הצעות שהתקבלו · 4</span>
+                <span className="inline-flex items-center gap-1 normal-case text-emerald-600"><Trophy className="h-3 w-3" /> מובילה</span>
+              </div>
               {[
-                { name: "כוח אדם דניאל בע״מ", price: "₪185", rating: 4.9, badge: true, phone: "972541234567" },
+                { name: "כוח אדם דניאל בע״מ", price: "₪185", rating: 4.9, badge: true, phone: "972541234567", best: true },
                 { name: "אלקטרה מנפאואר", price: "₪192", rating: 4.8, badge: true, phone: "972542345678" },
                 { name: "מצדה כוח אדם", price: "₪198", rating: 4.7, badge: false, phone: "972543456789" },
               ].map((c, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-secondary/40 p-3 transition-colors hover:border-primary/40">
+                <div key={i} className={`flex items-center justify-between gap-2 rounded-xl border p-3 transition-colors ${c.best ? "border-emerald-500/40 bg-emerald-500/5 ring-1 ring-emerald-500/20" : "border-border/60 bg-secondary/40 hover:border-primary/40"}`}>
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-xs font-bold">{c.name[0]}</div>
                     <div className="min-w-0">
@@ -166,7 +182,7 @@ function Hero() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-left">
-                      <div className="text-base font-extrabold">{c.price}</div>
+                      <div className={`text-base font-extrabold ${c.best ? "text-emerald-600" : ""}`}>{c.price}</div>
                       <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
                     </div>
                     <WhatsAppButton
@@ -185,6 +201,32 @@ function Hero() {
               </Link>
             </Button>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- COMPETITION ADVANTAGE ---------- */
+function CompetitionAdvantage() {
+  return (
+    <section className="relative overflow-hidden py-16 md:py-20">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+      <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            { icon: Gavel, title: "תאגיד אחד מפרסם — כולם מתחרים", desc: "במקום שאתה תרדוף אחרי הצעות, התאגידים מתחרים זה בזה על הזכות לעבוד איתך." },
+            { icon: TrendingDown, title: "המחיר רק יורד", desc: "כל הצעה חדשה רואה את המתחרות ושואפת להיות טובה יותר. אתה מקבל את המחיר האמיתי של השוק." },
+            { icon: Trophy, title: "אתה הבוחר היחיד", desc: "מחיר, דירוג, ניסיון, זמינות — אתה מחליט לפי מה שחשוב לך. בלי לחץ, בלי טלפונים." },
+          ].map((it) => (
+            <div key={it.title} className="rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur hover-lift">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
+                <it.icon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-bold">{it.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
