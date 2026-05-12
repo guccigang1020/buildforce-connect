@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2,
-  Users, Clock, TrendingUp, BadgeCheck, Quote, Sparkles,
+  Users, Clock, TrendingUp, BadgeCheck, Sparkles, Lock, FileCheck2, Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
@@ -72,13 +72,13 @@ function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
       <Hero />
-      <Stats />
+      <TrustBar />
       <HowItWorks />
       <PlatformShowcase />
       <Categories />
       <WhyTrust />
       <Corporations />
-      <Testimonials />
+      <EarlyAccess />
       <CTABanner />
       <SiteFooter />
     </div>
@@ -98,7 +98,7 @@ function Hero() {
         <div className="lg:col-span-7">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5" />
-            הפלטפורמה המובילה לכוח אדם בבנייה בישראל
+            פלטפורמה חדשה · גישה מוקדמת לקבלנים נבחרים
           </div>
           <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
             כוח האדם הנכון.<br />
@@ -121,9 +121,9 @@ function Hero() {
             </Button>
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> ללא עמלה לקבלן</span>
+            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> שימוש חינם לקבלנים</span>
             <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> תאגידים מאומתים בלבד</span>
-            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> הצעות תוך 24 שעות</span>
+            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> נתונים מאובטחים בתקן בנקאי</span>
           </div>
         </div>
 
@@ -191,21 +191,26 @@ function Hero() {
   );
 }
 
-/* ---------- STATS ---------- */
-function Stats() {
-  const stats = [
-    { value: "+340", label: "תאגידי כוח אדם מאומתים" },
-    { value: "12,400", label: "עובדים זמינים השבוע" },
-    { value: "<24h", label: "זמן ממוצע לקבלת הצעות" },
-    { value: "98%", label: "שביעות רצון קבלנים" },
+/* ---------- TRUST BAR ---------- */
+function TrustBar() {
+  const items = [
+    { icon: ShieldCheck, title: "תאגידים מאומתים", desc: "רישוי, ביטוח ותעודות נבדקים ידנית לפני אישור." },
+    { icon: Lock, title: "אבטחת נתונים", desc: "הצפנה מקצה לקצה והרשאות מבוססות תפקיד (RLS)." },
+    { icon: FileCheck2, title: "תיעוד מלא", desc: "כל בקשה, הצעה ובחירה נשמרות עם חותמת זמן." },
+    { icon: Headphones, title: "תמיכה אנושית", desc: "ליווי ישיר מצוות BuildForce בכל שלב בתהליך." },
   ];
   return (
     <section className="border-y border-border/60 bg-card/40">
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-10 md:grid-cols-4 md:px-6">
-        {stats.map((s) => (
-          <div key={s.label} className="text-center md:text-right">
-            <div className="text-3xl font-extrabold tracking-tight md:text-4xl">{s.value}</div>
-            <div className="mt-1 text-xs text-muted-foreground md:text-sm">{s.label}</div>
+        {items.map((it) => (
+          <div key={it.title} className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+              <it.icon className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm font-bold">{it.title}</div>
+              <div className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{it.desc}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -353,34 +358,29 @@ function Corporations() {
   );
 }
 
-/* ---------- TESTIMONIALS ---------- */
-function Testimonials() {
-  const items = [
-    { quote: "תוך פחות מיממה היו לי 5 הצעות איכותיות. החלפתי קבלן משנה תוך יום. שינה לי את האתר.", name: "אבי ש׳", role: "מנהל פרויקט · רמת גן", rating: 5 },
-    { quote: "שקיפות מלאה במחירים. סוף סוף יודעים אם משלמים יותר מדי. חוסך לי לפחות 12% בחודש.", name: "רונן מ׳", role: "קבלן ראשי · נתניה", rating: 5 },
-    { quote: "הדירוגים אמיתיים. עבדתי עם תאגיד שדורג 4.9 ובאמת קיבלתי צוות מקצועי בזמן.", name: "דנה ל׳", role: "יזמית · תל אביב", rating: 5 },
+/* ---------- EARLY ACCESS ---------- */
+function EarlyAccess() {
+  const benefits = [
+    { icon: BadgeCheck, title: "ללא עלות בתקופת ההשקה", desc: "קבלנים משתמשים בפלטפורמה ללא עמלה ובלי הגבלת בקשות." },
+    { icon: Users, title: "ליווי אישי", desc: "צוות BuildForce מסייע בפרסום הבקשות הראשונות ובאיתור ספקים." },
+    { icon: TrendingUp, title: "השפעה על המוצר", desc: "המשובים שלכם מעצבים את הפיצ׳רים הבאים שייצאו לשוק." },
   ];
   return (
-    <section id="testimonials" className="py-20 md:py-28">
+    <section id="early-access" className="py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <SectionHeader eyebrow="מה אומרים עלינו" title="קבלנים מובילים כבר עברו ל-BuildForce." subtitle="" />
+        <SectionHeader
+          eyebrow="גישה מוקדמת"
+          title="אנחנו עכשיו עולים לאוויר."
+          subtitle="BuildForce בשלב השקה — מצטרפים מקבלים תנאים מועדפים, ליווי צמוד ויכולת להשפיע על המוצר."
+        />
         <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {items.map((t, i) => (
-            <div key={i} className="hover-lift relative rounded-2xl border border-border/60 bg-card p-6">
-              <Quote className="absolute left-5 top-5 h-8 w-8 text-primary/15" />
-              <div className="flex gap-0.5">
-                {Array.from({ length: t.rating }).map((_, j) => (
-                  <Star key={j} className="h-4 w-4 fill-primary text-primary" />
-                ))}
+          {benefits.map((b) => (
+            <div key={b.title} className="hover-lift rounded-2xl border border-border/60 bg-card p-6">
+              <div className="grid h-11 w-11 place-items-center rounded-lg bg-gradient-primary text-primary-foreground shadow-elegant">
+                <b.icon className="h-6 w-6" />
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-foreground/90">״{t.quote}״</p>
-              <div className="mt-6 flex items-center gap-3 border-t border-border/60 pt-4">
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-sm font-bold">{t.name[0]}</div>
-                <div>
-                  <div className="text-sm font-bold">{t.name}</div>
-                  <div className="text-xs text-muted-foreground">{t.role}</div>
-                </div>
-              </div>
+              <h3 className="mt-4 text-lg font-bold">{b.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{b.desc}</p>
             </div>
           ))}
         </div>
