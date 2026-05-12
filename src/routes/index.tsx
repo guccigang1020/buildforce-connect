@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import {
   Hammer, Layers, PaintRoller, Wrench, Building2,
-  ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2,
+  ShieldCheck, Zap, Star, MessageCircle, ArrowLeft, CheckCircle2, Mail,
   Users, Clock, TrendingUp, BadgeCheck, Lock, FileCheck2, Headphones,
-  TrendingDown, Gavel, Trophy,
+  TrendingDown, Gavel, Trophy, ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
@@ -12,59 +12,24 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PlatformShowcase } from "@/components/platform-showcase";
 import { CORPORATIONS } from "@/lib/mock-data";
-import { buildWhatsAppUrl, type RequestDetails } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
-/* ---------- WHATSAPP ---------- */
-const SAMPLE_REQUEST: RequestDetails = {
-  id: "BF-2847",
-  role: "טפסנים",
-  count: 7,
-  location: "תל אביב",
-  duration: "3 חודשים",
-  startDate: "1 ביוני",
-};
+/* ---------- SECURE CHAT ---------- */
+const SAMPLE_REQUEST_ID = "BF-2847";
 
-function WhatsAppButton({
-  phone,
-  supplierName,
-  request,
-  variant = "icon",
-}: {
-  phone: string;
-  supplierName: string;
-  request: RequestDetails;
-  variant?: "icon" | "full";
-}) {
-  const href = buildWhatsAppUrl(phone, supplierName, request);
-  if (variant === "full") {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`שלח הודעת WhatsApp ל${supplierName}`}
-        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-bold text-white shadow-elegant transition-transform hover:scale-[1.02] hover:opacity-95"
-      >
-        <MessageCircle className="h-4 w-4" />
-        שלח ב-WhatsApp
-      </a>
-    );
-  }
+function SecureChatButton({ supplierName }: { supplierName: string }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={`שלח הודעת WhatsApp ל${supplierName}`}
-      title="שלח ב-WhatsApp"
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#25D366] text-white shadow-elegant transition-transform hover:scale-105 hover:opacity-95"
+    <Link
+      to="/login"
+      aria-label={`פתח צ׳אט מאובטח עם ${supplierName}`}
+      title="צ׳אט מאובטח בפלטפורמה"
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30 transition-transform hover:scale-105 hover:bg-primary/25"
     >
-      <MessageCircle className="h-5 w-5" />
-    </a>
+      <Lock className="h-4 w-4" />
+    </Link>
   );
 }
 
@@ -185,18 +150,14 @@ function Hero() {
                       <div className={`text-base font-extrabold ${c.best ? "text-emerald-600" : ""}`}>{c.price}</div>
                       <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
                     </div>
-                    <WhatsAppButton
-                      phone={c.phone}
-                      supplierName={c.name}
-                      request={SAMPLE_REQUEST}
-                    />
+                    <SecureChatButton supplierName={c.name} />
                   </div>
                 </div>
               ))}
             </div>
 
             <Button asChild className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95">
-              <Link to="/requests/$id" params={{ id: SAMPLE_REQUEST.id }}>
+              <Link to="/requests/$id" params={{ id: SAMPLE_REQUEST_ID }}>
                 השוואת הצעות מלאה
               </Link>
             </Button>
