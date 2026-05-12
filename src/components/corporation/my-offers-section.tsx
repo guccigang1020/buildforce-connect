@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Send, Trophy, XCircle, Ban, MapPin, Calendar, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Send, Trophy, XCircle, Ban, MapPin, Calendar, Loader2, Eye, Undo2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { listMyOffers } from "@/lib/job-offers.functions";
+import { listMyOffers, withdrawOffer } from "@/lib/job-offers.functions";
 
 type MyOffer = {
   id: string;
@@ -36,6 +39,9 @@ function formatDateTime(iso: string) {
 
 export function MyOffersSection() {
   const fetchMine = useServerFn(listMyOffers);
+  const withdrawFn = useServerFn(withdrawOffer);
+  const qc = useQueryClient();
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-offers"],
     queryFn: () => fetchMine(),
@@ -43,8 +49,22 @@ export function MyOffersSection() {
 
   const offers = (data?.offers ?? []) as MyOffer[];
 
+  const handleWithdraw = async (offerId: string) => {
+    if (!confirm("למשוך את ההצעה? לא ניתן לבטל פעולה זו.")) return;
+    setWithdrawingId(offerId);
+    try {
+      await withdrawFn({ data: { offerId } });
+      toast.success("ההצעה נמשכה");
+      qc.invalidateQueries({ queryKey: ["my-offers"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "שגיאה במשיכת ההצעה");
+    } finally {
+      setWithdrawingId(null);
+    }
+  };
+
   return (
-    <div className="mt-10">
+    <div className="mt-10 scroll-mt-24" id="my-offers">
       <h2 className="mb-3 text-base font-bold md:text-lg">ההצעות שלי ({offers.length})</h2>
       {isLoading ? (
         <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-8 text-sm text-muted-foreground">
@@ -64,11 +84,9 @@ export function MyOffersSection() {
             const meta = STATUS_META[o.status] ?? STATUS_META.submitted;
             const Icon = meta.icon;
             return (
-              <Link
+              <div
                 key={o.id}
-                to="/requests/$id"
-                params={{ id: o.request_id }}
-                className="hover-lift block rounded-2xl border border-border/60 bg-card p-4 md:p-5"
+                className="rounded-2xl border border-border/60 bg-card p-4 md:p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -96,7 +114,25 @@ export function MyOffersSection() {
                     <div className="text-[10px] text-muted-foreground">{o.available_workers} עובדים</div>
                   </div>
                 </div>
-              </Link>
+                <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-border/50 pt-3">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/requests/$id" params={{ id: o.request_id }}>
+                      <Eye className="ml-1 h-4 w-4" /> צפייה במכרז
+                    </Link>
+                  </Button>
+                  {o.status === "submitted" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleWithdraw(o.id)}
+                      disabled={withdrawingId === o.id}
+                    >
+                      <Undo2 className="ml-1 h-4 w-4" />
+                      {withdrawingId === o.id ? "מושך…" : "משוך הצעה"}
+                    </Button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
