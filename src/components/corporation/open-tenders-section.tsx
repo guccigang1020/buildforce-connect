@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MapPin, Calendar, Clock, Send, Loader2 } from "lucide-react";
+import { MapPin, Calendar, Clock, Send, Loader2, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +37,15 @@ export function OpenTendersSection() {
 
   return (
     <div className="mt-10">
-      <h2 className="mb-3 text-base font-bold md:text-lg">מכרזים פתוחים להגשת הצעה</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-bold md:text-lg">מכרזים פתוחים להגשת הצעה</h2>
+        <a
+          href="#my-offers"
+          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/10"
+        >
+          <ListChecks className="h-3.5 w-3.5" /> לניהול ההצעות שלי
+        </a>
+      </div>
       {isLoading ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
           טוען מכרזים...
