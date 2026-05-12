@@ -1,5 +1,21 @@
 import { getRequest } from '@tanstack/react-start/server'
 
+// Hardcoded allowlist of trusted base URLs for the internal email endpoint.
+// SSRF-safe: never derived from request headers (Origin/Host could be spoofed
+// to exfiltrate the caller's Authorization JWT).
+const ALLOWED_BASE_URLS = [
+  'https://buildforceprime.com',
+  'https://www.buildforceprime.com',
+  'https://project--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app',
+  'https://id-preview--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app',
+]
+
+function resolveBaseUrl(): string {
+  const fromEnv = process.env.SITE_URL
+  if (fromEnv && ALLOWED_BASE_URLS.includes(fromEnv)) return fromEnv
+  return ALLOWED_BASE_URLS[0]
+}
+
 interface ServerSendParams {
   templateName: string
   recipientEmail: string
@@ -15,9 +31,7 @@ interface ServerSendParams {
 export async function sendTransactionalEmailServer(params: ServerSendParams) {
   const req = getRequest()
   const authHeader = req?.headers.get('authorization') ?? ''
-  const origin = req?.headers.get('origin') || req?.headers.get('host')
-  const baseUrl = process.env.SITE_URL
-    || (origin?.startsWith('http') ? origin : origin ? `https://${origin}` : 'https://buildforceprime.com')
+  const baseUrl = resolveBaseUrl()
 
   const res = await fetch(`${baseUrl}/lovable/email/transactional/send`, {
     method: 'POST',
