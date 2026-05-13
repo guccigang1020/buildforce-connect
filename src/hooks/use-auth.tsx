@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,14 +34,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadUserData = async (uid: string) => {
-    const [{ data: prof }, { data: roleRows }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
-    ]);
-    setProfile((prof as Profile | null) ?? null);
-    setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
-  };
+  const loadUserData = useCallback(async (uid: string, options?: { background?: boolean }) => {
+    const background = options?.background ?? false;
+    if (!background) setLoading(true);
+
+    try {
+      const [{ data: prof, error: profileError }, { data: roleRows, error: rolesError }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+      ]);
+
+      if (profileError) throw profileError;
+      if (rolesError) throw rolesError;
+
+      setProfile((prof as Profile | null) ?? null);
+      setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
+    } catch (error) {
+      console.error("Failed to load auth user data", error);
+      if (!background) {
+        setProfile(null);
+        setRoles([]);
+      }
+    } finally {
+      if (!background) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     // 1) Set up listener FIRST
@@ -55,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRoles([]);
+        setLoading(false);
       }
     });
 
@@ -62,14 +80,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void supabase.auth.getSession().then(({ data: { session: existing } }) => {
       setSession(existing);
       if (existing?.user) {
-        void loadUserData(existing.user.id).finally(() => setLoading(false));
+        void loadUserData(existing.user.id);
       } else {
         setLoading(false);
       }
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [loadUserData]);
+
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+
+    const refreshInBackground = () => {
+      void loadUserData(uid, { background: true });
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) refreshInBackground();
+    };
+
+    const channel = supabase
+      .channel(`auth-sync-${uid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${uid}` }, refreshInBackground)
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${uid}` }, refreshInBackground)
+      .subscribe();
+
+    const intervalId = window.setInterval(refreshInBackground, 5000);
+
+    window.addEventListener("focus", refreshInBackground);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshInBackground);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      void supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, loadUserData]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
