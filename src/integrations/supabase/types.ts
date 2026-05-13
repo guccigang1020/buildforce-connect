@@ -767,6 +767,9 @@ export type Database = {
           hourly_rate: number | null
           id: string
           name: string
+          site_lat: number | null
+          site_lng: number | null
+          site_radius_meters: number
           source_award_id: string | null
           source_request_id: string | null
           start_date: string
@@ -782,6 +785,9 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           name: string
+          site_lat?: number | null
+          site_lng?: number | null
+          site_radius_meters?: number
           source_award_id?: string | null
           source_request_id?: string | null
           start_date?: string
@@ -797,6 +803,9 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           name?: string
+          site_lat?: number | null
+          site_lng?: number | null
+          site_radius_meters?: number
           source_award_id?: string | null
           source_request_id?: string | null
           start_date?: string
@@ -907,6 +916,10 @@ export type Database = {
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
+        Returns: number
+      }
+      geo_distance_meters: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
       has_role: {
