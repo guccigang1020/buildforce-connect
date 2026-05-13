@@ -3,11 +3,35 @@ import { z } from 'zod'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 
-const uploadPhotoSchema = z.object({
-  recordId: z.string().uuid(),
-  kind: z.enum(['start', 'end']),
-  base64: z.string().min(100).max(8_000_000),
-})
+function cleanPhone(p?: string | null): string | null {
+  if (!p) return null
+  const d = p.replace(/\D/g, '')
+  if (d.length < 8) return null
+  // assume IL local 0XXXXXXXXX → 972XXXXXXXXX
+  if (d.startsWith('0')) return '972' + d.slice(1)
+  return d
+}
+
+function waLink(phone: string, text: string): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+}
+
+async function logNotification(
+  recordId: string,
+  kind: string,
+  recipientPhone: string,
+  recipientRole: string,
+  payload: Record<string, unknown>,
+) {
+  await supabaseAdmin.from('attendance_notifications').insert({
+    record_id: recordId,
+    kind,
+    channel: 'whatsapp',
+    recipient_phone: recipientPhone,
+    recipient_role: recipientRole,
+    payload: payload as never,
+  })
+}
 
 function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000
