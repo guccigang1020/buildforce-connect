@@ -171,3 +171,31 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
     </div>
   )
 }
+
+function TeamQr({ teamId, teamName, projectName }: { teamId: string; teamName: string; projectName: string }) {
+  const [open, setOpen] = useState(false)
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/team-leader?team=${teamId}` : ''
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=8&data=${encodeURIComponent(url)}`
+  const printQr = () => {
+    const w = window.open('', '_blank', 'width=420,height=600')
+    if (!w) return
+    w.document.write(`<!doctype html><html dir="rtl"><head><title>QR — ${projectName} · ${teamName}</title>
+      <style>body{font-family:sans-serif;text-align:center;padding:24px}h2{margin:6px 0}p{color:#555;margin:4px 0}img{margin-top:12px;border:1px solid #ddd;border-radius:8px}</style>
+      </head><body><h2>${projectName}</h2><p>${teamName}</p><img src="${qrSrc}" alt="QR" />
+      <p style="margin-top:14px;font-size:13px">סרוק כדי לפתוח את מסך הנוכחות לצוות זה</p>
+      <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`)
+    w.document.close()
+  }
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}><QrCode className="w-4 h-4" /> QR לאתר</Button>
+      {open && (
+        <div className="absolute mt-2 bg-card border rounded-lg p-3 shadow-lg z-10">
+          <img src={qrSrc} alt={`QR ${teamName}`} width={180} height={180} />
+          <div className="text-xs text-muted-foreground mt-1 max-w-[180px] truncate">{url}</div>
+          <Button size="sm" className="w-full mt-2" onClick={printQr}><Printer className="w-4 h-4" /> הדפס מדבקה</Button>
+        </div>
+      )}
+    </>
+  )
+}
