@@ -26,8 +26,10 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
 import { Route as MyRequestsIdRouteImport } from './routes/my-requests.$id'
+import { Route as LaborSupplierAttendanceRouteImport } from './routes/labor-supplier.attendance'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
+import { Route as ContractorAttendanceRouteImport } from './routes/contractor.attendance'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -122,6 +124,11 @@ const MyRequestsIdRoute = MyRequestsIdRouteImport.update({
   path: '/my-requests/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LaborSupplierAttendanceRoute = LaborSupplierAttendanceRouteImport.update({
+  id: '/labor-supplier/attendance',
+  path: '/labor-supplier/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -130,6 +137,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
 const CorporationsIdRoute = CorporationsIdRouteImport.update({
   id: '/corporations/$id',
   path: '/corporations/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractorAttendanceRoute = ContractorAttendanceRouteImport.update({
+  id: '/contractor/attendance',
+  path: '/contractor/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
@@ -194,8 +206,10 @@ export interface FileRoutesByFullPath {
   '/team-leader': typeof TeamLeaderRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/contractor/attendance': typeof ContractorAttendanceRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -223,8 +237,10 @@ export interface FileRoutesByTo {
   '/team-leader': typeof TeamLeaderRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/contractor/attendance': typeof ContractorAttendanceRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -253,8 +269,10 @@ export interface FileRoutesById {
   '/team-leader': typeof TeamLeaderRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/contractor/attendance': typeof ContractorAttendanceRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -284,8 +302,10 @@ export interface FileRouteTypes {
     | '/team-leader'
     | '/terms'
     | '/unsubscribe'
+    | '/contractor/attendance'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
@@ -313,8 +333,10 @@ export interface FileRouteTypes {
     | '/team-leader'
     | '/terms'
     | '/unsubscribe'
+    | '/contractor/attendance'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
@@ -342,8 +364,10 @@ export interface FileRouteTypes {
     | '/team-leader'
     | '/terms'
     | '/unsubscribe'
+    | '/contractor/attendance'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
@@ -372,8 +396,10 @@ export interface RootRouteChildren {
   TeamLeaderRoute: typeof TeamLeaderRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  ContractorAttendanceRoute: typeof ContractorAttendanceRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LaborSupplierAttendanceRoute: typeof LaborSupplierAttendanceRoute
   MyRequestsIdRoute: typeof MyRequestsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -507,6 +533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyRequestsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/labor-supplier/attendance': {
+      id: '/labor-supplier/attendance'
+      path: '/labor-supplier/attendance'
+      fullPath: '/labor-supplier/attendance'
+      preLoaderRoute: typeof LaborSupplierAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -519,6 +552,13 @@ declare module '@tanstack/react-router' {
       path: '/corporations/$id'
       fullPath: '/corporations/$id'
       preLoaderRoute: typeof CorporationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contractor/attendance': {
+      id: '/contractor/attendance'
+      path: '/contractor/attendance'
+      fullPath: '/contractor/attendance'
+      preLoaderRoute: typeof ContractorAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
@@ -596,8 +636,10 @@ const rootRouteChildren: RootRouteChildren = {
   TeamLeaderRoute: TeamLeaderRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  ContractorAttendanceRoute: ContractorAttendanceRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LaborSupplierAttendanceRoute: LaborSupplierAttendanceRoute,
   MyRequestsIdRoute: MyRequestsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
