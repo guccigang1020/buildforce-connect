@@ -512,3 +512,136 @@ function Benefit({ icon: Icon, title, desc }: { icon: typeof MapPin; title: stri
     </div>
   );
 }
+
+/* ---------- PEACE OF MIND — TWO-SIDED VALUE ---------- */
+function PeaceOfMind() {
+  const contractor = [
+    { icon: Eye, title: "רואה כל יום מי הגיע, מתי ולכמה זמן", desc: "תמונה חיה של כל הצוות באתר עם שעה ומיקום. בלי ניחושים, בלי וואטסאפים." },
+    { icon: AlertTriangle, title: "חריגות מדווחות באותו רגע", desc: "פועל עזב? צוות יצא באמצע? מקבל התראה מיידית עם הסבר — לפני שזה הופך לדרמה בסוף החודש." },
+    { icon: FileBarChart, title: "דוח חודשי מוכן לחשבונית", desc: "כל יום מאושר משני הצדדים. בסוף החודש מוריד דוח אחד אמין — מוכן להנהלת חשבונות." },
+    { icon: TrendingDown, title: "חוסך אלפי שקלים בחודש", desc: "פחות שעות סרק, פחות חשבוניות מנופחות, פחות שעות של בירור." },
+  ];
+  const supplier = [
+    { icon: BadgeCheck, title: "כל יום נסגר ומאושר", desc: "ראש הצוות שלך מצלם, מדווח, והקבלן מאשר. אין מה לפרק את החודש בדיעבד." },
+    { icon: ShieldCheck, title: "הוכחת עבודה חתומה דיגיטלית", desc: "תמונות חיות + GPS + שעה. אם יש מחלוקת — יש ראיה." },
+    { icon: MessageCircle, title: "פחות שיחות, יותר עבודה", desc: "ראש הצוות לוחץ כפתור אחד. הקבלן מקבל הודעת WhatsApp ומאשר. זהו." },
+    { icon: TrendingUp, title: "תזרים ברור וצפוי", desc: "יודע בדיוק כמה הוא צובר כל יום. החשבונית בסוף החודש לא מפתיעה אף אחד." },
+  ];
+  const flow = [
+    { time: "07:00", title: "כניסה לאתר", desc: "ראש צוות מצלם תמונה חיה של כל הפועלים + עצמו. GPS מאמת שהוא באתר." },
+    { time: "07:02", title: "התראה למנהל האתר", desc: "WhatsApp עם מספר העובדים שהגיעו. אישור בלחיצה." },
+    { time: "16:00", title: "סיום יום", desc: "תמונה חיה ביציאה. שני הצדדים מאשרים. הרשומה מוקפאת." },
+    { time: "16:01", title: "בלי וויכוחים", desc: "היום נכנס לדוח החודשי המאושר. מקור אמת אחד." },
+  ];
+  return (
+    <section className="bg-background py-20 md:py-28">
+      <div className="container mx-auto px-4">
+        <SectionHeader
+          eyebrow="ראש שקט · סדר מופתי · שקיפות מלאה"
+          title="שני הצדדים מרוויחים. כל יום."
+          subtitle="לא רק ספקי כוח אדם — אנחנו ספקי סדר. כל יום עבודה נסגר, מאושר ומתועד מבלי שאף אחד יצטרך לרדוף אחרי תמונות בוואטסאפ או לבדוק חשבוניות בלילה."
+        />
+
+        {/* Two columns */}
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          <SideCard
+            icon={HardHat}
+            audience="לקבלן"
+            headline="שליטה מלאה במה שקורה באתר — בלי לעמוד שם בעצמך"
+            color="primary"
+            items={contractor}
+          />
+          <SideCard
+            icon={Briefcase}
+            audience="לתאגיד כוח האדם"
+            headline="הוכחה דיגיטלית לכל יום עבודה — ותזרים שאי אפשר לערער עליו"
+            color="emerald"
+            items={supplier}
+          />
+        </div>
+
+        {/* Daily flow strip */}
+        <div className="mt-16">
+          <h3 className="mb-6 text-center text-2xl font-bold">איך נראה יום עבודה אחד בפלטפורמה</h3>
+          <div className="grid gap-4 md:grid-cols-4">
+            {flow.map((f, i) => (
+              <div key={f.time} className="relative rounded-2xl border border-border bg-card p-5">
+                <div className="absolute -top-3 right-5 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
+                  {f.time}
+                </div>
+                <div className="mb-2 text-sm font-bold text-primary">שלב {i + 1}</div>
+                <div className="font-semibold">{f.title}</div>
+                <div className="mt-1 text-sm text-muted-foreground">{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Stat band */}
+        <div className="mt-16 grid gap-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:grid-cols-3 md:p-10">
+          <BigStat number="0" label="וויכוחים בסוף החודש" sub="כי הכל אושר ביום עצמו" />
+          <BigStat number="100%" label="ימים מתועדים" sub="תמונות חיות, GPS, שעה" />
+          <BigStat number="1" label="מקור אמת אחד" sub="לקבלן ולתאגיד באותו דוח" />
+        </div>
+
+        {/* CTA */}
+        <div className="mt-12 text-center">
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+            אנחנו לא רק מחברים בין קבלנים לתאגידי כוח אדם — אנחנו דואגים שהיום-יום שלכם יעבוד בלי בלגן, בלי שיחות מיותרות, ובלי הפתעות בסוף החודש.
+          </p>
+          <Link to="/signup" className="mt-6 inline-block">
+            <Button size="lg" className="h-14 px-8 text-base">התחל לעבוד עם ראש שקט <ArrowLeft className="mr-2 h-5 w-5" /></Button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SideCard({
+  icon: Icon, audience, headline, items, color,
+}: {
+  icon: typeof MapPin;
+  audience: string;
+  headline: string;
+  color: "primary" | "emerald";
+  items: { icon: typeof MapPin; title: string; desc: string }[];
+}) {
+  const ring = color === "primary" ? "ring-primary/30 bg-primary/10 text-primary" : "ring-emerald-500/30 bg-emerald-500/10 text-emerald-600";
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+      <div className="flex items-center gap-3">
+        <div className={`grid h-12 w-12 place-items-center rounded-xl ring-1 ${ring}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div>
+          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{audience}</div>
+          <div className="text-lg font-bold leading-tight">{headline}</div>
+        </div>
+      </div>
+      <ul className="mt-6 space-y-4">
+        {items.map((it) => (
+          <li key={it.title} className="flex items-start gap-3">
+            <div className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${ring}`}>
+              <it.icon className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="font-semibold">{it.title}</div>
+              <div className="text-sm text-muted-foreground">{it.desc}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function BigStat({ number, label, sub }: { number: string; label: string; sub: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-5xl font-black text-primary md:text-6xl">{number}</div>
+      <div className="mt-2 text-lg font-bold">{label}</div>
+      <div className="mt-1 text-sm text-muted-foreground">{sub}</div>
+    </div>
+  );
+}
