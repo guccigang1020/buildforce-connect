@@ -440,3 +440,73 @@ function SectionHeader({ eyebrow, title, subtitle }: { eyebrow: string; title: s
     </div>
   );
 }
+
+/* ---------- SITE ATTENDANCE & GEOFENCE ---------- */
+function SiteAttendance() {
+  const steps = [
+    {
+      icon: MapPin,
+      title: "הקבלן מסמן את מיקום האתר",
+      desc: "מיד לאחר הזכייה במכרז, הקבלן ממלא את פרטי הפרויקט ומסמן את מיקום האתר על המפה. רק שם תתאפשר רישום כניסה ויציאה.",
+    },
+    {
+      icon: Camera,
+      title: "כניסה ויציאה רק באתר",
+      desc: "ראש הצוות לוחץ \"פתח יום עבודה\" — המערכת מאמתת GPS ומצלמת תמונה חיה עם חותמת זמן ומיקום. אין אפשרות לרשום נוכחות מהבית או מהדרך.",
+    },
+    {
+      icon: ClipboardCheck,
+      title: "אישור יומי משני הצדדים",
+      desc: "בסוף כל יום הקבלן והתאגיד מאשרים את היום. הרשומה מוקפאת — מקור אמת אחד לשני הצדדים, בלי וויכוחים בסוף החודש.",
+    },
+    {
+      icon: Smile,
+      title: "אנחנו דואגים לסדר ולראש שקט",
+      desc: "לא רק מספקים פועלים — אנחנו מספקים סדר, תיעוד יומי, דוחות חודשיים מאושרים, וראש שקט אמיתי לשני הצדדים.",
+    },
+  ];
+  return (
+    <section className="bg-gradient-to-b from-background to-muted/30 py-20 md:py-28">
+      <div className="container mx-auto px-4">
+        <SectionHeader
+          eyebrow="נוכחות חכמה באתר"
+          title="כניסה ויציאה רק מהאתר. אישור יומי משני הצדדים."
+          subtitle="חוסכים לקבלן ולתאגיד וויכוחים, טלפונים מיותרים וטעויות אקסל בסוף החודש. הכל מתועד, חתום ומאושר — יום אחר יום."
+        />
+        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {steps.map((s) => (
+            <div
+              key={s.title}
+              className="group relative rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30">
+                <s.icon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-bold">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-12 grid gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:grid-cols-3 md:p-8">
+          <Benefit icon={ShieldCheck} title="בלי וויכוחים בסוף החודש" desc="כל יום סגור, מאושר ומוקפא. אי אפשר לשנות בדיעבד." />
+          <Benefit icon={FileCheck2} title="דוח חודשי אחד אמין" desc="שני הצדדים רואים את אותו דוח. מוכן להנהלת חשבונות." />
+          <Benefit icon={Headphones} title="ראש שקט אמיתי" desc="לא צריך לרדוף אחרי טלפונים, וואטסאפים ותמונות. הכל בפלטפורמה." />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Benefit({ icon: Icon, title, desc }: { icon: typeof MapPin; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <div className="font-semibold">{title}</div>
+        <div className="text-sm text-muted-foreground">{desc}</div>
+      </div>
+    </div>
+  );
+}
