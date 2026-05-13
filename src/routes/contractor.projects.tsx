@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { MapPin, Users, Phone, Smartphone } from 'lucide-react'
+import { MapPin, Users, Phone, Smartphone, QrCode, Printer } from 'lucide-react'
 
 export const Route = createFileRoute('/contractor/projects')({
   head: () => ({ meta: [{ title: 'הגדרת פרויקט — קבלן' }] }),
@@ -116,6 +116,7 @@ function ProjectCard({ project, onChange }: { project: any; onChange: () => void
               <div className="font-medium">{t.name}</div>
               <div className="text-xs text-muted-foreground">ראש צוות: {t.team_leader_name} · {t.team_leader_phone} · {t.expected_workers} עובדים · ₪{t.hourly_rate}/שעה</div>
             </div>
+            <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
           </div>
         ))}
         <AddTeamForm projectId={project.id} onSaved={() => qc.invalidateQueries({ queryKey: ['teams', project.id] })} />
