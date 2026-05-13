@@ -3,7 +3,7 @@ import { useServerFn } from '@tanstack/react-start'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
-import { listMyTeamLeaderProjects, startWorkday, endWorkday, reportException } from '@/lib/attendance.functions'
+import { listMyTeamLeaderProjects, startWorkday, endWorkday, reportException, getLastWorkersCount } from '@/lib/attendance.functions'
 import { getGps, watermarkImage } from '@/lib/attendance-camera'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -17,10 +17,18 @@ function Page() {
   const list = useServerFn(listMyTeamLeaderProjects)
   const { data, isLoading, refetch } = useQuery({ queryKey: ['tl-teams'], queryFn: () => list() })
   if (isLoading) return <div className="p-6 text-center" dir="rtl">טוען…</div>
-  const teams = data?.teams ?? []
+  const allTeams = data?.teams ?? []
+  const focusTeamId = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('team') : null
+  const teams = focusTeamId ? allTeams.filter((t: any) => t.id === focusTeamId) : allTeams
   return (
     <div dir="rtl" className="min-h-screen bg-background p-4 pb-24">
-      <h1 className="text-2xl font-bold mb-4">הצוותים שלי</h1>
+      <h1 className="text-2xl font-bold mb-2">הצוותים שלי</h1>
+      {focusTeamId && (
+        <div className="mb-3 text-xs bg-primary/10 text-primary rounded p-2 flex items-center justify-between">
+          <span>📍 נכנסת דרך QR של אתר — מוצג צוות אחד בלבד</span>
+          <a href="/team-leader" className="underline">הצג הכל</a>
+        </div>
+      )}
       {teams.length === 0 && <p className="text-muted-foreground">אין צוותים פעילים. צור קשר עם הקבלן.</p>}
       <div className="space-y-3">
         {teams.map((t: any) => (
@@ -39,10 +47,12 @@ function TeamCard({ team, onChange }: { team: any; onChange: () => void }) {
   const startFn = useServerFn(startWorkday)
   const endFn = useServerFn(endWorkday)
   const excFn = useServerFn(reportException)
+  const lastFn = useServerFn(getLastWorkersCount)
   const fileRef = useRef<HTMLInputElement>(null)
   const [mode, setMode] = useState<'start' | 'end' | null>(null)
   const [workers, setWorkers] = useState(team.expected_workers)
   const [busy, setBusy] = useState(false)
+  const lastQ = useQuery({ queryKey: ['last-workers', team.id], queryFn: () => lastFn({ data: { teamId: team.id } }) })
 
   const today = team.today
   const status = today?.status
@@ -104,6 +114,11 @@ function TeamCard({ team, onChange }: { team: any; onChange: () => void }) {
             <input type="number" min={1} max={500} value={workers} onChange={(e) => setWorkers(Number(e.target.value))}
               className="mt-1 w-full h-12 rounded border px-3 text-lg" />
           </label>
+          {lastQ.data?.workers != null && lastQ.data.workers !== workers && (
+            <Button variant="outline" size="sm" className="w-full" onClick={() => { setWorkers(lastQ.data!.workers!); toast.success('הוטען מהיום הקודם') }}>
+              ↺ אותו דבר כמו {lastQ.data.date} — {lastQ.data.workers} עובדים
+            </Button>
+          )}
           <Button size="lg" className="w-full h-16 text-lg" disabled={busy}
             onClick={() => { setMode('start'); fileRef.current?.click() }}>
             📷 התחל יום עבודה
