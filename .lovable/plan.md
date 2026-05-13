@@ -1,87 +1,113 @@
-# תשתית מכרזים מלאה — BuildForce
+# מערכת נוכחות ואישורים יומיים — BuildForce
 
-המערכת הקיימת של ההצעות בנויה כולה על **mock data**. הצעדים הבאים יחברו את כל זה למסד אמיתי, עם מיילים, סטטוסים, ובעלות נכונה.
-
-## 1. סכמת מסד נתונים (migration אחת)
-
-### טבלאות חדשות
-- **`job_offers`** — הצעת תאגיד לבקשה
-  - `request_id`, `corporation_id` (user_id של תאגיד), `price_per_hour`, `available_workers`, `start_date`, `response_time_hours`, `warranty_days`, `insurance` (bool), `note`
-  - `status`: `submitted` | `withdrawn` | `awarded` | `rejected`
-  - `created_at`, `updated_at`
-  - UNIQUE(`request_id`, `corporation_id`) — הצעה אחת לכל תאגיד לכל בקשה
-- **`job_awards`** — בחירת זוכה
-  - `request_id` (UNIQUE), `offer_id`, `corporation_id`, `awarded_by` (user_id), `awarded_at`
-- **`job_request_messages`** — צ'אט בקשה⇄תאגיד (אחד-לאחד)
-  - `request_id`, `corporation_id`, `sender_id`, `body`, `created_at`
-
-### עדכונים קיימים
-- `job_requests.status`: `open` | `awarded` | `closed` | `cancelled` (מוגבל ב-CHECK)
-- `job_requests.deadline_at` (timestamptz, nullable) — סגירה אוטומטית של מכרז (default: 48 שעות מ-`created_at`)
-
-### RLS
-| טבלה | SELECT | INSERT | UPDATE | DELETE |
-|---|---|---|---|---|
-| `job_offers` | בעל הבקשה + התאגיד שהגיש + admin | רק תאגיד מאומת על בקשה במצב `open` | התאגיד שהגיש (לפני זכייה) | לא |
-| `job_awards` | בעל הבקשה + התאגיד הזוכה + admin | בעל הבקשה בלבד | לא | לא |
-| `job_request_messages` | בעל הבקשה + התאגיד הספציפי + admin | אחד מהם | לא | לא |
-
-### טריגרים
-- כשנכנס שורה ב-`job_awards` → עדכן `job_requests.status='awarded'` והצעה זוכה ל-`awarded`, השאר ל-`rejected`.
-
-## 2. Server Functions (`src/lib/`)
-
-### `job-offers.functions.ts`
-- `submitOffer({ requestId, pricePerHour, availableWorkers, startDate, responseTimeHours, warrantyDays, insurance, note })` — תאגיד מאומת מגיש; מייל לבעל הבקשה ("התקבלה הצעה חדשה").
-- `withdrawOffer({ offerId })` — התאגיד מבטל לפני זכייה.
-- `listOffersForRequest({ requestId })` — בעל הבקשה רואה הכל; תאגיד רואה רק את שלו.
-- `awardOffer({ offerId })` — בעל הבקשה מכריז זוכה; שולח שני מיילים: לזוכה ("זכית בבקשה") ולמפסידים ("הבקשה נסגרה").
-
-### `job-requests.functions.ts` (תוספות)
-- `listMyJobRequests()` — לפי תפקיד: קבלן רואה את שלו, תאגיד רואה בקשות פתוחות שמתאימות, אדמין רואה הכל.
-- `getJobRequestWithOffers({ id })` — מחזיר בקשה + פריטים + הצעות (מוסתר/חשוף לפי תפקיד).
-- `closeJobRequest({ id })` — בעל הבקשה סוגר ידנית.
-
-### `job-messages.functions.ts`
-- `sendJobMessage({ requestId, corporationId, body })`
-- `listJobMessages({ requestId, corporationId })`
-
-## 3. תבניות מייל חדשות (`src/lib/email-templates/`)
-- `offer-submitted.tsx` — לבעל הבקשה כשמתקבלת הצעה (תאגיד אנונימי, מחיר, זמינות).
-- `offer-awarded.tsx` — לתאגיד שזכה (פרטי קשר חשופים, הוראות המשך).
-- `offer-rejected.tsx` — לתאגידים שלא זכו (התראה מנומסת).
-
-כולן רשומות ב-`registry.ts`.
-
-## 4. שינויי UI (מינימליים, ממוקדים)
-
-### `requests.$id.tsx`
-- במקום `getRequest()` mock → `getJobRequestWithOffers` server function ב-loader (תחת `_authenticated`).
-- שמירה על כל ה-UI (השוואה/דירוג/סינון) — ה-types נשארים תואמים.
-- כפתור "בחר זוכה" → קורא ל-`awardOffer`.
-
-### `corporation-dashboard.tsx`
-- הצגת בקשות פתוחות שתאגיד יכול להגיש להן.
-- טופס "הגש הצעה" (Sheet/Dialog) → `submitOffer`.
-
-### `dashboard.tsx`
-- הוספת רשימת הבקשות האמיתיות של הקבלן עם סטטוס וסיכום הצעות (`open` / `awarded` / `closed`).
-
-## 5. הערות טכניות
-- כל הפעולות עוברות `requireSupabaseAuth`.
-- `submitOffer` בודק:
-  1. המשתמש בעל role=`corporation` ו-`verification_status='approved'`
-  2. הבקשה במצב `open`
-  3. אין הצעה קיימת מאותו תאגיד (UNIQUE)
-- `awardOffer` בודק שהמשתמש הוא בעל הבקשה.
-- מיילים נשלחים דרך `sendTransactionalEmail` עם `idempotencyKey` ייחודי לכל אירוע.
-- `mock-data.ts` נשאר זמנית כ-fallback ל-corporations שטרם נרשמו (לתצוגה בעמודי שיווק בלבד).
-
-## מה לא נכלל בסבב הזה
-- Realtime updates (אפשר להוסיף מאוחר יותר עם Supabase Realtime).
-- מערכת תשלומים/escrow (תלוי במחבר תשלומים נפרד).
-- ייצוא PDF לבקשה האמיתית — פונקציית הייצוא הקיימת תעבוד אוטומטית כי ה-types תואמים.
+הוספת מודול שלם של נוכחות, אישורים יומיים ודוחות חודשיים על בסיס הפלטפורמה הקיימת. נבנה ב-3 שלבים כדי לעלות לאוויר מהר ובאיכות.
 
 ---
 
-**גודל משוער:** migration אחת + ~6 קבצי server functions/templates + 3 קבצי UI מעודכנים. אחרי אישור — אבצע הכל ברצף.
+## שלב 1 — תשתית נתונים וליבת זרימה (MVP פעיל)
+
+### טבלאות חדשות (Lovable Cloud)
+- `projects` — פרויקט חי שנוצר אוטומטית אחרי בחירת זוכה במכרז: שם, כתובת, קבלן, תאגיד, תאריך התחלה, סטטוס (active/paused/completed), כמות עובדים מתוכננת.
+- `project_teams` — צוות בפרויקט: שם צוות, מנהל צוות (team_leader user_id), כמות עובדים מתוכננת, מחיר לשעה.
+- `project_members` — שיוך משתמשים לפרויקט עם תפקיד (`site_manager`, `team_leader`).
+- `attendance_records` — רשומה יומית אחת לכל צוות: project_id, team_id, date, workers_expected, workers_actual, start_time, end_time, status (`pending`, `approved`, `auto_approved`, `exception`, `rejected`, `correction_requested`), approved_by, approved_at, frozen_at.
+- `attendance_events` — timeline של אירועים: סוג (start/end/exception/approval/correction), photo_url, gps_lat/lng, timestamp, actor_id, payload.
+- `attendance_corrections` — בקשות תיקון אחרי הקפאה: reason, requested_change, status, decided_by.
+- `attendance_audit` — לוג בלתי-משתנה לכל שינוי סטטוס.
+- תפקיד חדש ב-`app_role`: `team_leader`, `site_manager`.
+
+### Storage
+- bucket `attendance-photos` (פרטי). כל קובץ תחת `{project_id}/{date}/{team_id}/{event_id}.jpg`.
+
+### RLS
+- קבלן רואה רשומות של הפרויקטים שלו בלבד.
+- תאגיד רואה רשומות של הצוותים שלו.
+- ראש צוות רואה את הרשומות שהוא יצר.
+- אדמין רואה הכל.
+- אחרי `frozen_at` — אין UPDATE על הרשומה (rule בטריגר), רק דרך `attendance_corrections`.
+
+### Cron + Server Functions
+- `auto-approve-attendance` (cron כל 15 דק') — סוגר אוטומטית רשומות שעברו את ה-timeout (ברירת מחדל 4 שעות מהשליחה) → `auto_approved`.
+- `freeze-end-of-day` (cron יומי 23:59) — מקפיא רשומות שאושרו.
+- `nightly-daily-summary` — בונה כרטיסי סיכום יומי.
+
+---
+
+## שלב 2 — חוויית משתמש מובייל-first
+
+### מסכי ראש צוות (`/team-leader`)
+- כפתור ענק **"התחל יום עבודה"** — פותח מצלמה חיה (`<input type="file" capture="environment">` נעול ל-camera, ללא גלריה), בוחר כמות עובדים, שולח GPS אוטומטי.
+- ווטרמרק על התמונה: שם פרויקט / תאריך / שעה / GPS — נצרב ב-Canvas לפני העלאה.
+- כפתור **"סיים יום עבודה"** באותו אופן.
+- כפתור **"דווח חריגה"** — 6 כפתורים גדולים בלבד (יצא מוקדם / עזב חלקי / היעדרות / חצי יום / איחור / אחר).
+- תור offline ב-IndexedDB: אם אין רשת, שומר ושולח ברגע שחוזרת (`navigator.onLine` + service worker basic).
+
+### דשבורד קבלן (`/contractor`)
+- כרטיס "היום": צוותים פעילים, ממתינים לאישור, חריגות.
+- כפתור **"אשר הכל"** — אישור גורף.
+- אישור בודד עם תצוגת תמונה ומפה.
+- סיכום עלות יומית/חודשית.
+- רשימת פרויקטים פעילים.
+
+### דשבורד תאגיד (`/labor-supplier`)
+- צוותים פעילים היום, אישורים שהתקבלו, חריגות, ימי עבודה מאושרים, סיכום מוכן-לחשבונית.
+
+### עיצוב
+- Mobile-first, RTL, כפתורים גדולים (h-16+), צבעי סטטוס: ירוק/צהוב/אדום/אפור.
+- שפות: עברית עכשיו, מבנה i18n מוכן ל-EN/AR/RU בעתיד.
+
+---
+
+## שלב 3 — דוחות, התראות, התחברות לפלטפורמה
+
+- **דוח חודשי PDF + Excel** (server fn): פרויקט, קבלן, תאגיד, צוות, ימים מאושרים/חצאי/חריגות, סך עלות.
+- **התראות חכמות**: תזכורת בוקר אם לא נפתח יום עד 09:00, תזכורת ערב אם לא נסגר עד 18:00, התראת חריגה מיידית — דרך תור המייל הקיים + מייל אחד מאוחד ביום (לא ספאם).
+- **חיבור לזכייה במכרז**: trigger על `job_awards` יוצר אוטומטית `project` + `project_team` + משייך את הקבלן והתאגיד. דשבורד הקבלן הקיים יציג כרטיס "פרויקט פעיל חדש" עם כניסה למודול הנוכחות.
+- **Audit Trail**: שימוש ב-`audit_log` הקיים (כבר נבנה) לכל פעולת אישור/דחייה/תיקון.
+
+---
+
+## עקרונות שלא מתפשרים
+
+- ראש צוות חייב מצלמה חיה — `capture="environment"` + ולידציה ב-server שיש GPS ו-EXIF סביר.
+- אחרי הקפאה → רק דרך `correction_request`.
+- שני הצדדים תמיד רואים את אותה הרשומה (single source of truth).
+- כל פעולה ≤ 5 שניות, כפתור אחד.
+
+---
+
+## טכני (לסקירה מהירה)
+
+```text
+Routes חדשים:
+  /team-leader           → start/end day, exceptions
+  /team-leader/$projectId
+  /contractor/attendance → daily approvals
+  /labor-supplier/attendance
+  /reports/$projectId    → monthly PDF/Excel
+  api/public/hooks/auto-approve-attendance
+  api/public/hooks/freeze-end-of-day
+
+Server functions:
+  startWorkday, endWorkday, reportException
+  approveAttendance, approveAllPending, rejectAttendance
+  requestCorrection, decideCorrection
+  generateMonthlyReport (pdf + xlsx)
+
+Tech:
+  - exif-js / canvas watermark
+  - jsPDF + sheetjs (כבר במערכת לחלקם)
+  - IndexedDB queue ל-offline (idb-keyval)
+  - שדרוג service worker ל-background-sync
+```
+
+---
+
+## מה אבנה עכשיו (בסבב הבא, אם תאשר)
+
+1. כל הסכמה (טבלאות + RLS + triggers + storage bucket).
+2. שלוש זרימות הליבה: `startWorkday`, `endWorkday`, `approveAttendance` + auto-approve cron.
+3. שלושה מסכים: ראש צוות, דשבורד קבלן (אישורים יומיים), דשבורד תאגיד.
+4. דוח חודשי PDF (Excel בסבב 2).
+
+תגיד "אשר תוכנית" ואני יוצא לדרך — סבב ראשון יסתיים בכך שתוכל באמת להריץ יום עבודה שלם מקצה לקצה במצב דמו.

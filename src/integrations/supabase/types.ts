@@ -14,6 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_corrections: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          reason: string
+          record_id: string
+          requested_by: string
+          requested_change: Json
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          reason: string
+          record_id: string
+          requested_by: string
+          requested_change: Json
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          reason?: string
+          record_id?: string
+          requested_by?: string
+          requested_change?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_corrections_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          kind: string
+          payload: Json | null
+          photo_url: string | null
+          record_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          kind: string
+          payload?: Json | null
+          photo_url?: string | null
+          record_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          kind?: string
+          payload?: Json | null
+          photo_url?: string | null
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_events_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_records: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          contractor_id: string
+          corporation_id: string
+          created_at: string
+          end_gps_lat: number | null
+          end_gps_lng: number | null
+          end_photo_url: string | null
+          end_time: string | null
+          exception_reason: string | null
+          frozen_at: string | null
+          hourly_rate: number | null
+          id: string
+          project_id: string
+          rejection_reason: string | null
+          start_gps_lat: number | null
+          start_gps_lng: number | null
+          start_photo_url: string | null
+          start_time: string | null
+          status: string
+          team_id: string
+          team_leader_id: string
+          total_cost: number | null
+          total_hours: number | null
+          updated_at: string
+          work_date: string
+          workers_actual: number | null
+          workers_expected: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          contractor_id: string
+          corporation_id: string
+          created_at?: string
+          end_gps_lat?: number | null
+          end_gps_lng?: number | null
+          end_photo_url?: string | null
+          end_time?: string | null
+          exception_reason?: string | null
+          frozen_at?: string | null
+          hourly_rate?: number | null
+          id?: string
+          project_id: string
+          rejection_reason?: string | null
+          start_gps_lat?: number | null
+          start_gps_lng?: number | null
+          start_photo_url?: string | null
+          start_time?: string | null
+          status?: string
+          team_id: string
+          team_leader_id: string
+          total_cost?: number | null
+          total_hours?: number | null
+          updated_at?: string
+          work_date: string
+          workers_actual?: number | null
+          workers_expected?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          contractor_id?: string
+          corporation_id?: string
+          created_at?: string
+          end_gps_lat?: number | null
+          end_gps_lng?: number | null
+          end_photo_url?: string | null
+          end_time?: string | null
+          exception_reason?: string | null
+          frozen_at?: string | null
+          hourly_rate?: number | null
+          id?: string
+          project_id?: string
+          rejection_reason?: string | null
+          start_gps_lat?: number | null
+          start_gps_lng?: number | null
+          start_photo_url?: string | null
+          start_time?: string | null
+          status?: string
+          team_id?: string
+          team_leader_id?: string
+          total_cost?: number | null
+          total_hours?: number | null
+          updated_at?: string
+          work_date?: string
+          workers_actual?: number | null
+          workers_expected?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "project_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -488,6 +687,124 @@ export type Database = {
         }
         Relationships: []
       }
+      project_members: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_teams: {
+        Row: {
+          created_at: string
+          expected_workers: number
+          hourly_rate: number | null
+          id: string
+          name: string
+          project_id: string
+          team_leader_id: string
+        }
+        Insert: {
+          created_at?: string
+          expected_workers?: number
+          hourly_rate?: number | null
+          id?: string
+          name: string
+          project_id: string
+          team_leader_id: string
+        }
+        Update: {
+          created_at?: string
+          expected_workers?: number
+          hourly_rate?: number | null
+          id?: string
+          name?: string
+          project_id?: string
+          team_leader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_teams_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          address: string | null
+          contractor_id: string
+          corporation_id: string
+          created_at: string
+          expected_workers: number
+          hourly_rate: number | null
+          id: string
+          name: string
+          source_award_id: string | null
+          source_request_id: string | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contractor_id: string
+          corporation_id: string
+          created_at?: string
+          expected_workers?: number
+          hourly_rate?: number | null
+          id?: string
+          name: string
+          source_award_id?: string | null
+          source_request_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contractor_id?: string
+          corporation_id?: string
+          created_at?: string
+          expected_workers?: number
+          hourly_rate?: number | null
+          id?: string
+          name?: string
+          source_award_id?: string | null
+          source_request_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           bucket: string
@@ -599,6 +916,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_project_member: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       log_audit: {
         Args: {
           _action: string
@@ -627,7 +948,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "contractor" | "corporation" | "admin"
+      app_role:
+        | "contractor"
+        | "corporation"
+        | "admin"
+        | "team_leader"
+        | "site_manager"
       verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -756,7 +1082,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["contractor", "corporation", "admin"],
+      app_role: [
+        "contractor",
+        "corporation",
+        "admin",
+        "team_leader",
+        "site_manager",
+      ],
       verification_status: ["pending", "approved", "rejected"],
     },
   },
