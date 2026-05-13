@@ -422,6 +422,22 @@ export const listMyTeamLeaderProjects = createServerFn({ method: 'GET' })
     }
   })
 
+export const getLastWorkersCount = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ teamId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context
+    const { data: r } = await supabase
+      .from('attendance_records')
+      .select('workers_actual, work_date')
+      .eq('team_id', data.teamId)
+      .not('workers_actual', 'is', null)
+      .order('work_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return { workers: r?.workers_actual ?? null, date: r?.work_date ?? null }
+  })
+
 export const listContractorAttendance = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
