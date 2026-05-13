@@ -59,36 +59,49 @@ function Home() {
 function Hero() {
   return (
     <section className="relative overflow-hidden">
+      {/* Background image */}
       <div className="absolute inset-0">
-        <img src={heroImg} alt="אתר בנייה" className="h-full w-full object-cover opacity-40" width={1920} height={1080} />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
-        <div className="pointer-events-none absolute -top-32 right-1/3 h-[480px] w-[480px] rounded-full bg-primary/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 left-1/4 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
+        <img src={heroImg} alt="אתר בנייה" className="h-full w-full object-cover opacity-25" width={1920} height={1080} />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/92 to-background" />
       </div>
+      {/* Ambient mesh glows */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 right-[20%] h-[520px] w-[520px] rounded-full bg-primary/25 blur-[120px] animate-pulse" style={{ animationDuration: "6s" }} />
+        <div className="absolute -bottom-32 left-[15%] h-[460px] w-[460px] rounded-full bg-primary/15 blur-[120px] animate-pulse" style={{ animationDuration: "8s", animationDelay: "1s" }} />
+        <div className="absolute top-1/3 left-1/2 h-[380px] w-[380px] -translate-x-1/2 rounded-full bg-primary/10 blur-[140px]" />
+      </div>
+      {/* Subtle grid texture */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+      />
 
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 md:px-6 md:py-28 lg:grid-cols-12 lg:py-36">
         <div className="lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary shadow-elegant animate-fade-in">
-            <Gavel className="h-3.5 w-3.5" />
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary shadow-elegant backdrop-blur-md animate-fade-in">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
             מכרז חי · תאגידים נלחמים על העבודה שלך
           </div>
-          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl animate-fade-in">
+          <h1 className="text-5xl font-black leading-[1.02] tracking-tight md:text-7xl lg:text-8xl animate-fade-in">
             הם נלחמים.<br />
             <span className="text-gradient-primary">אתה מרוויח.</span><br />
-            במחיר הכי נמוך.
+            <span className="opacity-90">במחיר הכי נמוך.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg lg:text-xl">
             פרסם בקשה אחת — תאגידי כוח אדם מאומתים מתחרים על הזכות לעבוד איתך.
             כל הצעה חדשה דוחפת את המחיר למטה. שקיפות מלאה, החלטה אצלך, ללא עמלה לקבלן.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 h-12 px-7 text-base font-semibold">
+            <Button asChild size="lg" className="group relative h-14 overflow-hidden bg-gradient-primary px-8 text-base font-bold text-primary-foreground shadow-[0_0_40px_-8px_hsl(var(--primary)/0.6)] transition-all hover:scale-[1.02] hover:shadow-[0_0_50px_-4px_hsl(var(--primary)/0.8)]">
               <Link to="/new-request">
                 פרסם בקשת כוח אדם
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 border-border bg-card/50 px-7 text-base backdrop-blur hover:bg-card">
+            <Button asChild size="lg" variant="outline" className="h-14 border-border/60 bg-card/40 px-8 text-base font-semibold backdrop-blur-md hover:bg-card/80">
               <Link to="/" hash="how">איך זה עובד</Link>
             </Button>
           </div>
@@ -101,7 +114,11 @@ function Hero() {
 
         {/* Sample request card */}
         <div className="lg:col-span-5">
-          <div className="glass-card relative rounded-2xl p-6 shadow-card ring-1 ring-primary/20 animate-fade-in">
+          <div className="relative">
+            {/* Halo glow */}
+            <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-gradient-to-tr from-primary/30 via-primary/10 to-transparent blur-2xl" />
+            <div className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-b from-primary/40 via-primary/10 to-transparent opacity-60 blur-sm" />
+            <div className="glass-card relative rounded-2xl p-6 shadow-[0_30px_80px_-20px_hsl(var(--primary)/0.35)] ring-1 ring-primary/25 backdrop-blur-2xl animate-fade-in">
             <div className="absolute -top-3 right-6 inline-flex items-center gap-1.5 rounded-full bg-gradient-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-elegant">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
@@ -164,6 +181,7 @@ function Hero() {
                 השוואת הצעות מלאה
               </Link>
             </Button>
+            </div>
           </div>
         </div>
       </div>
