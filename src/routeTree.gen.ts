@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TeamLeaderRouteImport } from './routes/team-leader'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
@@ -25,8 +26,10 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
 import { Route as MyRequestsIdRouteImport } from './routes/my-requests.$id'
+import { Route as LaborSupplierAttendanceRouteImport } from './routes/labor-supplier.attendance'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
+import { Route as ContractorAttendanceRouteImport } from './routes/contractor.attendance'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -34,6 +37,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksCloseExpiredRequestsRouteImport } from './routes/api/public/hooks/close-expired-requests'
+import { Route as ApiPublicHooksAutoApproveAttendanceRouteImport } from './routes/api/public/hooks/auto-approve-attendance'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -43,6 +47,11 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamLeaderRoute = TeamLeaderRouteImport.update({
+  id: '/team-leader',
+  path: '/team-leader',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -115,6 +124,11 @@ const MyRequestsIdRoute = MyRequestsIdRouteImport.update({
   path: '/my-requests/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LaborSupplierAttendanceRoute = LaborSupplierAttendanceRouteImport.update({
+  id: '/labor-supplier/attendance',
+  path: '/labor-supplier/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
@@ -123,6 +137,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
 const CorporationsIdRoute = CorporationsIdRouteImport.update({
   id: '/corporations/$id',
   path: '/corporations/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractorAttendanceRoute = ContractorAttendanceRouteImport.update({
+  id: '/contractor/attendance',
+  path: '/contractor/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
@@ -164,6 +183,12 @@ const ApiPublicHooksCloseExpiredRequestsRoute =
     path: '/api/public/hooks/close-expired-requests',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAutoApproveAttendanceRoute =
+  ApiPublicHooksAutoApproveAttendanceRouteImport.update({
+    id: '/api/public/hooks/auto-approve-attendance',
+    path: '/api/public/hooks/auto-approve-attendance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -178,13 +203,17 @@ export interface FileRoutesByFullPath {
   '/robots.txt': typeof RobotsDottxtRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/team-leader': typeof TeamLeaderRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/contractor/attendance': typeof ContractorAttendanceRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -205,13 +234,17 @@ export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/team-leader': typeof TeamLeaderRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/contractor/attendance': typeof ContractorAttendanceRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -233,13 +266,17 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/team-leader': typeof TeamLeaderRoute
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/contractor/attendance': typeof ContractorAttendanceRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -262,13 +299,17 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/signup'
     | '/sitemap.xml'
+    | '/team-leader'
     | '/terms'
     | '/unsubscribe'
+    | '/contractor/attendance'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -289,13 +330,17 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/signup'
     | '/sitemap.xml'
+    | '/team-leader'
     | '/terms'
     | '/unsubscribe'
+    | '/contractor/attendance'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -316,13 +361,17 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/signup'
     | '/sitemap.xml'
+    | '/team-leader'
     | '/terms'
     | '/unsubscribe'
+    | '/contractor/attendance'
     | '/corporations/$id'
     | '/email/unsubscribe'
+    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -344,13 +393,17 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TeamLeaderRoute: typeof TeamLeaderRoute
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  ContractorAttendanceRoute: typeof ContractorAttendanceRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LaborSupplierAttendanceRoute: typeof LaborSupplierAttendanceRoute
   MyRequestsIdRoute: typeof MyRequestsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksAutoApproveAttendanceRoute: typeof ApiPublicHooksAutoApproveAttendanceRoute
   ApiPublicHooksCloseExpiredRequestsRoute: typeof ApiPublicHooksCloseExpiredRequestsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -373,6 +426,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team-leader': {
+      id: '/team-leader'
+      path: '/team-leader'
+      fullPath: '/team-leader'
+      preLoaderRoute: typeof TeamLeaderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -473,6 +533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyRequestsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/labor-supplier/attendance': {
+      id: '/labor-supplier/attendance'
+      path: '/labor-supplier/attendance'
+      fullPath: '/labor-supplier/attendance'
+      preLoaderRoute: typeof LaborSupplierAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -485,6 +552,13 @@ declare module '@tanstack/react-router' {
       path: '/corporations/$id'
       fullPath: '/corporations/$id'
       preLoaderRoute: typeof CorporationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contractor/attendance': {
+      id: '/contractor/attendance'
+      path: '/contractor/attendance'
+      fullPath: '/contractor/attendance'
+      preLoaderRoute: typeof ContractorAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
@@ -536,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCloseExpiredRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/auto-approve-attendance': {
+      id: '/api/public/hooks/auto-approve-attendance'
+      path: '/api/public/hooks/auto-approve-attendance'
+      fullPath: '/api/public/hooks/auto-approve-attendance'
+      preLoaderRoute: typeof ApiPublicHooksAutoApproveAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -552,13 +633,18 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TeamLeaderRoute: TeamLeaderRoute,
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  ContractorAttendanceRoute: ContractorAttendanceRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LaborSupplierAttendanceRoute: LaborSupplierAttendanceRoute,
   MyRequestsIdRoute: MyRequestsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksAutoApproveAttendanceRoute:
+    ApiPublicHooksAutoApproveAttendanceRoute,
   ApiPublicHooksCloseExpiredRequestsRoute:
     ApiPublicHooksCloseExpiredRequestsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
@@ -570,3 +656,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
