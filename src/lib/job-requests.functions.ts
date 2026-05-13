@@ -190,19 +190,19 @@ export const getJobRequestWithOffers = createServerFn({ method: 'POST' })
 
     const isOwner = req.user_id === userId
 
-    // Contact info now lives in job_request_contacts (RLS protected).
+    // Contact info lives in job_request_contacts (RLS protected).
     // Owners (and winning corps post-award) can read it.
-    let contact: { contact_name: string; contact_phone: string } | null = null
+    let contact_name = ''
+    let contact_phone = ''
     if (isOwner) {
       const { data: c } = await supabaseAdmin
         .from('job_request_contacts')
         .select('contact_name, contact_phone')
         .eq('request_id', data.id)
         .maybeSingle()
-      contact = c ?? null
+      contact_name = c?.contact_name ?? ''
+      contact_phone = c?.contact_phone ?? ''
     }
-    req.contact_name = contact?.contact_name ?? ''
-    req.contact_phone = contact?.contact_phone ?? ''
 
     const [{ data: items }, { data: offers }] = await Promise.all([
       supabaseAdmin.from('job_request_items').select('*').eq('request_id', data.id),
@@ -213,7 +213,19 @@ export const getJobRequestWithOffers = createServerFn({ method: 'POST' })
         .order('price_per_hour', { ascending: true }),
     ])
 
-    return { request: req, items: items ?? [], offers: offers ?? [], isOwner }
+    // Non-owners can only see their own offer (sealed-bid integrity).
+    const allOffers = offers ?? []
+    const visibleOffers = isOwner
+      ? allOffers
+      : allOffers.filter((o) => o.corporation_id === userId)
+
+    return {
+      request: { ...req, contact_name, contact_phone },
+      items: items ?? [],
+      offers: visibleOffers,
+      offers_count: allOffers.length,
+      isOwner,
+    }
   })
 
 export const closeJobRequest = createServerFn({ method: 'POST' })

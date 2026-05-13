@@ -78,6 +78,7 @@ function RequestPage() {
   }
 
   const { request: req, items, offers, isOwner } = data;
+  const offersCount = (data as { offers_count?: number }).offers_count ?? offers.length;
   if (isOwner) return <Shell><div className="py-16 text-center text-sm text-muted-foreground">מעביר ל…</div></Shell>;
 
   const isCorporation = hasRole("corporation");
@@ -129,8 +130,8 @@ function RequestPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
-        <h2 className="text-sm font-bold">סטטוס הצעות ({offers.length})</h2>
-        {offers.length === 0 ? (
+        <h2 className="text-sm font-bold">סטטוס הצעות ({offersCount})</h2>
+        {offersCount === 0 ? (
           <p className="mt-2 text-xs text-muted-foreground">עדיין לא הוגשו הצעות.</p>
         ) : (
           <p className="mt-2 text-xs text-muted-foreground">פרטי ההצעות חסויים — רק מזמין המכרז יכול לראותם.</p>

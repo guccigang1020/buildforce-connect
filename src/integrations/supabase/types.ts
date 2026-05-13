@@ -652,8 +652,6 @@ export type Database = {
         Row: {
           budget: string | null
           commitment_months: string
-          contact_name: string | null
-          contact_phone: string | null
           created_at: string
           deadline_at: string | null
           description: string | null
@@ -668,8 +666,6 @@ export type Database = {
         Insert: {
           budget?: string | null
           commitment_months: string
-          contact_name?: string | null
-          contact_phone?: string | null
           created_at?: string
           deadline_at?: string | null
           description?: string | null
@@ -684,8 +680,6 @@ export type Database = {
         Update: {
           budget?: string | null
           commitment_months?: string
-          contact_name?: string | null
-          contact_phone?: string | null
           created_at?: string
           deadline_at?: string | null
           description?: string | null
@@ -1044,7 +1038,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          business_name: string | null
+          city: string | null
+          company_name: string | null
+          contractor_classification: string | null
+          full_name: string | null
+          is_verified: boolean | null
+          user_id: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          business_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_classification?: string | null
+          full_name?: string | null
+          is_verified?: boolean | null
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Update: {
+          avatar_url?: string | null
+          business_name?: string | null
+          city?: string | null
+          company_name?: string | null
+          contractor_classification?: string | null
+          full_name?: string | null
+          is_verified?: boolean | null
+          user_id?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_rate_limit: {

@@ -664,7 +664,16 @@ export const listProjectTeams = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ projectId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context
+    const { supabase, userId } = context
+    const { data: proj } = await supabase
+      .from('projects')
+      .select('contractor_id, corporation_id')
+      .eq('id', data.projectId)
+      .maybeSingle()
+    const isAdmin = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' })
+    const allowed =
+      !!proj && (proj.contractor_id === userId || proj.corporation_id === userId || isAdmin.data === true)
+    if (!allowed) throw new Error('Unauthorized')
     const { data: teams, error } = await supabase
       .from('project_teams')
       .select('id, name, expected_workers, hourly_rate, team_leader_id, team_leader_name, team_leader_phone')
