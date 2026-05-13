@@ -274,14 +274,14 @@ export const requestCorrection = createServerFn({ method: 'POST' })
       record_id: data.recordId,
       requested_by: userId,
       reason: data.reason,
-      requested_change: data.requestedChange,
+      requested_change: data.requestedChange as never,
     })
     if (error) throw new Error(error.message)
     await supabase.from('attendance_events').insert({
       record_id: data.recordId,
       kind: 'correction_request',
       actor_id: userId,
-      payload: { reason: data.reason, change: data.requestedChange },
+      payload: { reason: data.reason, change: data.requestedChange } as never,
     })
     return { ok: true }
   })
