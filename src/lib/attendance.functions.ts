@@ -445,3 +445,37 @@ export const getMonthlySummary = createServerFn({ method: 'POST' })
     }
     return { records: recs, summary }
   })
+
+// Contractor sets the project site location & geofence radius
+export const setProjectSiteLocation = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      projectId: z.string().uuid(),
+      siteLat: z.number().min(-90).max(90),
+      siteLng: z.number().min(-180).max(180),
+      radiusMeters: z.number().int().min(50).max(2000).default(200),
+      address: z.string().max(500).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context
+    const { data: proj, error: pErr } = await supabase
+      .from('projects')
+      .select('id, contractor_id')
+      .eq('id', data.projectId)
+      .single()
+    if (pErr || !proj) throw new Error('פרויקט לא נמצא')
+    if (proj.contractor_id !== userId) throw new Error('רק הקבלן יכול להגדיר את מיקום האתר')
+    const { error } = await supabase
+      .from('projects')
+      .update({
+        site_lat: data.siteLat,
+        site_lng: data.siteLng,
+        site_radius_meters: data.radiusMeters,
+        ...(data.address ? { address: data.address } : {}),
+      })
+      .eq('id', data.projectId)
+    if (error) throw new Error(error.message)
+    return { ok: true }
+  })
