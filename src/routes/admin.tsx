@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { adminSetVerificationStatus, adminToggleRole, adminGetDocumentUrl } from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteNav } from "@/components/site-nav";
@@ -232,6 +234,9 @@ function ReviewDialog({ profile, roles, onClose, onChange }: { profile: AdminPro
   const [notes, setNotes] = useState(profile.admin_notes ?? "");
   const [busy, setBusy] = useState(false);
   const [docs, setDocs] = useState<{ label: string; url: string | null }[]>([]);
+  const setStatusFn = useServerFn(adminSetVerificationStatus);
+  const toggleRoleFn = useServerFn(adminToggleRole);
+  const getDocUrlFn = useServerFn(adminGetDocumentUrl);
 
   useEffect(() => {
     const load = async () => {
@@ -243,30 +248,29 @@ function ReviewDialog({ profile, roles, onClose, onChange }: { profile: AdminPro
       const resolved = await Promise.all(
         items.map(async (it) => {
           if (!it.path) return { label: it.label, url: null };
-          const { data } = await supabase.storage.from("contractor-docs").createSignedUrl(it.path, 60 * 60);
-          return { label: it.label, url: data?.signedUrl ?? null };
+          try {
+            const res = await getDocUrlFn({ data: { path: it.path } });
+            return { label: it.label, url: res.url };
+          } catch {
+            return { label: it.label, url: null };
+          }
         }),
       );
       setDocs(resolved);
     };
     void load();
-  }, [profile]);
+  }, [profile, getDocUrlFn]);
 
   const setStatus = async (status: "approved" | "rejected") => {
     setBusy(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        verification_status: status,
-        is_verified: status === "approved",
-        admin_notes: notes || null,
-      })
-      .eq("id", profile.id);
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
+    try {
+      await setStatusFn({ data: { profileId: profile.id, status, notes: notes || null } });
+    } catch (e) {
+      setBusy(false);
+      toast.error(e instanceof Error ? e.message : "שגיאה");
       return;
     }
+    setBusy(false);
     if (profile.email) {
       try {
         await sendTransactionalEmail({
@@ -288,12 +292,12 @@ function ReviewDialog({ profile, roles, onClose, onChange }: { profile: AdminPro
 
   const toggleRole = async (role: "corporation" | "admin") => {
     setBusy(true);
-    if (roles.includes(role)) {
-      const { error } = await supabase.from("user_roles").delete().eq("user_id", profile.user_id).eq("role", role);
-      if (error) toast.error(error.message); else toast.success("הוסר תפקיד " + role);
-    } else {
-      const { error } = await supabase.from("user_roles").insert({ user_id: profile.user_id, role });
-      if (error) toast.error(error.message); else toast.success("נוסף תפקיד " + role);
+    const action = roles.includes(role) ? "remove" : "add";
+    try {
+      await toggleRoleFn({ data: { targetUserId: profile.user_id, role, action } });
+      toast.success(action === "add" ? "נוסף תפקיד " + role : "הוסר תפקיד " + role);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "שגיאה");
     }
     setBusy(false);
     onChange();
