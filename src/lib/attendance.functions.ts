@@ -9,6 +9,30 @@ const uploadPhotoSchema = z.object({
   base64: z.string().min(100).max(8_000_000),
 })
 
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+async function assertWithinSite(
+  project: { site_lat: number | null; site_lng: number | null; site_radius_meters: number | null },
+  lat: number,
+  lng: number,
+) {
+  if (project.site_lat == null || project.site_lng == null) {
+    throw new Error('הקבלן עדיין לא הגדיר את מיקום האתר. לא ניתן לפתוח/לסגור יום עבודה.')
+  }
+  const radius = project.site_radius_meters ?? 200
+  const dist = haversineMeters(Number(project.site_lat), Number(project.site_lng), lat, lng)
+  if (dist > radius) {
+    throw new Error(`אתה ${Math.round(dist)} מטר מהאתר. נדרש להיות בתוך ${radius} מטר מהאתר כדי לרשום נוכחות.`)
+  }
+}
+
 async function uploadPhoto(recordId: string, kind: string, base64: string): Promise<string> {
   const { data: rec } = await supabaseAdmin
     .from('attendance_records')
@@ -40,12 +64,13 @@ export const startWorkday = createServerFn({ method: 'POST' })
     const { supabase, userId } = context
     const { data: team, error: tErr } = await supabase
       .from('project_teams')
-      .select('id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id)')
+      .select('id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id, site_lat, site_lng, site_radius_meters)')
       .eq('id', data.teamId)
       .single()
     if (tErr || !team) throw new Error('צוות לא נמצא')
     if (team.team_leader_id !== userId) throw new Error('רק ראש הצוות יכול לפתוח יום עבודה')
-    const proj = team.projects as { contractor_id: string; corporation_id: string }
+    const proj = team.projects as { contractor_id: string; corporation_id: string; site_lat: number | null; site_lng: number | null; site_radius_meters: number | null }
+    await assertWithinSite(proj, data.gpsLat, data.gpsLng)
     const today = new Date().toISOString().slice(0, 10)
 
     // upsert pending record
@@ -119,13 +144,14 @@ export const endWorkday = createServerFn({ method: 'POST' })
     const { supabase, userId } = context
     const { data: rec } = await supabase
       .from('attendance_records')
-      .select('id, team_leader_id, end_time, frozen_at')
+      .select('id, team_leader_id, end_time, frozen_at, project_id, projects:project_id(site_lat, site_lng, site_radius_meters)')
       .eq('id', data.recordId)
       .single()
     if (!rec) throw new Error('רשומה לא נמצאה')
     if (rec.team_leader_id !== userId) throw new Error('Unauthorized')
     if (rec.frozen_at) throw new Error('הרשומה הוקפאה')
     if (rec.end_time) throw new Error('יום העבודה כבר נסגר')
+    await assertWithinSite(rec.projects as { site_lat: number | null; site_lng: number | null; site_radius_meters: number | null }, data.gpsLat, data.gpsLng)
 
     const photoPath = await uploadPhoto(data.recordId, 'end', data.photoBase64)
     const now = new Date().toISOString()
@@ -418,4 +444,38 @@ export const getMonthlySummary = createServerFn({ method: 'POST' })
       totalHours: recs.reduce((s, r) => s + Number(r.total_hours || 0), 0),
     }
     return { records: recs, summary }
+  })
+
+// Contractor sets the project site location & geofence radius
+export const setProjectSiteLocation = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      projectId: z.string().uuid(),
+      siteLat: z.number().min(-90).max(90),
+      siteLng: z.number().min(-180).max(180),
+      radiusMeters: z.number().int().min(50).max(2000).default(200),
+      address: z.string().max(500).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context
+    const { data: proj, error: pErr } = await supabase
+      .from('projects')
+      .select('id, contractor_id')
+      .eq('id', data.projectId)
+      .single()
+    if (pErr || !proj) throw new Error('פרויקט לא נמצא')
+    if (proj.contractor_id !== userId) throw new Error('רק הקבלן יכול להגדיר את מיקום האתר')
+    const { error } = await supabase
+      .from('projects')
+      .update({
+        site_lat: data.siteLat,
+        site_lng: data.siteLng,
+        site_radius_meters: data.radiusMeters,
+        ...(data.address ? { address: data.address } : {}),
+      })
+      .eq('id', data.projectId)
+    if (error) throw new Error(error.message)
+    return { ok: true }
   })
