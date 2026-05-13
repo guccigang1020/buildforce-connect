@@ -44,10 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("user_roles").select("role").eq("user_id", uid),
       ]);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Failed to load auth profile", profileError);
+      } else {
+        setProfile((prof as Profile | null) ?? null);
+      }
+
       if (rolesError) throw rolesError;
 
-      setProfile((prof as Profile | null) ?? null);
       setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
     } catch (error) {
       console.error("Failed to load auth user data", error);
