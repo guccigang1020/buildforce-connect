@@ -34,6 +34,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksCloseExpiredRequestsRouteImport } from './routes/api/public/hooks/close-expired-requests'
+import { Route as ApiPublicHooksAutoApproveAttendanceRouteImport } from './routes/api/public/hooks/auto-approve-attendance'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -164,6 +165,12 @@ const ApiPublicHooksCloseExpiredRequestsRoute =
     path: '/api/public/hooks/close-expired-requests',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAutoApproveAttendanceRoute =
+  ApiPublicHooksAutoApproveAttendanceRouteImport.update({
+    id: '/api/public/hooks/auto-approve-attendance',
+    path: '/api/public/hooks/auto-approve-attendance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -240,6 +249,7 @@ export interface FileRoutesById {
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -323,6 +335,7 @@ export interface FileRouteTypes {
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
+    | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -351,6 +364,7 @@ export interface RootRouteChildren {
   MyRequestsIdRoute: typeof MyRequestsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksAutoApproveAttendanceRoute: typeof ApiPublicHooksAutoApproveAttendanceRoute
   ApiPublicHooksCloseExpiredRequestsRoute: typeof ApiPublicHooksCloseExpiredRequestsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -536,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCloseExpiredRequestsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/auto-approve-attendance': {
+      id: '/api/public/hooks/auto-approve-attendance'
+      path: '/api/public/hooks/auto-approve-attendance'
+      fullPath: '/api/public/hooks/auto-approve-attendance'
+      preLoaderRoute: typeof ApiPublicHooksAutoApproveAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -559,6 +580,8 @@ const rootRouteChildren: RootRouteChildren = {
   MyRequestsIdRoute: MyRequestsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksAutoApproveAttendanceRoute:
+    ApiPublicHooksAutoApproveAttendanceRoute,
   ApiPublicHooksCloseExpiredRequestsRoute:
     ApiPublicHooksCloseExpiredRequestsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
@@ -570,3 +593,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
