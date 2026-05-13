@@ -149,10 +149,16 @@ export type Database = {
           end_gps_lng: number | null
           end_photo_url: string | null
           end_time: string | null
+          entry_approved_at: string | null
+          entry_approved_by: string | null
+          entry_rejection_reason: string | null
           exception_at: string | null
           exception_note: string | null
           exception_reason: string | null
           exception_reported_by: string | null
+          exit_approved_at: string | null
+          exit_approved_by: string | null
+          exit_rejection_reason: string | null
           frozen_at: string | null
           hourly_rate: number | null
           id: string
@@ -182,10 +188,16 @@ export type Database = {
           end_gps_lng?: number | null
           end_photo_url?: string | null
           end_time?: string | null
+          entry_approved_at?: string | null
+          entry_approved_by?: string | null
+          entry_rejection_reason?: string | null
           exception_at?: string | null
           exception_note?: string | null
           exception_reason?: string | null
           exception_reported_by?: string | null
+          exit_approved_at?: string | null
+          exit_approved_by?: string | null
+          exit_rejection_reason?: string | null
           frozen_at?: string | null
           hourly_rate?: number | null
           id?: string
@@ -215,10 +227,16 @@ export type Database = {
           end_gps_lng?: number | null
           end_photo_url?: string | null
           end_time?: string | null
+          entry_approved_at?: string | null
+          entry_approved_by?: string | null
+          entry_rejection_reason?: string | null
           exception_at?: string | null
           exception_note?: string | null
           exception_reason?: string | null
           exception_reported_by?: string | null
+          exit_approved_at?: string | null
+          exit_approved_by?: string | null
+          exit_rejection_reason?: string | null
           frozen_at?: string | null
           hourly_rate?: number | null
           id?: string
@@ -907,6 +925,54 @@ export type Database = {
           kind?: string
           request_id?: string
           sent_at?: string
+        }
+        Relationships: []
+      }
+      sms_notifications: {
+        Row: {
+          body: string
+          channel: string
+          error: string | null
+          id: string
+          kind: string
+          payload: Json | null
+          provider: string | null
+          provider_message_id: string | null
+          recipient_phone: string
+          recipient_role: string
+          record_id: string
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          body: string
+          channel: string
+          error?: string | null
+          id?: string
+          kind: string
+          payload?: Json | null
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_phone: string
+          recipient_role: string
+          record_id: string
+          sent_at?: string
+          status?: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          payload?: Json | null
+          provider?: string | null
+          provider_message_id?: string | null
+          recipient_phone?: string
+          recipient_role?: string
+          record_id?: string
+          sent_at?: string
+          status?: string
         }
         Relationships: []
       }
