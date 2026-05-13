@@ -136,7 +136,7 @@ export const awardOffer = createServerFn({ method: 'POST' })
 
     const { data: req, error: rErr } = await supabase
       .from('job_requests')
-      .select('id, user_id, location, start_date, contact_name, contact_phone, status')
+      .select('id, user_id, location, start_date, status')
       .eq('id', offer.request_id)
       .single()
     if (rErr || !req) throw new Error('בקשה לא נמצאה')
