@@ -79,10 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "פלטפורמה פרימיום למכרזי כוח אדם בבנייה. קבלנים ויזמים מקבלים הצעות מתאגידי כוח אדם מאומתים תוך שעות." },
       { name: "author", content: "BuildForce" },
       { property: "og:title", content: "BuildForce — שוק כוח האדם החכם לענף הבנייה" },
-      { property: "og:description", content: "מכרזי כוח אדם מאומתים לקבלנים ויזמים בישראל." },
+      { property: "og:description", content: "פלטפורמה פרימיום למכרזי כוח אדם בבנייה. קבלנים ויזמים מקבלים הצעות מתאגידי כוח אדם מאומתים תוך שעות." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "BuildForce — שוק כוח האדם החכם לענף הבנייה" },
+      { name: "twitter:description", content: "פלטפורמה פרימיום למכרזי כוח אדם בבנייה. קבלנים ויזמים מקבלים הצעות מתאגידי כוח אדם מאומתים תוך שעות." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4589d039-f74a-49cf-9d8b-4411e7a10939/id-preview-d8f52fa4--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app-1778699461679.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4589d039-f74a-49cf-9d8b-4411e7a10939/id-preview-d8f52fa4--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app-1778699461679.png" },
     ],
     links: [
       {
