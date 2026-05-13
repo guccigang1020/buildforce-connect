@@ -37,6 +37,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksContractorDailyReminderRouteImport } from './routes/api/public/hooks/contractor-daily-reminder'
 import { Route as ApiPublicHooksCloseExpiredRequestsRouteImport } from './routes/api/public/hooks/close-expired-requests'
 import { Route as ApiPublicHooksAutoApproveAttendanceRouteImport } from './routes/api/public/hooks/auto-approve-attendance'
 
@@ -183,6 +184,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksContractorDailyReminderRoute =
+  ApiPublicHooksContractorDailyReminderRouteImport.update({
+    id: '/api/public/hooks/contractor-daily-reminder',
+    path: '/api/public/hooks/contractor-daily-reminder',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCloseExpiredRequestsRoute =
   ApiPublicHooksCloseExpiredRequestsRouteImport.update({
     id: '/api/public/hooks/close-expired-requests',
@@ -222,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
+  '/api/public/hooks/contractor-daily-reminder': typeof ApiPublicHooksContractorDailyReminderRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -254,6 +262,7 @@ export interface FileRoutesByTo {
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
+  '/api/public/hooks/contractor-daily-reminder': typeof ApiPublicHooksContractorDailyReminderRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -287,6 +296,7 @@ export interface FileRoutesById {
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
+  '/api/public/hooks/contractor-daily-reminder': typeof ApiPublicHooksContractorDailyReminderRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/lovable/email/suppression'
     | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
+    | '/api/public/hooks/contractor-daily-reminder'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/lovable/email/suppression'
     | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
+    | '/api/public/hooks/contractor-daily-reminder'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -385,6 +397,7 @@ export interface FileRouteTypes {
     | '/lovable/email/suppression'
     | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
+    | '/api/public/hooks/contractor-daily-reminder'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -418,6 +431,7 @@ export interface RootRouteChildren {
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksAutoApproveAttendanceRoute: typeof ApiPublicHooksAutoApproveAttendanceRoute
   ApiPublicHooksCloseExpiredRequestsRoute: typeof ApiPublicHooksCloseExpiredRequestsRoute
+  ApiPublicHooksContractorDailyReminderRoute: typeof ApiPublicHooksContractorDailyReminderRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -623,6 +637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/contractor-daily-reminder': {
+      id: '/api/public/hooks/contractor-daily-reminder'
+      path: '/api/public/hooks/contractor-daily-reminder'
+      fullPath: '/api/public/hooks/contractor-daily-reminder'
+      preLoaderRoute: typeof ApiPublicHooksContractorDailyReminderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/close-expired-requests': {
       id: '/api/public/hooks/close-expired-requests'
       path: '/api/public/hooks/close-expired-requests'
@@ -668,6 +689,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksAutoApproveAttendanceRoute,
   ApiPublicHooksCloseExpiredRequestsRoute:
     ApiPublicHooksCloseExpiredRequestsRoute,
+  ApiPublicHooksContractorDailyReminderRoute:
+    ApiPublicHooksContractorDailyReminderRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

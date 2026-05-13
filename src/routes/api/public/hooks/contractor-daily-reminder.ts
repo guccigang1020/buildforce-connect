@@ -29,7 +29,14 @@ export const Route = createFileRoute('/api/public/hooks/contractor-daily-reminde
           byContractor.set(r.contractor_id, arr)
         }
 
-        const inserts: Array<Record<string, unknown>> = []
+        const inserts: Array<{
+          record_id: string
+          kind: string
+          channel: string
+          recipient_phone: string
+          recipient_role: string
+          payload: Record<string, unknown>
+        }> = []
         for (const [, recs] of byContractor) {
           const head = recs[0]
           const phone = (head.projects as { site_manager_phone?: string | null } | null)?.site_manager_phone ?? ''
