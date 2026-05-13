@@ -36,6 +36,28 @@ export const sendJobMessage = createServerFn({ method: 'POST' })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context
 
+    // Verify caller belongs to this conversation:
+    // either the request owner OR the corporation themselves (with an offer).
+    const { data: req } = await supabase
+      .from('job_requests')
+      .select('user_id')
+      .eq('id', data.requestId)
+      .maybeSingle()
+    const isOwner = req?.user_id === userId
+    const isCorp = userId === data.corporationId
+    if (!isOwner && !isCorp) {
+      throw new Error('אין לך הרשאה לשלוח הודעות בשיחה זו')
+    }
+    if (isCorp) {
+      const { data: offer } = await supabase
+        .from('job_offers')
+        .select('id')
+        .eq('request_id', data.requestId)
+        .eq('corporation_id', userId)
+        .maybeSingle()
+      if (!offer) throw new Error('יש להגיש הצעה לפני שליחת הודעות')
+    }
+
     // Block contact details until an award exists for this request.
     const { data: award } = await supabase
       .from('job_awards')
@@ -72,7 +94,18 @@ export const listJobMessages = createServerFn({ method: 'POST' })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context
+    const { supabase, userId } = context
+    // Verify membership before returning a private thread.
+    const { data: req } = await supabase
+      .from('job_requests')
+      .select('user_id')
+      .eq('id', data.requestId)
+      .maybeSingle()
+    const isOwner = req?.user_id === userId
+    const isCorp = userId === data.corporationId
+    if (!isOwner && !isCorp) {
+      throw new Error('אין לך הרשאה לצפות בשיחה זו')
+    }
     const { data: messages, error } = await supabase
       .from('job_request_messages')
       .select('*')
