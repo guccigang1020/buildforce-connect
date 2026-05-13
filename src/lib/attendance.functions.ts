@@ -538,6 +538,8 @@ export const setProjectSiteLocation = createServerFn({ method: 'POST' })
       siteLng: z.number().min(-180).max(180),
       radiusMeters: z.number().int().min(50).max(2000).default(200),
       address: z.string().max(500).optional(),
+      siteManagerName: z.string().min(2).max(120).optional(),
+      siteManagerPhone: z.string().min(8).max(20).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -556,8 +558,81 @@ export const setProjectSiteLocation = createServerFn({ method: 'POST' })
         site_lng: data.siteLng,
         site_radius_meters: data.radiusMeters,
         ...(data.address ? { address: data.address } : {}),
+        ...(data.siteManagerName ? { site_manager_name: data.siteManagerName } : {}),
+        ...(data.siteManagerPhone ? { site_manager_phone: data.siteManagerPhone } : {}),
       })
       .eq('id', data.projectId)
     if (error) throw new Error(error.message)
     return { ok: true }
+  })
+
+// Contractor lists own projects (for setup screen)
+export const listContractorProjects = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name, address, status, site_lat, site_lng, site_radius_meters, site_manager_name, site_manager_phone, start_date')
+      .eq('contractor_id', userId)
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return { projects: data ?? [] }
+  })
+
+// Contractor adds/updates a team with team-leader phone
+export const upsertProjectTeam = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      teamId: z.string().uuid().optional(),
+      projectId: z.string().uuid(),
+      name: z.string().min(2).max(120),
+      teamLeaderName: z.string().min(2).max(120),
+      teamLeaderPhone: z.string().min(8).max(20),
+      teamLeaderUserId: z.string().uuid(),
+      expectedWorkers: z.number().int().min(1).max(500),
+      hourlyRate: z.number().min(0).max(10000),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context
+    const { data: proj } = await supabase
+      .from('projects')
+      .select('id, contractor_id')
+      .eq('id', data.projectId)
+      .single()
+    if (!proj || proj.contractor_id !== userId) throw new Error('Unauthorized')
+    const payload = {
+      project_id: data.projectId,
+      name: data.name,
+      team_leader_id: data.teamLeaderUserId,
+      team_leader_name: data.teamLeaderName,
+      team_leader_phone: data.teamLeaderPhone,
+      expected_workers: data.expectedWorkers,
+      hourly_rate: data.hourlyRate,
+    }
+    if (data.teamId) {
+      const { error } = await supabase.from('project_teams').update(payload).eq('id', data.teamId)
+      if (error) throw new Error(error.message)
+      return { id: data.teamId }
+    }
+    const { data: created, error } = await supabase.from('project_teams').insert(payload).select('id').single()
+    if (error || !created) throw new Error(error?.message || 'שגיאה')
+    return { id: created.id }
+  })
+
+// Contractor lists teams for a project
+export const listProjectTeams = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ projectId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context
+    const { data: teams, error } = await supabase
+      .from('project_teams')
+      .select('id, name, expected_workers, hourly_rate, team_leader_id, team_leader_name, team_leader_phone')
+      .eq('project_id', data.projectId)
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return { teams: teams ?? [] }
   })
