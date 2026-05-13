@@ -1,113 +1,74 @@
-# מערכת נוכחות ואישורים יומיים — BuildForce
 
-הוספת מודול שלם של נוכחות, אישורים יומיים ודוחות חודשיים על בסיס הפלטפורמה הקיימת. נבנה ב-3 שלבים כדי לעלות לאוויר מהר ובאיכות.
+# בדיקה מקיפה — תוצאות
 
----
+✅ **תקין**: Cloud פעיל, אין שגיאות runtime, מבנה DB תקין (4 משתמשים, 4 פרופילים, 1 מכרז, 3 הצעות), כל המסכים נבנים ללא שגיאות, RLS מופעל על כל הטבלאות.
 
-## שלב 1 — תשתית נתונים וליבת זרימה (MVP פעיל)
-
-### טבלאות חדשות (Lovable Cloud)
-- `projects` — פרויקט חי שנוצר אוטומטית אחרי בחירת זוכה במכרז: שם, כתובת, קבלן, תאגיד, תאריך התחלה, סטטוס (active/paused/completed), כמות עובדים מתוכננת.
-- `project_teams` — צוות בפרויקט: שם צוות, מנהל צוות (team_leader user_id), כמות עובדים מתוכננת, מחיר לשעה.
-- `project_members` — שיוך משתמשים לפרויקט עם תפקיד (`site_manager`, `team_leader`).
-- `attendance_records` — רשומה יומית אחת לכל צוות: project_id, team_id, date, workers_expected, workers_actual, start_time, end_time, status (`pending`, `approved`, `auto_approved`, `exception`, `rejected`, `correction_requested`), approved_by, approved_at, frozen_at.
-- `attendance_events` — timeline של אירועים: סוג (start/end/exception/approval/correction), photo_url, gps_lat/lng, timestamp, actor_id, payload.
-- `attendance_corrections` — בקשות תיקון אחרי הקפאה: reason, requested_change, status, decided_by.
-- `attendance_audit` — לוג בלתי-משתנה לכל שינוי סטטוס.
-- תפקיד חדש ב-`app_role`: `team_leader`, `site_manager`.
-
-### Storage
-- bucket `attendance-photos` (פרטי). כל קובץ תחת `{project_id}/{date}/{team_id}/{event_id}.jpg`.
-
-### RLS
-- קבלן רואה רשומות של הפרויקטים שלו בלבד.
-- תאגיד רואה רשומות של הצוותים שלו.
-- ראש צוות רואה את הרשומות שהוא יצר.
-- אדמין רואה הכל.
-- אחרי `frozen_at` — אין UPDATE על הרשומה (rule בטריגר), רק דרך `attendance_corrections`.
-
-### Cron + Server Functions
-- `auto-approve-attendance` (cron כל 15 דק') — סוגר אוטומטית רשומות שעברו את ה-timeout (ברירת מחדל 4 שעות מהשליחה) → `auto_approved`.
-- `freeze-end-of-day` (cron יומי 23:59) — מקפיא רשומות שאושרו.
-- `nightly-daily-summary` — בונה כרטיסי סיכום יומי.
+❌ **נמצאו 28 ממצאים** (8 קריטיים, 9 אזהרות, השאר אינפורמטיביים).
 
 ---
 
-## שלב 2 — חוויית משתמש מובייל-first
+# הפלאן: לתקן את 8 הבעיות הקריטיות
 
-### מסכי ראש צוות (`/team-leader`)
-- כפתור ענק **"התחל יום עבודה"** — פותח מצלמה חיה (`<input type="file" capture="environment">` נעול ל-camera, ללא גלריה), בוחר כמות עובדים, שולח GPS אוטומטי.
-- ווטרמרק על התמונה: שם פרויקט / תאריך / שעה / GPS — נצרב ב-Canvas לפני העלאה.
-- כפתור **"סיים יום עבודה"** באותו אופן.
-- כפתור **"דווח חריגה"** — 6 כפתורים גדולים בלבד (יצא מוקדם / עזב חלקי / היעדרות / חצי יום / איחור / אחר).
-- תור offline ב-IndexedDB: אם אין רשת, שומר ושולח ברגע שחוזרת (`navigator.onLine` + service worker basic).
+## 1. 🔴 חסר רישום middleware — כל server functions שבורות פוטנציאלית
+`src/start.ts` לא רושם את `attachSupabaseAuth` כ-`functionMiddleware`. בלי זה — כל קריאה מהדפדפן לפונקציה מוגנת יוצאת ללא Bearer token ונופלת ב-401.
+**תיקון**: הוספת `functionMiddleware: [attachSupabaseAuth]` ל-`createStart`.
 
-### דשבורד קבלן (`/contractor`)
-- כרטיס "היום": צוותים פעילים, ממתינים לאישור, חריגות.
-- כפתור **"אשר הכל"** — אישור גורף.
-- אישור בודד עם תצוגת תמונה ומפה.
-- סיכום עלות יומית/חודשית.
-- רשימת פרויקטים פעילים.
+## 2. 🔴 חשיפת פרטי קשר במכרזים
+שדות `contact_name` ו-`contact_phone` בטבלת `job_requests` נראים לכל תאגיד שמגיש הצעה — מאפשר לעקוף את הפלטפורמה.
+**תיקון**: העברת השדות לטבלה נפרדת `job_request_contacts` שנגישה רק אחרי זכייה (RLS על `job_awards`).
 
-### דשבורד תאגיד (`/labor-supplier`)
-- צוותים פעילים היום, אישורים שהתקבלו, חריגות, ימי עבודה מאושרים, סיכום מוכן-לחשבונית.
+## 3. 🔴 חשיפת שדות רגישים בפרופיל
+`admin_notes`, `business_id`, `contractor_license_number`, מסמכים — נחשפים לצד הנגדי במכרז.
+**תיקון**: יצירת view `public_profiles` ללא השדות הרגישים, ועדכון RLS לחשוף רק אותו לצדדים נגדיים.
 
-### עיצוב
-- Mobile-first, RTL, כפתורים גדולים (h-16+), צבעי סטטוס: ירוק/צהוב/אדום/אפור.
-- שפות: עברית עכשיו, מבנה i18n מוכן ל-EN/AR/RU בעתיד.
+## 4. 🔴 שני endpoints ציבוריים ללא אימות
+- `/api/public/hooks/auto-approve-attendance` — תוקף יכול לאשר אוטומטית את כל רשומות הנוכחות.
+- `/api/public/hooks/contractor-daily-reminder` — תוקף יכול להציף את טבלת ההתראות.
+**תיקון**: הוספת בדיקת `Bearer token` עם `timingSafeEqual` (זהה לדפוס ב-`close-expired-requests.ts`).
 
----
+## 5. 🔴 הזרקת הודעות בצ'אט המכרז
+`sendJobMessage` ו-`listJobMessages` מקבלים `corporationId` מהלקוח ללא אימות שייכות. כל משתמש מאומת יכול לשלוח הודעות בשם תאגיד אחר ולקרוא שיחות פרטיות.
+**תיקון**: וידוא ב-server שה-`userId` שייך ל-`corporationId` או הוא בעל ה-request.
 
-## שלב 3 — דוחות, התראות, התחברות לפלטפורמה
+## 6. 🔴 חשיפת רשומות נוכחות + תמונות חתומות
+`getAttendanceRecord` מחזיר רשומה מלאה + Signed URLs לכל משתמש מאומת ללא בדיקת בעלות.
+`requestCorrection` מאפשר לכל משתמש להגיש בקשת תיקון על כל רשומה.
+**תיקון**: הוספת בדיקת `userId === team_leader_id|contractor_id|corporation_id` לפני החזרת/עדכון נתונים.
 
-- **דוח חודשי PDF + Excel** (server fn): פרויקט, קבלן, תאגיד, צוות, ימים מאושרים/חצאי/חריגות, סך עלות.
-- **התראות חכמות**: תזכורת בוקר אם לא נפתח יום עד 09:00, תזכורת ערב אם לא נסגר עד 18:00, התראת חריגה מיידית — דרך תור המייל הקיים + מייל אחד מאוחד ביום (לא ספאם).
-- **חיבור לזכייה במכרז**: trigger על `job_awards` יוצר אוטומטית `project` + `project_team` + משייך את הקבלן והתאגיד. דשבורד הקבלן הקיים יציג כרטיס "פרויקט פעיל חדש" עם כניסה למודול הנוכחות.
-- **Audit Trail**: שימוש ב-`audit_log` הקיים (כבר נבנה) לכל פעולת אישור/דחייה/תיקון.
+## 7. 🔴 מדיניות Storage שבורות
+שתי מדיניויות (`Parties read attendance photos`, `Team leader uploads`) משתמשות ב-`storage.foldername(p.name)` במקום ב-`storage.objects.name` — הבדיקה כמעט תמיד תיכשל ותחסום גישה לגיטימית.
+**תיקון**: עדכון המדיניויות לחלץ מהנתיב של הקובץ עצמו.
 
----
-
-## עקרונות שלא מתפשרים
-
-- ראש צוות חייב מצלמה חיה — `capture="environment"` + ולידציה ב-server שיש GPS ו-EXIF סביר.
-- אחרי הקפאה → רק דרך `correction_request`.
-- שני הצדדים תמיד רואים את אותה הרשומה (single source of truth).
-- כל פעולה ≤ 5 שניות, כפתור אחד.
+## 8. 🔴 Realtime פתוח לכל המשתמשים
+`attendance_records` ו-`attendance_events` משודרים ב-Realtime ללא RLS על `realtime.messages` — כל משתמש מאומת יכול להאזין לרשומות נוכחות של אחרים.
+**תיקון**: RLS על `realtime.messages` שמגביל לפי project membership.
 
 ---
 
-## טכני (לסקירה מהירה)
+# בעיות חמורות (warn) — מומלץ אך לא חוסם השקה
+
+- 🟡 פאנל אדמין מסתמך על בדיקה client-side בלבד (פעולות בטוחות בזכות RLS אבל עדיף server fn).
+- 🟡 `corporation_workforce`, `job_request_items`, `job_ratings` נראים לכל משתמש מאומת.
+- 🟡 `recipient_phone` בהתראות SMS/in-app נחשף לכל הצדדים ברשומה.
+
+אטפל בהם בסבב נפרד אחרי ההשקה אם תרצה.
+
+---
+
+# סדר ביצוע (אחרי אישור)
 
 ```text
-Routes חדשים:
-  /team-leader           → start/end day, exceptions
-  /team-leader/$projectId
-  /contractor/attendance → daily approvals
-  /labor-supplier/attendance
-  /reports/$projectId    → monthly PDF/Excel
-  api/public/hooks/auto-approve-attendance
-  api/public/hooks/freeze-end-of-day
-
-Server functions:
-  startWorkday, endWorkday, reportException
-  approveAttendance, approveAllPending, rejectAttendance
-  requestCorrection, decideCorrection
-  generateMonthlyReport (pdf + xlsx)
-
-Tech:
-  - exif-js / canvas watermark
-  - jsPDF + sheetjs (כבר במערכת לחלקם)
-  - IndexedDB queue ל-offline (idb-keyval)
-  - שדרוג service worker ל-background-sync
+1. מיגרציה אחת מאוחדת:
+   - העברת contact_name/phone לטבלה נפרדת + RLS
+   - יצירת public_profiles view + RLS
+   - תיקון 2 storage policies
+   - RLS על realtime.messages
+2. עדכון src/start.ts — רישום attachSupabaseAuth
+3. עדכון 2 endpoints ציבוריים — בדיקת Bearer
+4. עדכון job-messages.functions.ts — אימות שייכות
+5. עדכון attendance.functions.ts — getAttendanceRecord + requestCorrection
+6. הרצת בדיקת אבטחה חוזרת לוודא 0 errors
+7. SMS4Free (כשתסיים למלא את הסודות)
 ```
 
----
-
-## מה אבנה עכשיו (בסבב הבא, אם תאשר)
-
-1. כל הסכמה (טבלאות + RLS + triggers + storage bucket).
-2. שלוש זרימות הליבה: `startWorkday`, `endWorkday`, `approveAttendance` + auto-approve cron.
-3. שלושה מסכים: ראש צוות, דשבורד קבלן (אישורים יומיים), דשבורד תאגיד.
-4. דוח חודשי PDF (Excel בסבב 2).
-
-תגיד "אשר תוכנית" ואני יוצא לדרך — סבב ראשון יסתיים בכך שתוכל באמת להריץ יום עבודה שלם מקצה לקצה במצב דמו.
+זמן משוער: 15–20 דקות עבודה רצופה. אחרי האישור שלך — נכנסים לבנייה.
