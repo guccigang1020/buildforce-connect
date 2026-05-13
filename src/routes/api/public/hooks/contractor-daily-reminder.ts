@@ -49,7 +49,7 @@ export const Route = createFileRoute('/api/public/hooks/contractor-daily-reminde
             payload: { count: recs.length, work_date: today, record_ids: recs.map((r) => r.id) },
           })
         }
-        await supabaseAdmin.from('attendance_notifications').insert(inserts)
+        await supabaseAdmin.from('attendance_notifications').insert(inserts as never)
         return Response.json({ ok: true, sent: inserts.length, contractors: byContractor.size })
       },
     },
