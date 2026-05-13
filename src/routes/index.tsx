@@ -5,6 +5,7 @@ import {
   ShieldCheck, Zap, Star, ArrowLeft, CheckCircle2, Mail,
   Users, Clock, TrendingUp, BadgeCheck, Lock, FileCheck2, Headphones,
   TrendingDown, Gavel, Trophy, MapPin, Camera, ClipboardCheck, Smile,
+  Eye, MessageCircle, FileBarChart, HardHat, Briefcase, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
@@ -43,6 +44,7 @@ function Home() {
       <HowItWorks />
       <PlatformShowcase />
       <SiteAttendance />
+      <PeaceOfMind />
       <Categories />
       <WhyTrust />
       <Corporations />
