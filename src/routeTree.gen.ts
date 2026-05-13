@@ -29,6 +29,7 @@ import { Route as MyRequestsIdRouteImport } from './routes/my-requests.$id'
 import { Route as LaborSupplierAttendanceRouteImport } from './routes/labor-supplier.attendance'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
+import { Route as ContractorProjectsRouteImport } from './routes/contractor.projects'
 import { Route as ContractorAttendanceRouteImport } from './routes/contractor.attendance'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -139,6 +140,11 @@ const CorporationsIdRoute = CorporationsIdRouteImport.update({
   path: '/corporations/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContractorProjectsRoute = ContractorProjectsRouteImport.update({
+  id: '/contractor/projects',
+  path: '/contractor/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContractorAttendanceRoute = ContractorAttendanceRouteImport.update({
   id: '/contractor/attendance',
   path: '/contractor/attendance',
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/contractor/attendance': typeof ContractorAttendanceRoute
+  '/contractor/projects': typeof ContractorProjectsRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/contractor/attendance': typeof ContractorAttendanceRoute
+  '/contractor/projects': typeof ContractorProjectsRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/contractor/attendance': typeof ContractorAttendanceRoute
+  '/contractor/projects': typeof ContractorProjectsRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/unsubscribe'
     | '/contractor/attendance'
+    | '/contractor/projects'
     | '/corporations/$id'
     | '/email/unsubscribe'
     | '/labor-supplier/attendance'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/unsubscribe'
     | '/contractor/attendance'
+    | '/contractor/projects'
     | '/corporations/$id'
     | '/email/unsubscribe'
     | '/labor-supplier/attendance'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/unsubscribe'
     | '/contractor/attendance'
+    | '/contractor/projects'
     | '/corporations/$id'
     | '/email/unsubscribe'
     | '/labor-supplier/attendance'
@@ -397,6 +409,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   ContractorAttendanceRoute: typeof ContractorAttendanceRoute
+  ContractorProjectsRoute: typeof ContractorProjectsRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LaborSupplierAttendanceRoute: typeof LaborSupplierAttendanceRoute
@@ -554,6 +567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorporationsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contractor/projects': {
+      id: '/contractor/projects'
+      path: '/contractor/projects'
+      fullPath: '/contractor/projects'
+      preLoaderRoute: typeof ContractorProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contractor/attendance': {
       id: '/contractor/attendance'
       path: '/contractor/attendance'
@@ -637,6 +657,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   ContractorAttendanceRoute: ContractorAttendanceRoute,
+  ContractorProjectsRoute: ContractorProjectsRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LaborSupplierAttendanceRoute: LaborSupplierAttendanceRoute,
