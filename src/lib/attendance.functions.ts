@@ -9,6 +9,30 @@ const uploadPhotoSchema = z.object({
   base64: z.string().min(100).max(8_000_000),
 })
 
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+async function assertWithinSite(
+  project: { site_lat: number | null; site_lng: number | null; site_radius_meters: number | null },
+  lat: number,
+  lng: number,
+) {
+  if (project.site_lat == null || project.site_lng == null) {
+    throw new Error('הקבלן עדיין לא הגדיר את מיקום האתר. לא ניתן לפתוח/לסגור יום עבודה.')
+  }
+  const radius = project.site_radius_meters ?? 200
+  const dist = haversineMeters(Number(project.site_lat), Number(project.site_lng), lat, lng)
+  if (dist > radius) {
+    throw new Error(`אתה ${Math.round(dist)} מטר מהאתר. נדרש להיות בתוך ${radius} מטר מהאתר כדי לרשום נוכחות.`)
+  }
+}
+
 async function uploadPhoto(recordId: string, kind: string, base64: string): Promise<string> {
   const { data: rec } = await supabaseAdmin
     .from('attendance_records')
