@@ -39,12 +39,18 @@ export const createJobRequest = createServerFn({ method: 'POST' })
         commitment_months: data.commitmentMonths,
         budget: data.budget || null,
         description: data.description || null,
-        contact_name: data.contactName,
-        contact_phone: data.contactPhone,
       })
       .select('id')
       .single()
     if (reqErr || !req) throw new Error(reqErr?.message || 'Failed to create request')
+
+    // Store sensitive contact info in a separate table; only owner + winning corp can read.
+    const { error: cErr } = await supabase.from('job_request_contacts').insert({
+      request_id: req.id,
+      contact_name: data.contactName,
+      contact_phone: data.contactPhone,
+    })
+    if (cErr) throw new Error(cErr.message)
 
     const itemsPayload = data.items.map((it) => ({
       request_id: req.id,
@@ -184,11 +190,19 @@ export const getJobRequestWithOffers = createServerFn({ method: 'POST' })
 
     const isOwner = req.user_id === userId
 
-    // Only owners (and admins, via separate admin tooling) can see contact info
-    if (!isOwner) {
-      req.contact_name = ''
-      req.contact_phone = ''
+    // Contact info now lives in job_request_contacts (RLS protected).
+    // Owners (and winning corps post-award) can read it.
+    let contact: { contact_name: string; contact_phone: string } | null = null
+    if (isOwner) {
+      const { data: c } = await supabaseAdmin
+        .from('job_request_contacts')
+        .select('contact_name, contact_phone')
+        .eq('request_id', data.id)
+        .maybeSingle()
+      contact = c ?? null
     }
+    req.contact_name = contact?.contact_name ?? ''
+    req.contact_phone = contact?.contact_phone ?? ''
 
     const [{ data: items }, { data: offers }] = await Promise.all([
       supabaseAdmin.from('job_request_items').select('*').eq('request_id', data.id),

@@ -154,6 +154,13 @@ export const awardOffer = createServerFn({ method: 'POST' })
       })
     if (awErr) throw new Error(awErr.message)
 
+    // Fetch contact info from the dedicated table for the award notification.
+    const { data: contact } = await supabaseAdmin
+      .from('job_request_contacts')
+      .select('contact_name, contact_phone')
+      .eq('request_id', req.id)
+      .maybeSingle()
+
     // Get all corp emails (winner + losers)
     const { data: allOffers } = await supabaseAdmin
       .from('job_offers')
@@ -176,8 +183,8 @@ export const awardOffer = createServerFn({ method: 'POST' })
             recipientEmail: email,
             idempotencyKey: `offer-awarded-${o.id}`,
             templateData: {
-              contactName: req.contact_name,
-              contactPhone: req.contact_phone,
+              contactName: contact?.contact_name ?? '',
+              contactPhone: contact?.contact_phone ?? '',
               location: req.location,
               startDate: req.start_date,
               requestId: req.id,
