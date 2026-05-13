@@ -105,6 +105,39 @@ export type Database = {
           },
         ]
       }
+      attendance_notifications: {
+        Row: {
+          channel: string
+          id: string
+          kind: string
+          payload: Json | null
+          recipient_phone: string
+          recipient_role: string
+          record_id: string
+          sent_at: string
+        }
+        Insert: {
+          channel?: string
+          id?: string
+          kind: string
+          payload?: Json | null
+          recipient_phone: string
+          recipient_role: string
+          record_id: string
+          sent_at?: string
+        }
+        Update: {
+          channel?: string
+          id?: string
+          kind?: string
+          payload?: Json | null
+          recipient_phone?: string
+          recipient_role?: string
+          record_id?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           approved_at: string | null
@@ -116,7 +149,10 @@ export type Database = {
           end_gps_lng: number | null
           end_photo_url: string | null
           end_time: string | null
+          exception_at: string | null
+          exception_note: string | null
           exception_reason: string | null
+          exception_reported_by: string | null
           frozen_at: string | null
           hourly_rate: number | null
           id: string
@@ -146,7 +182,10 @@ export type Database = {
           end_gps_lng?: number | null
           end_photo_url?: string | null
           end_time?: string | null
+          exception_at?: string | null
+          exception_note?: string | null
           exception_reason?: string | null
+          exception_reported_by?: string | null
           frozen_at?: string | null
           hourly_rate?: number | null
           id?: string
@@ -176,7 +215,10 @@ export type Database = {
           end_gps_lng?: number | null
           end_photo_url?: string | null
           end_time?: string | null
+          exception_at?: string | null
+          exception_note?: string | null
           exception_reason?: string | null
+          exception_reported_by?: string | null
           frozen_at?: string | null
           hourly_rate?: number | null
           id?: string
@@ -728,6 +770,8 @@ export type Database = {
           name: string
           project_id: string
           team_leader_id: string
+          team_leader_name: string | null
+          team_leader_phone: string | null
         }
         Insert: {
           created_at?: string
@@ -737,6 +781,8 @@ export type Database = {
           name: string
           project_id: string
           team_leader_id: string
+          team_leader_name?: string | null
+          team_leader_phone?: string | null
         }
         Update: {
           created_at?: string
@@ -746,6 +792,8 @@ export type Database = {
           name?: string
           project_id?: string
           team_leader_id?: string
+          team_leader_name?: string | null
+          team_leader_phone?: string | null
         }
         Relationships: [
           {
@@ -769,6 +817,8 @@ export type Database = {
           name: string
           site_lat: number | null
           site_lng: number | null
+          site_manager_name: string | null
+          site_manager_phone: string | null
           site_radius_meters: number
           source_award_id: string | null
           source_request_id: string | null
@@ -787,6 +837,8 @@ export type Database = {
           name: string
           site_lat?: number | null
           site_lng?: number | null
+          site_manager_name?: string | null
+          site_manager_phone?: string | null
           site_radius_meters?: number
           source_award_id?: string | null
           source_request_id?: string | null
@@ -805,6 +857,8 @@ export type Database = {
           name?: string
           site_lat?: number | null
           site_lng?: number | null
+          site_manager_name?: string | null
+          site_manager_phone?: string | null
           site_radius_meters?: number
           source_award_id?: string | null
           source_request_id?: string | null

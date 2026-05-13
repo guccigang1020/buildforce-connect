@@ -55,11 +55,13 @@ function TeamCard({ team, onChange }: { team: any; onChange: () => void }) {
       const gps = await getGps()
       const dataUrl = await watermarkImage(file, { project: team.projects?.name ?? '', gps })
       if (mode === 'start') {
-        await startFn({ data: { teamId: team.id, workersActual: workers, gpsLat: gps.lat, gpsLng: gps.lng, photoBase64: dataUrl } })
+        const r = await startFn({ data: { teamId: team.id, workersActual: workers, gpsLat: gps.lat, gpsLng: gps.lng, photoBase64: dataUrl } })
         toast.success('יום העבודה נפתח')
+        if (r?.notify) window.open(r.notify, '_blank')
       } else if (mode === 'end' && today?.id) {
-        await endFn({ data: { recordId: today.id, gpsLat: gps.lat, gpsLng: gps.lng, photoBase64: dataUrl } })
+        const r = await endFn({ data: { recordId: today.id, gpsLat: gps.lat, gpsLng: gps.lng, photoBase64: dataUrl } })
         toast.success('יום העבודה נסגר ונשלח לאישור')
+        if (r?.notify) window.open(r.notify, '_blank')
       }
       qc.invalidateQueries({ queryKey: ['tl-teams'] })
       onChange()
@@ -126,7 +128,9 @@ function TeamCard({ team, onChange }: { team: any; onChange: () => void }) {
       )}
       {today?.end_time && <p className="text-sm text-muted-foreground">יום העבודה הסתיים — ממתין לאישור הקבלן.</p>}
 
+      {/* Live camera only — capture forces device camera, no gallery on mobile */}
       <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+      <p className="text-[11px] text-muted-foreground">📸 חובה לצלם את כל הפועלים + עצמך באתר. תמונה מהגלריה לא תתקבל.</p>
     </Card>
   )
 }

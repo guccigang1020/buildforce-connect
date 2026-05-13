@@ -3,11 +3,35 @@ import { z } from 'zod'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 
-const uploadPhotoSchema = z.object({
-  recordId: z.string().uuid(),
-  kind: z.enum(['start', 'end']),
-  base64: z.string().min(100).max(8_000_000),
-})
+function cleanPhone(p?: string | null): string | null {
+  if (!p) return null
+  const d = p.replace(/\D/g, '')
+  if (d.length < 8) return null
+  // assume IL local 0XXXXXXXXX → 972XXXXXXXXX
+  if (d.startsWith('0')) return '972' + d.slice(1)
+  return d
+}
+
+function waLink(phone: string, text: string): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+}
+
+async function logNotification(
+  recordId: string,
+  kind: string,
+  recipientPhone: string,
+  recipientRole: string,
+  payload: Record<string, unknown>,
+) {
+  await supabaseAdmin.from('attendance_notifications').insert({
+    record_id: recordId,
+    kind,
+    channel: 'whatsapp',
+    recipient_phone: recipientPhone,
+    recipient_role: recipientRole,
+    payload: payload as never,
+  })
+}
 
 function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000
@@ -127,7 +151,20 @@ export const startWorkday = createServerFn({ method: 'POST' })
       payload: { workers: data.workersActual },
     })
 
-    return { recordId, photoPath }
+    // Notify site manager
+    const { data: pj } = await supabaseAdmin
+      .from('projects')
+      .select('name, site_manager_phone, site_manager_name')
+      .eq('id', team.project_id)
+      .single()
+    let waUrl: string | null = null
+    const phone = cleanPhone(pj?.site_manager_phone)
+    if (phone) {
+      const text = `🟢 פתיחת יום עבודה — ${pj?.name ?? ''}\nצוות: ${(team as { name?: string }).name ?? ''}\nעובדים שהגיעו: ${data.workersActual}/${team.expected_workers}\nשעה: ${new Date().toLocaleString('he-IL')}\n\nכנס לאשר: ${process.env.SITE_URL ?? 'https://buildforce.app'}/contractor/attendance`
+      waUrl = waLink(phone, text)
+      await logNotification(recordId!, 'start', phone, 'site_manager', { workers: data.workersActual })
+    }
+    return { recordId, photoPath, notify: waUrl }
   })
 
 export const endWorkday = createServerFn({ method: 'POST' })
@@ -172,7 +209,21 @@ export const endWorkday = createServerFn({ method: 'POST' })
       gps_lat: data.gpsLat,
       gps_lng: data.gpsLng,
     })
-    return { ok: true }
+    // notify site manager to approve
+    const { data: full } = await supabaseAdmin
+      .from('attendance_records')
+      .select('id, project_id, projects:project_id(name, site_manager_phone)')
+      .eq('id', data.recordId)
+      .single()
+    let waUrl: string | null = null
+    const proj = (full?.projects ?? null) as { name?: string; site_manager_phone?: string | null } | null
+    const phone = cleanPhone(proj?.site_manager_phone)
+    if (phone) {
+      const text = `🔴 סיום יום עבודה — ${proj?.name ?? ''}\nשעה: ${new Date().toLocaleString('he-IL')}\n\nכנס לאשר: ${process.env.SITE_URL ?? 'https://buildforce.app'}/contractor/attendance`
+      waUrl = waLink(phone, text)
+      await logNotification(data.recordId, 'end', phone, 'site_manager', {})
+    }
+    return { ok: true, notify: waUrl }
   })
 
 export const reportException = createServerFn({ method: 'POST' })
@@ -188,15 +239,24 @@ export const reportException = createServerFn({ method: 'POST' })
     const { supabase, userId } = context
     const { data: rec } = await supabase
       .from('attendance_records')
-      .select('id, team_leader_id, frozen_at')
+      .select('id, team_leader_id, contractor_id, frozen_at, project_id')
       .eq('id', data.recordId)
       .single()
     if (!rec) throw new Error('רשומה לא נמצאה')
-    if (rec.team_leader_id !== userId) throw new Error('Unauthorized')
+    // Both team leader AND site manager (contractor) can report mid-day exceptions
+    if (rec.team_leader_id !== userId && rec.contractor_id !== userId) {
+      throw new Error('רק ראש הצוות או מנהל האתר יכולים לדווח חריגה')
+    }
     if (rec.frozen_at) throw new Error('הרשומה הוקפאה')
     await supabase
       .from('attendance_records')
-      .update({ status: 'exception', exception_reason: data.reason })
+      .update({
+        status: 'exception',
+        exception_reason: data.reason,
+        exception_reported_by: userId,
+        exception_note: data.note ?? null,
+        exception_at: new Date().toISOString(),
+      })
       .eq('id', data.recordId)
     await supabase.from('attendance_events').insert({
       record_id: data.recordId,
@@ -204,7 +264,29 @@ export const reportException = createServerFn({ method: 'POST' })
       actor_id: userId,
       payload: { reason: data.reason, note: data.note ?? null },
     })
-    return { ok: true }
+    // Notify the OTHER party
+    const { data: pj } = await supabaseAdmin
+      .from('projects')
+      .select('name, site_manager_phone')
+      .eq('id', rec.project_id)
+      .single()
+    const { data: tm } = await supabaseAdmin
+      .from('project_teams')
+      .select('team_leader_phone, name')
+      .eq('id', (await supabaseAdmin.from('attendance_records').select('team_id').eq('id', data.recordId).single()).data?.team_id ?? '')
+      .maybeSingle()
+    let waUrl: string | null = null
+    // If site manager reported → notify team leader; else notify site manager
+    const targetPhone = userId === rec.contractor_id
+      ? cleanPhone(tm?.team_leader_phone)
+      : cleanPhone(pj?.site_manager_phone)
+    const targetRole = userId === rec.contractor_id ? 'team_leader' : 'site_manager'
+    if (targetPhone) {
+      const text = `⚠️ חריגה דווחה — ${pj?.name ?? ''}${tm?.name ? ` · ${tm.name}` : ''}\nסיבה: ${data.reason}${data.note ? `\nהערה: ${data.note}` : ''}\nשעה: ${new Date().toLocaleString('he-IL')}\n\nנדרש אישור: ${process.env.SITE_URL ?? 'https://buildforce.app'}/contractor/attendance`
+      waUrl = waLink(targetPhone, text)
+      await logNotification(data.recordId, 'exception', targetPhone, targetRole, { reason: data.reason })
+    }
+    return { ok: true, notify: waUrl }
   })
 
 export const approveAttendance = createServerFn({ method: 'POST' })
@@ -456,6 +538,8 @@ export const setProjectSiteLocation = createServerFn({ method: 'POST' })
       siteLng: z.number().min(-180).max(180),
       radiusMeters: z.number().int().min(50).max(2000).default(200),
       address: z.string().max(500).optional(),
+      siteManagerName: z.string().min(2).max(120).optional(),
+      siteManagerPhone: z.string().min(8).max(20).optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -474,8 +558,81 @@ export const setProjectSiteLocation = createServerFn({ method: 'POST' })
         site_lng: data.siteLng,
         site_radius_meters: data.radiusMeters,
         ...(data.address ? { address: data.address } : {}),
+        ...(data.siteManagerName ? { site_manager_name: data.siteManagerName } : {}),
+        ...(data.siteManagerPhone ? { site_manager_phone: data.siteManagerPhone } : {}),
       })
       .eq('id', data.projectId)
     if (error) throw new Error(error.message)
     return { ok: true }
+  })
+
+// Contractor lists own projects (for setup screen)
+export const listContractorProjects = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name, address, status, site_lat, site_lng, site_radius_meters, site_manager_name, site_manager_phone, start_date')
+      .eq('contractor_id', userId)
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return { projects: data ?? [] }
+  })
+
+// Contractor adds/updates a team with team-leader phone
+export const upsertProjectTeam = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      teamId: z.string().uuid().optional(),
+      projectId: z.string().uuid(),
+      name: z.string().min(2).max(120),
+      teamLeaderName: z.string().min(2).max(120),
+      teamLeaderPhone: z.string().min(8).max(20),
+      teamLeaderUserId: z.string().uuid(),
+      expectedWorkers: z.number().int().min(1).max(500),
+      hourlyRate: z.number().min(0).max(10000),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context
+    const { data: proj } = await supabase
+      .from('projects')
+      .select('id, contractor_id')
+      .eq('id', data.projectId)
+      .single()
+    if (!proj || proj.contractor_id !== userId) throw new Error('Unauthorized')
+    const payload = {
+      project_id: data.projectId,
+      name: data.name,
+      team_leader_id: data.teamLeaderUserId,
+      team_leader_name: data.teamLeaderName,
+      team_leader_phone: data.teamLeaderPhone,
+      expected_workers: data.expectedWorkers,
+      hourly_rate: data.hourlyRate,
+    }
+    if (data.teamId) {
+      const { error } = await supabase.from('project_teams').update(payload).eq('id', data.teamId)
+      if (error) throw new Error(error.message)
+      return { id: data.teamId }
+    }
+    const { data: created, error } = await supabase.from('project_teams').insert(payload).select('id').single()
+    if (error || !created) throw new Error(error?.message || 'שגיאה')
+    return { id: created.id }
+  })
+
+// Contractor lists teams for a project
+export const listProjectTeams = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ projectId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context
+    const { data: teams, error } = await supabase
+      .from('project_teams')
+      .select('id, name, expected_workers, hourly_rate, team_leader_id, team_leader_name, team_leader_phone')
+      .eq('project_id', data.projectId)
+      .order('created_at', { ascending: false })
+    if (error) throw new Error(error.message)
+    return { teams: teams ?? [] }
   })

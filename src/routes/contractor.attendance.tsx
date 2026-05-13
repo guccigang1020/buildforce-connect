@@ -1,8 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { listContractorAttendance, approveAttendance, approveAllPending } from '@/lib/attendance.functions'
+import { listContractorAttendance, approveAttendance, approveAllPending, rejectAttendance, reportException } from '@/lib/attendance.functions'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
@@ -24,13 +25,18 @@ function Page() {
   const list = useServerFn(listContractorAttendance)
   const approve = useServerFn(approveAttendance)
   const approveAll = useServerFn(approveAllPending)
+  const reject = useServerFn(rejectAttendance)
+  const exc = useServerFn(reportException)
   const { data, refetch } = useQuery({ queryKey: ['contractor-att'], queryFn: () => list({ data: {} }) })
   const records = data?.records ?? []
   const pending = records.filter((r: any) => (r.status === 'pending' || r.status === 'exception') && r.end_time)
 
   return (
     <div dir="rtl" className="min-h-screen bg-background p-4 md:p-8 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">נוכחות היום</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-2xl font-bold">נוכחות היום</h1>
+        <Link to="/contractor/projects"><Button variant="outline" size="sm">⚙️ הגדרת פרויקטים</Button></Link>
+      </div>
       <p className="text-muted-foreground mb-4">{records.length} צוותים · {pending.length} ממתינים לאישור</p>
       {pending.length > 0 && (
         <Button size="lg" className="mb-4 h-14 w-full md:w-auto" onClick={async () => {
@@ -52,19 +58,63 @@ function Page() {
                     {r.total_hours && ` · ${r.total_hours} שעות`}
                     {r.total_cost && ` · ₪${Number(r.total_cost).toLocaleString()}`}
                   </div>
-                  {r.exception_reason && <div className="text-orange-600 text-sm mt-1">חריגה: {r.exception_reason}</div>}
+                  {r.exception_reason && <div className="text-orange-600 text-sm mt-1">חריגה: {r.exception_reason}{r.exception_note ? ` — ${r.exception_note}` : ''}</div>}
                 </div>
                 <span className="px-2 py-1 rounded text-xs font-medium text-white" style={{ background: s.bg }}>{s.label}</span>
               </div>
-              {(r.status === 'pending' || r.status === 'exception') && r.end_time && !r.frozen_at && (
-                <Button size="sm" className="mt-3" onClick={async () => {
-                  await approve({ data: { recordId: r.id } }); toast.success('אושר'); refetch()
-                }}>אשר</Button>
+              {!r.frozen_at && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {(r.status === 'pending' || r.status === 'exception') && r.end_time && (
+                    <>
+                      <Button size="sm" onClick={async () => {
+                        await approve({ data: { recordId: r.id } }); toast.success('אושר'); refetch()
+                      }}>✅ אשר</Button>
+                      <Button size="sm" variant="destructive" onClick={async () => {
+                        const reason = window.prompt('סיבת דחייה?') ?? ''
+                        if (reason.length < 3) return
+                        await reject({ data: { recordId: r.id, reason } }); toast.success('נדחה'); refetch()
+                      }}>❌ דחה</Button>
+                    </>
+                  )}
+                  {r.start_time && !r.end_time && (
+                    <ReportExceptionInline recordId={r.id} onDone={refetch} fn={exc} />
+                  )}
+                </div>
               )}
             </Card>
           )
         })}
         {records.length === 0 && <p className="text-muted-foreground">אין רשומות נוכחות להיום.</p>}
+      </div>
+    </div>
+  )
+}
+
+function ReportExceptionInline({ recordId, onDone, fn }: { recordId: string; onDone: () => void; fn: any }) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState<'left_early' | 'partial_left' | 'absent' | 'half_day' | 'late' | 'other'>('partial_left')
+  const [note, setNote] = useState('')
+  if (!open) return <Button size="sm" variant="outline" onClick={() => setOpen(true)}>⚠️ דווח חריגה</Button>
+  return (
+    <div className="w-full border rounded p-2 space-y-2 bg-muted/30">
+      <select value={reason} onChange={(e) => setReason(e.target.value as never)} className="w-full h-10 rounded border px-2">
+        <option value="partial_left">חלק מהצוות עזב</option>
+        <option value="left_early">כל הצוות עזב מוקדם</option>
+        <option value="absent">לא הגיעו</option>
+        <option value="half_day">חצי יום</option>
+        <option value="late">איחור</option>
+        <option value="other">אחר</option>
+      </select>
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="הסבר מה קרה ומתי" className="w-full rounded border p-2 text-sm" rows={2} />
+      <div className="flex gap-2">
+        <Button size="sm" onClick={async () => {
+          if (note.trim().length < 3) return toast.error('יש להסביר מה קרה')
+          const r = await fn({ data: { recordId, reason, note } })
+          toast.success('חריגה דווחה')
+          if (r?.notify) window.open(r.notify, '_blank')
+          setOpen(false); onDone()
+        }}>שלח</Button>
+        <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>בטל</Button>
       </div>
     </div>
   )
