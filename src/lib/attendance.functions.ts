@@ -378,6 +378,20 @@ export const requestCorrection = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context
+    // Verify caller is associated with this attendance record.
+    const { data: rec } = await supabase
+      .from('attendance_records')
+      .select('contractor_id, corporation_id, team_leader_id')
+      .eq('id', data.recordId)
+      .maybeSingle()
+    if (!rec) throw new Error('רשומה לא נמצאה')
+    if (
+      rec.contractor_id !== userId &&
+      rec.corporation_id !== userId &&
+      rec.team_leader_id !== userId
+    ) {
+      throw new Error('אין לך הרשאה לבקש תיקון לרשומה זו')
+    }
     const { error } = await supabase.from('attendance_corrections').insert({
       record_id: data.recordId,
       requested_by: userId,
@@ -480,13 +494,20 @@ export const getAttendanceRecord = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ recordId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context
+    const { supabase, userId } = context
     const { data: rec } = await supabase
       .from('attendance_records')
       .select('*, project_teams:team_id(name), projects:project_id(name, address)')
       .eq('id', data.recordId)
       .single()
     if (!rec) throw new Error('רשומה לא נמצאה')
+    if (
+      rec.contractor_id !== userId &&
+      rec.corporation_id !== userId &&
+      rec.team_leader_id !== userId
+    ) {
+      throw new Error('אין לך הרשאה לצפות ברשומה זו')
+    }
     const { data: events } = await supabase
       .from('attendance_events')
       .select('*')

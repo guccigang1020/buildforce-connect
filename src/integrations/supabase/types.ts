@@ -557,6 +557,27 @@ export type Database = {
         }
         Relationships: []
       }
+      job_request_contacts: {
+        Row: {
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          request_id: string
+        }
+        Insert: {
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          request_id: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          request_id?: string
+        }
+        Relationships: []
+      }
       job_request_items: {
         Row: {
           count: number
@@ -631,8 +652,8 @@ export type Database = {
         Row: {
           budget: string | null
           commitment_months: string
-          contact_name: string
-          contact_phone: string
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           deadline_at: string | null
           description: string | null
@@ -647,8 +668,8 @@ export type Database = {
         Insert: {
           budget?: string | null
           commitment_months: string
-          contact_name: string
-          contact_phone: string
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           deadline_at?: string | null
           description?: string | null
@@ -663,8 +684,8 @@ export type Database = {
         Update: {
           budget?: string | null
           commitment_months?: string
-          contact_name?: string
-          contact_phone?: string
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           deadline_at?: string | null
           description?: string | null
