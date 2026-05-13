@@ -4,7 +4,7 @@ import {
   Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, ArrowLeft, CheckCircle2, Mail,
   Users, Clock, TrendingUp, BadgeCheck, Lock, FileCheck2, Headphones,
-  TrendingDown, Gavel, Trophy,
+  TrendingDown, Gavel, Trophy, MapPin, Camera, ClipboardCheck, Smile,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
@@ -42,6 +42,7 @@ function Home() {
       <CompetitionAdvantage />
       <HowItWorks />
       <PlatformShowcase />
+      <SiteAttendance />
       <Categories />
       <WhyTrust />
       <Corporations />
