@@ -1,5 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { timingSafeEqual } from 'crypto'
+
+function isAuthorized(request: Request): boolean {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) return false
+  const token = authHeader.slice('Bearer '.length).trim()
+  const expected = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!expected || !token) return false
+  const a = Buffer.from(token)
+  const b = Buffer.from(expected)
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
+}
 
 // Daily 15:00 reminder: for every contractor with pending/exception records
 // (end_time submitted but not approved), log a reminder notification row.
@@ -8,7 +21,10 @@ import { supabaseAdmin } from '@/integrations/supabase/client.server'
 export const Route = createFileRoute('/api/public/hooks/contractor-daily-reminder')({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        if (!isAuthorized(request)) {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
         const today = new Date().toISOString().slice(0, 10)
         const { data: rows, error } = await supabaseAdmin
           .from('attendance_records')
