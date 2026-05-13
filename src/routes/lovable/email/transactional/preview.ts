@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { render as renderAsync } from '@react-email/components'
 import { createFileRoute } from '@tanstack/react-router'
+import { timingSafeEqual } from 'crypto'
 import { TEMPLATES } from '@/lib/email-templates/registry'
 
 // Renders all registered templates with their previewData.
@@ -20,8 +21,10 @@ export const Route = createFileRoute("/lovable/email/transactional/preview")({
 
         // Verify the caller is authorized with LOVABLE_API_KEY
         const authHeader = request.headers.get('Authorization')
-        const token = authHeader?.replace(/^Bearer\s+/i, '')
-        if (token !== apiKey) {
+        const token = authHeader?.replace(/^Bearer\s+/i, '') ?? ''
+        const a = Buffer.from(token)
+        const b = Buffer.from(apiKey)
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
