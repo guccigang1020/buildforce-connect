@@ -86,6 +86,11 @@ export function SiteNav() {
             <div className="mt-2 grid grid-cols-2 gap-2">
               {session ? (
                 <>
+                  {hasRole("admin") && (
+                    <Button variant="outline" asChild onClick={() => setOpen(false)} className="col-span-2">
+                      <Link to="/admin"><ShieldCheck className="me-1 h-4 w-4" /> אדמין</Link>
+                    </Button>
+                  )}
                   <Button variant="outline" asChild onClick={() => setOpen(false)}>
                     <Link to="/dashboard"><User className="me-1 h-4 w-4" /> דשבורד</Link>
                   </Button>
