@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
   Plus, Search, MapPin, Calendar, Users, Briefcase, Clock,
-  Trophy, CheckCircle2, XCircle, Loader2, Inbox, ArrowLeft,
+  Trophy, CheckCircle2, XCircle, Loader2, Inbox, ArrowLeft, ShieldCheck,
   TrendingUp, Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { listMyJobRequests } from "@/lib/job-requests.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 type MyRequest = {
   id: string;
@@ -48,11 +49,13 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
+  const { hasRole } = useAuth();
   const fetchMine = useServerFn(listMyJobRequests);
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-requests"],
     queryFn: () => fetchMine({ data: {} as never }),
   });
+  const isAdmin = hasRole("admin");
 
   const requests = (data?.requests ?? []) as MyRequest[];
   const [filter, setFilter] = useState<StatusFilter>("all");
@@ -83,7 +86,14 @@ function DashboardPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-primary">לוח בקרה</div>
-            <h1 className="mt-1 text-3xl font-extrabold tracking-tight md:text-4xl">הבקשות שלי</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">הבקשות שלי</h1>
+              {isAdmin && (
+                <Badge variant="outline" className="border-primary/50 text-primary">
+                  <ShieldCheck className="ms-1 h-3.5 w-3.5" /> מנהל מערכת
+                </Badge>
+              )}
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
               עקוב אחרי כל בקשות העבודה שפרסמת, ההצעות שהתקבלו וסטטוס הזכיות.
             </p>
