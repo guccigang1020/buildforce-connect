@@ -3,12 +3,14 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { HardHat, Menu, X, LogOut, LayoutDashboard, User, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const { session, profile, signOut, hasRole } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = hasRole("admin");
 
   const links = [
     { label: "איך זה עובד", to: "/" as const, hash: "how" },
@@ -45,7 +47,12 @@ export function SiteNav() {
         <div className="hidden items-center gap-3 md:flex">
           {session ? (
             <>
-              {hasRole("admin") && (
+              {isAdmin && (
+                <Badge variant="outline" className="border-primary/50 text-primary">
+                  <ShieldCheck className="ms-1 h-3.5 w-3.5" /> מנהל מערכת
+                </Badge>
+              )}
+              {isAdmin && (
                 <Button variant="ghost" size="sm" asChild className="gap-2">
                   <Link to="/admin"><ShieldCheck className="h-4 w-4" /> אדמין</Link>
                 </Button>
@@ -86,7 +93,15 @@ export function SiteNav() {
             <div className="mt-2 grid grid-cols-2 gap-2">
               {session ? (
                 <>
-                  {hasRole("admin") && (
+                  {isAdmin && (
+                    <div className="col-span-2 flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+                      <span className="font-medium text-foreground">{profile?.full_name ?? profile?.user_id ?? "החשבון שלי"}</span>
+                      <Badge variant="outline" className="border-primary/50 text-primary">
+                        <ShieldCheck className="ms-1 h-3.5 w-3.5" /> מנהל מערכת
+                      </Badge>
+                    </div>
+                  )}
+                  {isAdmin && (
                     <Button variant="outline" asChild onClick={() => setOpen(false)} className="col-span-2">
                       <Link to="/admin"><ShieldCheck className="me-1 h-4 w-4" /> אדמין</Link>
                     </Button>
