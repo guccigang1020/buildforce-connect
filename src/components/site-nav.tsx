@@ -36,6 +36,13 @@ export function SiteNav() {
             Build<span className="text-primary">Force</span>
           </span>
         </Link>
+        {session && isAdmin && (
+          <Button variant="ghost" size="icon" asChild className="md:hidden">
+            <Link to="/admin" aria-label="אזור אדמין">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+            </Link>
+          </Button>
+        )}
         <nav className="hidden items-center gap-7 md:flex">
           {links.map((l) => (
             <Link key={l.label} to={l.to} hash={l.hash}
