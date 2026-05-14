@@ -28,6 +28,8 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -38,28 +40,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const background = options?.background ?? false;
     if (!background) setLoading(true);
 
+    let lastError: unknown = null;
+
     try {
-      const [{ data: prof, error: profileError }, { data: roleRows, error: rolesError }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", uid),
-      ]);
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        const [{ data: prof, error: profileError }, { data: roleRows, error: rolesError }] = await Promise.all([
+          supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", uid),
+        ]);
 
-      if (profileError) {
-        console.error("Failed to load auth profile", profileError);
-      } else {
-        setProfile((prof as Profile | null) ?? null);
-      }
+        if (!profileError) {
+          setProfile((prof as Profile | null) ?? null);
+        } else {
+          console.error("Failed to load auth profile", profileError);
+        }
 
-      if (rolesError) throw rolesError;
+        if (!rolesError) {
+          setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
+          return;
+        }
 
-      setRoles(((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role));
-    } catch (error) {
-      console.error("Failed to load auth user data", error);
-      if (!background) {
-        setProfile(null);
-        setRoles([]);
+        lastError = rolesError;
+        console.error(`Failed to load auth roles (attempt ${attempt})`, rolesError);
+
+        if (attempt < 3) {
+          await wait(250 * attempt);
+        }
       }
     } finally {
+      if (lastError && !background) {
+        console.error("Failed to load auth user data", lastError);
+      }
       if (!background) setLoading(false);
     }
   }, []);
