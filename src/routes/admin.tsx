@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat } from "lucide-react";
+import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { adminSetVerificationStatus, adminToggleRole, adminGetDocumentUrl } from "@/lib/admin.functions";
@@ -155,15 +155,18 @@ function AdminDashboard() {
               <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
               <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
               <TabsTrigger value="all">הכל ({stats.total})</TabsTrigger>
+              <TabsTrigger value="activity"><Activity className="me-1 h-3.5 w-3.5" /> פעולות</TabsTrigger>
             </TabsList>
           </Tabs>
-          <div className="relative w-full md:w-72">
+          <div className={`relative w-full md:w-72 ${tab === "activity" ? "invisible" : ""}`}>
             <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="חיפוש לפי שם / ח.פ / רישיון..." className="pr-10" />
           </div>
         </div>
 
-        {isLoading ? (
+        {tab === "activity" ? (
+          <ActivityLog />
+        ) : isLoading ? (
           <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
           <Card className="p-12 text-center text-muted-foreground">אין משתמשים בקטגוריה זו</Card>
@@ -176,6 +179,62 @@ function AdminDashboard() {
         )}
       </main>
     </div>
+  );
+}
+
+type AuditEntry = {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  actor_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+function ActivityLog() {
+  const { data: entries = [], isLoading } = useQuery({
+    queryKey: ["admin-audit-log"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("audit_log")
+        .select("id, action, entity_type, entity_id, actor_id, metadata, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data ?? []) as AuditEntry[];
+    },
+  });
+
+  if (isLoading) {
+    return <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+  if (entries.length === 0) {
+    return <Card className="p-12 text-center text-muted-foreground">אין פעולות להצגה</Card>;
+  }
+
+  return (
+    <Card className="divide-y divide-border/60">
+      {entries.map((e) => (
+        <div key={e.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="font-mono text-xs">{e.action}</Badge>
+              <span className="text-sm text-muted-foreground">{e.entity_type}</span>
+              {e.entity_id && <span className="font-mono text-xs text-muted-foreground">#{e.entity_id.slice(0, 8)}</span>}
+            </div>
+            {e.metadata && Object.keys(e.metadata).length > 0 && (
+              <pre className="mt-2 max-h-32 overflow-auto rounded-md bg-muted/40 p-2 text-xs text-muted-foreground" dir="ltr">
+                {JSON.stringify(e.metadata, null, 2)}
+              </pre>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground whitespace-nowrap">
+            {new Date(e.created_at).toLocaleString("he-IL")}
+          </div>
+        </div>
+      ))}
+    </Card>
   );
 }
 
