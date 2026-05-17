@@ -42,7 +42,7 @@ type AdminProfile = {
 };
 
 function AdminPage() {
-  const { session, loading } = useAuth();
+  const { session, loading, hasRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,7 +52,7 @@ function AdminPage() {
     }
   }, [loading, session, navigate]);
 
-  if (!session || loading) {
+  if (!session || (loading && !hasRole("admin"))) {
     return (
       <div className="min-h-screen bg-background">
         <SiteNav />
