@@ -52,7 +52,7 @@ function AdminPage() {
     }
   }, [loading, session, navigate]);
 
-  if (loading && !session) {
+  if (!session || loading) {
     return (
       <div className="min-h-screen bg-background">
         <SiteNav />
