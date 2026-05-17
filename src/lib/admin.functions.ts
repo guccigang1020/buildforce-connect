@@ -34,12 +34,14 @@ export const adminSetVerificationStatus = createServerFn({ method: 'POST' })
       .eq('id', data.profileId)
     if (error) throw new Error(error.message)
 
-    await supabaseAdmin.rpc('log_audit', {
-      _action: `admin.verification_${data.status}`,
-      _entity_type: 'profile',
-      _entity_id: data.profileId,
-      _metadata: { notes: data.notes ?? null },
+    const { error: auditError } = await supabaseAdmin.from('audit_log').insert({
+      actor_id: context.userId,
+      action: `admin.verification_${data.status}`,
+      entity_type: 'profile',
+      entity_id: data.profileId,
+      metadata: { notes: data.notes ?? null },
     })
+    if (auditError) throw new Error(auditError.message)
 
     return { ok: true }
   })
@@ -71,12 +73,14 @@ export const adminToggleRole = createServerFn({ method: 'POST' })
       if (error && !/duplicate/i.test(error.message)) throw new Error(error.message)
     }
 
-    await supabaseAdmin.rpc('log_audit', {
-      _action: `admin.role_${data.action}`,
-      _entity_type: 'user_role',
-      _entity_id: data.targetUserId,
-      _metadata: { role: data.role },
+    const { error: auditError } = await supabaseAdmin.from('audit_log').insert({
+      actor_id: context.userId,
+      action: `admin.role_${data.action}`,
+      entity_type: 'user_role',
+      entity_id: data.targetUserId,
+      metadata: { role: data.role },
     })
+    if (auditError) throw new Error(auditError.message)
 
     return { ok: true }
   })
