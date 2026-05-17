@@ -1,18 +1,17 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat, Activity } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { adminSetVerificationStatus, adminToggleRole, adminGetDocumentUrl } from "@/lib/admin.functions";
+import { adminGetDashboardData, adminSetVerificationStatus, adminToggleRole, adminGetDocumentUrl } from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteNav } from "@/components/site-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -71,27 +70,16 @@ function AdminDashboard() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
+  const fetchDashboard = useServerFn(adminGetDashboardData);
 
-  const { data: profiles = [], isLoading } = useQuery({
-    queryKey: ["admin-profiles"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as AdminProfile[];
-    },
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-dashboard-data"],
+    queryFn: () => fetchDashboard(),
   });
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ["admin-roles"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("user_roles").select("user_id, role");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  const profiles = (data?.profiles ?? []) as AdminProfile[];
+  const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
+  const auditLog = (data?.auditLog ?? []) as AuditEntry[];
 
   const rolesByUser = useMemo(() => {
     const m = new Map<string, string[]>();
@@ -123,8 +111,7 @@ function AdminDashboard() {
   }), [profiles]);
 
   const refresh = () => {
-    void qc.invalidateQueries({ queryKey: ["admin-profiles"] });
-    void qc.invalidateQueries({ queryKey: ["admin-roles"] });
+    void qc.invalidateQueries({ queryKey: ["admin-dashboard-data"] });
   };
 
   return (
@@ -165,7 +152,9 @@ function AdminDashboard() {
         </div>
 
         {tab === "activity" ? (
-          <ActivityLog />
+          <ActivityLog entries={auditLog} isLoading={isLoading} />
+        ) : error ? (
+          <Card className="p-6 text-sm text-destructive">שגיאה בטעינת ניהול: {error instanceof Error ? error.message : "שגיאה לא ידועה"}</Card>
         ) : isLoading ? (
           <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
@@ -192,20 +181,7 @@ type AuditEntry = {
   created_at: string;
 };
 
-function ActivityLog() {
-  const { data: entries = [], isLoading } = useQuery({
-    queryKey: ["admin-audit-log"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("audit_log")
-        .select("id, action, entity_type, entity_id, actor_id, metadata, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return (data ?? []) as AuditEntry[];
-    },
-  });
-
+function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading: boolean }) {
   if (isLoading) {
     return <div className="grid place-items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
