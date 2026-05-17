@@ -42,17 +42,17 @@ type AdminProfile = {
 };
 
 function AdminPage() {
-  const { hasRole, loading } = useAuth();
+  const { session, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !hasRole("admin")) {
-      toast.error("אין לך הרשאת אדמין");
-      navigate({ to: "/" });
+    if (!loading && !session) {
+      toast.error("יש להתחבר כדי להיכנס לאזור הניהול");
+      navigate({ to: "/login" });
     }
-  }, [loading, hasRole, navigate]);
+  }, [loading, session, navigate]);
 
-  if (loading || !hasRole("admin")) {
+  if (loading && !session) {
     return (
       <div className="min-h-screen bg-background">
         <SiteNav />
@@ -68,6 +68,8 @@ function AdminPage() {
 
 function AdminDashboard() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { session } = useAuth();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
   const fetchDashboard = useServerFn(adminGetDashboardData);
@@ -75,11 +77,22 @@ function AdminDashboard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard-data"],
     queryFn: () => fetchDashboard(),
+    enabled: Boolean(session),
   });
 
   const profiles = (data?.profiles ?? []) as AdminProfile[];
   const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
   const auditLog = (data?.auditLog ?? []) as AuditEntry[];
+
+  useEffect(() => {
+    if (!error) return;
+
+    const message = error instanceof Error ? error.message : "שגיאה לא ידועה";
+    if (/forbidden|admin role required|unauthorized/i.test(message)) {
+      toast.error("אין לך הרשאת אדמין");
+      navigate({ to: "/" });
+    }
+  }, [error, navigate]);
 
   const rolesByUser = useMemo(() => {
     const m = new Map<string, string[]>();
