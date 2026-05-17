@@ -33,6 +33,14 @@ export const adminSetVerificationStatus = createServerFn({ method: 'POST' })
       })
       .eq('id', data.profileId)
     if (error) throw new Error(error.message)
+
+    await supabaseAdmin.rpc('log_audit', {
+      _action: `admin.verification_${data.status}`,
+      _entity_type: 'profile',
+      _entity_id: data.profileId,
+      _metadata: { notes: data.notes ?? null },
+    })
+
     return { ok: true }
   })
 
@@ -62,6 +70,14 @@ export const adminToggleRole = createServerFn({ method: 'POST' })
         .insert({ user_id: data.targetUserId, role: data.role })
       if (error && !/duplicate/i.test(error.message)) throw new Error(error.message)
     }
+
+    await supabaseAdmin.rpc('log_audit', {
+      _action: `admin.role_${data.action}`,
+      _entity_type: 'user_role',
+      _entity_id: data.targetUserId,
+      _metadata: { role: data.role },
+    })
+
     return { ok: true }
   })
 
