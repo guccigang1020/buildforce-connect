@@ -2,17 +2,14 @@ import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { assertAdmin, fetchAdminDashboardData } from '@/lib/admin.server'
 
-async function assertAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .eq('role', 'admin')
-    .maybeSingle()
-  if (error) throw new Error(error.message)
-  if (!data) throw new Error('Forbidden: admin role required')
-}
+export const adminGetDashboardData = createServerFn({ method: 'GET' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId)
+    return fetchAdminDashboardData()
+  })
 
 export const adminSetVerificationStatus = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
@@ -36,6 +33,16 @@ export const adminSetVerificationStatus = createServerFn({ method: 'POST' })
       })
       .eq('id', data.profileId)
     if (error) throw new Error(error.message)
+
+    const { error: auditError } = await supabaseAdmin.from('audit_log').insert({
+      actor_id: context.userId,
+      action: `admin.verification_${data.status}`,
+      entity_type: 'profile',
+      entity_id: data.profileId,
+      metadata: { notes: data.notes ?? null },
+    })
+    if (auditError) throw new Error(auditError.message)
+
     return { ok: true }
   })
 
@@ -65,6 +72,16 @@ export const adminToggleRole = createServerFn({ method: 'POST' })
         .insert({ user_id: data.targetUserId, role: data.role })
       if (error && !/duplicate/i.test(error.message)) throw new Error(error.message)
     }
+
+    const { error: auditError } = await supabaseAdmin.from('audit_log').insert({
+      actor_id: context.userId,
+      action: `admin.role_${data.action}`,
+      entity_type: 'user_role',
+      entity_id: data.targetUserId,
+      metadata: { role: data.role },
+    })
+    if (auditError) throw new Error(auditError.message)
+
     return { ok: true }
   })
 
