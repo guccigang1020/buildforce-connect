@@ -468,6 +468,54 @@ export type Database = {
           },
         ]
       }
+      job_offer_price_log: {
+        Row: {
+          corporation_id: string
+          created_at: string
+          event_type: string
+          id: string
+          offer_id: string
+          previous_price: number | null
+          price_per_hour: number
+          request_id: string
+        }
+        Insert: {
+          corporation_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          offer_id: string
+          previous_price?: number | null
+          price_per_hour: number
+          request_id: string
+        }
+        Update: {
+          corporation_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          offer_id?: string
+          previous_price?: number | null
+          price_per_hour?: number
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_offer_price_log_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "job_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_offer_price_log_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "job_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_offers: {
         Row: {
           available_workers: number
