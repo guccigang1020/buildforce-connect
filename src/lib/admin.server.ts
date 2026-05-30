@@ -13,7 +13,7 @@ export async function assertAdmin(userId: string) {
 }
 
 export async function fetchAdminDashboardData() {
-  const [profilesResult, rolesResult, auditResult] = await Promise.all([
+  const [profilesResult, rolesResult, auditResult, activeAuctionsResult, completedDealsResult] = await Promise.all([
     supabaseAdmin
       .from('profiles')
       .select(
@@ -26,15 +26,26 @@ export async function fetchAdminDashboardData() {
       .select('id, action, entity_type, entity_id, actor_id, metadata, created_at')
       .order('created_at', { ascending: false })
       .limit(100),
+    supabaseAdmin
+      .from('job_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open'),
+    supabaseAdmin
+      .from('job_awards')
+      .select('id', { count: 'exact', head: true }),
   ])
 
   if (profilesResult.error) throw new Error(profilesResult.error.message)
   if (rolesResult.error) throw new Error(rolesResult.error.message)
   if (auditResult.error) throw new Error(auditResult.error.message)
+  if (activeAuctionsResult.error) throw new Error(activeAuctionsResult.error.message)
+  if (completedDealsResult.error) throw new Error(completedDealsResult.error.message)
 
   return {
     profiles: profilesResult.data ?? [],
     roles: rolesResult.data ?? [],
     auditLog: auditResult.data ?? [],
+    activeAuctions: activeAuctionsResult.count ?? 0,
+    completedDeals: completedDealsResult.count ?? 0,
   }
 }
