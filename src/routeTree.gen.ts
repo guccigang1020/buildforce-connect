@@ -22,6 +22,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CorporationDashboardRouteImport } from './routes/corporation-dashboard'
+import { Route as AdminSetupRouteImport } from './routes/admin-setup'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
@@ -104,6 +105,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const CorporationDashboardRoute = CorporationDashboardRouteImport.update({
   id: '/corporation-dashboard',
   path: '/corporation-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSetupRoute = AdminSetupRouteImport.update({
+  id: '/admin-setup',
+  path: '/admin-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -206,6 +212,7 @@ const ApiPublicHooksAutoApproveAttendanceRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-setup': typeof AdminSetupRoute
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-setup': typeof AdminSetupRoute
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-setup': typeof AdminSetupRoute
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-setup'
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/admin-setup'
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-setup'
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
@@ -408,6 +420,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminSetupRoute: typeof AdminSetupRoute
   CorporationDashboardRoute: typeof CorporationDashboardRoute
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -530,6 +543,13 @@ declare module '@tanstack/react-router' {
       path: '/corporation-dashboard'
       fullPath: '/corporation-dashboard'
       preLoaderRoute: typeof CorporationDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-setup': {
+      id: '/admin-setup'
+      path: '/admin-setup'
+      fullPath: '/admin-setup'
+      preLoaderRoute: typeof AdminSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -664,6 +684,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminSetupRoute: AdminSetupRoute,
   CorporationDashboardRoute: CorporationDashboardRoute,
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
