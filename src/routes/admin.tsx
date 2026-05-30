@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat, Activity } from "lucide-react";
+import { ShieldCheck, Users, FileCheck2, FileX2, Loader2, ExternalLink, Search, Building2, HardHat, Activity, Gavel, Trophy, AlertCircle } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { adminGetDashboardData, adminSetVerificationStatus, adminToggleRole, adminGetDocumentUrl } from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
@@ -49,8 +49,13 @@ function AdminPage() {
     if (!loading && !session) {
       toast.error("יש להתחבר כדי להיכנס לאזור הניהול");
       navigate({ to: "/login" });
+      return;
     }
-  }, [loading, session, navigate]);
+    if (!loading && session && !hasRole("admin")) {
+      toast.error("אין הרשאת גישה");
+      navigate({ to: "/" });
+    }
+  }, [loading, session, hasRole, navigate]);
 
   if (!session || (loading && !hasRole("admin"))) {
     return (
@@ -69,7 +74,7 @@ function AdminPage() {
 function AdminDashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
   const fetchDashboard = useServerFn(adminGetDashboardData);
@@ -83,13 +88,15 @@ function AdminDashboard() {
   const profiles = (data?.profiles ?? []) as AdminProfile[];
   const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
   const auditLog = (data?.auditLog ?? []) as AuditEntry[];
+  const activeAuctions = (data?.activeAuctions ?? 0) as number;
+  const completedDeals = (data?.completedDeals ?? 0) as number;
 
   useEffect(() => {
     if (!error) return;
 
     const message = error instanceof Error ? error.message : "שגיאה לא ידועה";
     if (/forbidden|admin role required|unauthorized/i.test(message)) {
-      toast.error("אין לך הרשאת אדמין");
+      toast.error("אין הרשאת גישה");
       navigate({ to: "/" });
     }
   }, [error, navigate]);
@@ -131,21 +138,28 @@ function AdminDashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
       <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-primary shadow-elegant">
-            <ShieldCheck className="h-6 w-6 text-primary-foreground" />
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-primary shadow-elegant">
+              <ShieldCheck className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">דשבורד אדמין</h1>
+              <p className="text-sm text-muted-foreground">ניהול משתמשים, אימות תאגידים וקבלנים</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">דשבורד אדמין</h1>
-            <p className="text-sm text-muted-foreground">ניהול משתמשים, אימות תאגידים וקבלנים</p>
+          <div className="rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm">
+            שלום, <span className="font-semibold text-foreground">{profile?.full_name ?? "אדמין"}</span>
+            <span className="mx-2 text-muted-foreground">|</span>
+            <span className="font-semibold text-primary">אדמין</span>
           </div>
         </div>
 
         <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard label="סה״כ משתמשים" value={stats.total} icon={<Users className="h-5 w-5" />} />
-          <StatCard label="ממתינים לאישור" value={stats.pending} icon={<Loader2 className="h-5 w-5" />} highlight />
-          <StatCard label="מאושרים" value={stats.approved} icon={<FileCheck2 className="h-5 w-5" />} />
-          <StatCard label="נדחו" value={stats.rejected} icon={<FileX2 className="h-5 w-5" />} />
+          <StatCard label="ממתינים לאישור" value={stats.pending} icon={<AlertCircle className="h-5 w-5" />} highlight />
+          <StatCard label="מכרזים פעילים" value={activeAuctions} icon={<Gavel className="h-5 w-5" />} />
+          <StatCard label="עסקאות שנסגרו" value={completedDeals} icon={<Trophy className="h-5 w-5" />} />
         </div>
 
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
