@@ -107,6 +107,8 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
   const [warrantyDays, setWarrantyDays] = useState("30");
   const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
+  const [requiresPersonalGuarantee, setRequiresPersonalGuarantee] = useState(false);
+  const [requiresSecurityCheck, setRequiresSecurityCheck] = useState(false);
 
   const qc = useQueryClient();
   const submitFn = useServerFn(submitOffer);
@@ -114,6 +116,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
   const reset = () => {
     setPricePerHour(""); setAvailableWorkers(""); setStartDate("");
     setResponseTimeHours("24"); setWarrantyDays("30"); setInsurance(true); setNote("");
+    setRequiresPersonalGuarantee(false); setRequiresSecurityCheck(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,6 +141,8 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
           warrantyDays: warranty || 30,
           insurance,
           note: note.trim() || undefined,
+          requiresPersonalGuarantee,
+          requiresSecurityCheck,
         },
       });
       toast.success("ההצעה נשלחה בהצלחה ללקוח.");
@@ -195,6 +200,28 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
           <div className="flex items-center gap-2">
             <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
             <Label htmlFor="ins" className="cursor-pointer">כלול ביטוח מלא</Label>
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <div className="text-xs font-bold text-amber-600">דרישות לערבות העסקה (במידה והקבלן יבחר בהצעתך)</div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="pg"
+                checked={requiresPersonalGuarantee}
+                onCheckedChange={(v) => setRequiresPersonalGuarantee(v === true)}
+              />
+              <Label htmlFor="pg" className="cursor-pointer text-sm">דורש ערבות אישית מהקבלן</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="sc"
+                checked={requiresSecurityCheck}
+                onCheckedChange={(v) => setRequiresSecurityCheck(v === true)}
+              />
+              <Label htmlFor="sc" className="cursor-pointer text-sm">דורש צ׳ק לבטחון מהקבלן</Label>
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              ניתן לסמן אחד מהם, את שניהם, או אף אחד. הדרישות יוצגו לקבלן יחד עם ההצעה.
+            </div>
           </div>
           <div>
             <Label htmlFor="note">הערות</Label>
