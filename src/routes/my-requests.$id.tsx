@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft, MapPin, Calendar, Users, Briefcase, CheckCircle2,
-  Trophy, Clock, ShieldCheck, Coins, X, Lock,
+  Trophy, Clock, ShieldCheck, Coins, X, Lock, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -223,6 +223,19 @@ function MyRequestPage() {
                       <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />אחריות {o.warranty_days} ימים</span>
                       {o.insurance && <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" />ביטוח</span>}
                     </div>
+
+                    {(o.requires_personal_guarantee || o.requires_security_check) && (
+                      <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          תנאי התאגיד לזכייה — דרישות לערבות העסקה
+                        </div>
+                        <ul className="mt-1.5 space-y-0.5 text-xs text-amber-900/80">
+                          {o.requires_personal_guarantee && <li>• ערבות אישית מהקבלן</li>}
+                          {o.requires_security_check && <li>• צ׳ק לבטחון מהקבלן</li>}
+                        </ul>
+                      </div>
+                    )}
 
                     {o.note && (
                       <p className="mt-3 rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">{o.note}</p>
