@@ -107,6 +107,8 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
   const [warrantyDays, setWarrantyDays] = useState("30");
   const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
+  const [requiresPersonalGuarantee, setRequiresPersonalGuarantee] = useState(false);
+  const [requiresSecurityCheck, setRequiresSecurityCheck] = useState(false);
 
   const qc = useQueryClient();
   const submitFn = useServerFn(submitOffer);
@@ -114,6 +116,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
   const reset = () => {
     setPricePerHour(""); setAvailableWorkers(""); setStartDate("");
     setResponseTimeHours("24"); setWarrantyDays("30"); setInsurance(true); setNote("");
+    setRequiresPersonalGuarantee(false); setRequiresSecurityCheck(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,6 +141,8 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
           warrantyDays: warranty || 30,
           insurance,
           note: note.trim() || undefined,
+          requiresPersonalGuarantee,
+          requiresSecurityCheck,
         },
       });
       toast.success("ההצעה נשלחה בהצלחה ללקוח.");
