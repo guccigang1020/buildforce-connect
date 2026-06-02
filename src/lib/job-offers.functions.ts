@@ -13,6 +13,8 @@ const submitSchema = z.object({
   warrantyDays: z.number().int().min(0).max(365).default(30),
   insurance: z.boolean().default(true),
   note: z.string().max(2000).optional(),
+  requiresPersonalGuarantee: z.boolean().default(false),
+  requiresSecurityCheck: z.boolean().default(false),
 })
 
 export const submitOffer = createServerFn({ method: 'POST' })
@@ -32,6 +34,8 @@ export const submitOffer = createServerFn({ method: 'POST' })
         warranty_days: data.warrantyDays,
         insurance: data.insurance,
         note: data.note ?? null,
+        requires_personal_guarantee: data.requiresPersonalGuarantee,
+        requires_security_check: data.requiresSecurityCheck,
       })
       .select('id, request_id')
       .single()
