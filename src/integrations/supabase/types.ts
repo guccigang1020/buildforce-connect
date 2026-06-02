@@ -526,6 +526,8 @@ export type Database = {
           note: string | null
           price_per_hour: number
           request_id: string
+          requires_personal_guarantee: boolean
+          requires_security_check: boolean
           response_time_hours: number
           start_date: string
           status: string
@@ -541,6 +543,8 @@ export type Database = {
           note?: string | null
           price_per_hour: number
           request_id: string
+          requires_personal_guarantee?: boolean
+          requires_security_check?: boolean
           response_time_hours?: number
           start_date: string
           status?: string
@@ -556,6 +560,8 @@ export type Database = {
           note?: string | null
           price_per_hour?: number
           request_id?: string
+          requires_personal_guarantee?: boolean
+          requires_security_check?: boolean
           response_time_hours?: number
           start_date?: string
           status?: string
