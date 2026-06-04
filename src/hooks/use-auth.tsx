@@ -122,13 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${uid}` }, refreshInBackground)
       .subscribe();
 
-    const intervalId = window.setInterval(refreshInBackground, 5000);
-
     window.addEventListener("focus", refreshInBackground);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.clearInterval(intervalId);
       window.removeEventListener("focus", refreshInBackground);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);

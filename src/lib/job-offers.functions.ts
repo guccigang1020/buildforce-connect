@@ -22,6 +22,17 @@ export const submitOffer = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => submitSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context
+
+    // Reject unverified corporations at the server boundary
+    const { data: corpProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('is_verified, verification_status')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (!corpProfile?.is_verified || corpProfile.verification_status !== 'approved') {
+      throw new Error('חשבונך טרם אומת על ידי אדמין. לא ניתן להגיש הצעות לפני קבלת אישור.')
+    }
+
     const { data: offer, error } = await supabase
       .from('job_offers')
       .insert({
@@ -89,12 +100,28 @@ export const listOffersForRequest = createServerFn({ method: 'POST' })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context
-    const { data: offers, error } = await supabase
-      .from('job_offers')
-      .select('*')
-      .eq('request_id', data.requestId)
-      .order('price_per_hour', { ascending: true })
+    const { userId } = context
+
+    // Owners see all offers; corporations only see their own (sealed-bid)
+    const { data: req } = await supabaseAdmin
+      .from('job_requests')
+      .select('user_id')
+      .eq('id', data.requestId)
+      .maybeSingle()
+    const isOwner = req?.user_id === userId
+
+    const { data: offers, error } = isOwner
+      ? await supabaseAdmin
+          .from('job_offers')
+          .select('*')
+          .eq('request_id', data.requestId)
+          .order('price_per_hour', { ascending: true })
+      : await supabaseAdmin
+          .from('job_offers')
+          .select('*')
+          .eq('request_id', data.requestId)
+          .eq('corporation_id', userId)
+          .order('price_per_hour', { ascending: true })
     if (error) throw new Error(error.message)
     return { offers: offers ?? [] }
   })
@@ -132,7 +159,7 @@ export const awardOffer = createServerFn({ method: 'POST' })
     // Fetch offer + ensure ownership
     const { data: offer, error: oErr } = await supabase
       .from('job_offers')
-      .select('id, request_id, corporation_id, status')
+      .select('id, request_id, corporation_id, status, price_per_hour')
       .eq('id', data.offerId)
       .single()
     if (oErr || !offer) throw new Error('הצעה לא נמצאה')
@@ -147,8 +174,8 @@ export const awardOffer = createServerFn({ method: 'POST' })
     if (req.user_id !== userId) throw new Error('Unauthorized')
     if (req.status !== 'open') throw new Error('הבקשה כבר נסגרה')
 
-    // Insert award (trigger updates statuses)
-    const { error: awErr } = await supabase
+    // Insert award and get its id back
+    const { data: award, error: awErr } = await supabase
       .from('job_awards')
       .insert({
         request_id: offer.request_id,
@@ -156,7 +183,45 @@ export const awardOffer = createServerFn({ method: 'POST' })
         corporation_id: offer.corporation_id,
         awarded_by: userId,
       })
-    if (awErr) throw new Error(awErr.message)
+      .select('id')
+      .single()
+    if (awErr || !award) throw new Error(awErr?.message ?? 'Failed to create award')
+
+    // Explicitly update statuses in case the DB trigger is absent
+    await supabaseAdmin
+      .from('job_requests')
+      .update({ status: 'awarded' })
+      .eq('id', req.id)
+
+    const { data: allOfferIds } = await supabaseAdmin
+      .from('job_offers')
+      .select('id')
+      .eq('request_id', offer.request_id)
+      .neq('id', offer.id)
+    const loserIds = (allOfferIds ?? []).map((o) => o.id)
+    if (loserIds.length > 0) {
+      await supabaseAdmin.from('job_offers').update({ status: 'rejected' }).in('id', loserIds)
+    }
+    await supabaseAdmin.from('job_offers').update({ status: 'awarded' }).eq('id', offer.id)
+
+    // Create a project record so the attendance/delivery workflow can proceed
+    const { data: reqItems } = await supabaseAdmin
+      .from('job_request_items')
+      .select('count')
+      .eq('request_id', req.id)
+    const totalWorkers = (reqItems ?? []).reduce((s, it) => s + (it.count ?? 0), 0)
+    const { error: projErr } = await supabaseAdmin.from('projects').insert({
+      contractor_id: req.user_id,
+      corporation_id: offer.corporation_id,
+      name: req.location,
+      start_date: req.start_date,
+      expected_workers: totalWorkers,
+      hourly_rate: Number(offer.price_per_hour),
+      source_award_id: award.id,
+      source_request_id: req.id,
+      status: 'active',
+    })
+    if (projErr) console.error('[awardOffer] project creation failed:', projErr.message)
 
     // Fetch contact info from the dedicated table for the award notification.
     const { data: contact } = await supabaseAdmin

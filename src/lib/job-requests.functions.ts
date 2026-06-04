@@ -61,26 +61,21 @@ export const createJobRequest = createServerFn({ method: 'POST' })
     const { error: itemsErr } = await supabase.from('job_request_items').insert(itemsPayload)
     if (itemsErr) throw new Error(itemsErr.message)
 
-    // Notify all approved corporations (admin client to bypass RLS for cross-user lookup)
-    const { data: corps } = await supabaseAdmin
-      .from('profiles')
-      .select('user_id, email, full_name, company_name')
-      .eq('verification_status', 'approved')
+    // Notify ALL corporations (pending + approved) so they can browse new jobs
+    const { data: corpRoles } = await supabaseAdmin
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'corporation')
 
-    let corpUserIds: string[] = []
-    if (corps && corps.length > 0) {
-      const ids = corps.map((c) => c.user_id)
-      const { data: roles } = await supabaseAdmin
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'corporation')
-        .in('user_id', ids)
-      corpUserIds = (roles || []).map((r) => r.user_id)
+    const corpUserIds = (corpRoles ?? []).map((r) => r.user_id)
+    let recipients: { user_id: string; email: string | null }[] = []
+    if (corpUserIds.length > 0) {
+      const { data: corps } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id, email')
+        .in('user_id', corpUserIds)
+      recipients = (corps ?? []).filter((c) => c.email)
     }
-
-    const recipients = (corps || []).filter(
-      (c) => c.email && corpUserIds.includes(c.user_id),
-    )
 
     const totalWorkers = data.items.reduce((s, it) => s + it.count, 0)
     const categories = Array.from(new Set(data.items.map((i) => i.role))).join(', ')
@@ -132,6 +127,7 @@ export const listMyJobRequests = createServerFn({ method: 'POST' })
 
     const offersByReq = new Map<string, { total: number; min: number | null }>()
     for (const o of offers ?? []) {
+      if (o.status === 'withdrawn') continue
       const cur = offersByReq.get(o.request_id) ?? { total: 0, min: null as number | null }
       cur.total += 1
       const price = Number(o.price_per_hour)
