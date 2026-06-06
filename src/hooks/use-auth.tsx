@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // trigger failed (common with Google OAuth on first sign-in).
         // Call the self-heal RPC once and retry — it's idempotent.
         if (!prof && !profileError && attempt === 1) {
-          await supabase.rpc("ensure_user_bootstrap");
+          await supabase.rpc("ensure_user_bootstrap" as never);
           await wait(500);
           continue;
         }
