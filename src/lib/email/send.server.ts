@@ -1,5 +1,3 @@
-import { getRequest } from '@tanstack/react-start/server'
-
 // Hardcoded allowlist of trusted base URLs for the internal email endpoint.
 // SSRF-safe: never derived from request headers (Origin/Host could be spoofed
 // to exfiltrate the caller's Authorization JWT).
@@ -29,15 +27,18 @@ interface ServerSendParams {
  * to enqueue — the send route validates auth, the queue handles delivery).
  */
 export async function sendTransactionalEmailServer(params: ServerSendParams) {
-  const req = getRequest()
-  const authHeader = req?.headers.get('authorization') ?? ''
+  // Use the service-role key as a trusted internal bearer. The send route
+  // accepts this as proof the call originated from a trusted server context
+  // (validated business logic in our server functions), bypassing the
+  // per-user admin requirement that gates external callers.
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
   const baseUrl = resolveBaseUrl()
 
   const res = await fetch(`${baseUrl}/lovable/email/transactional/send`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: authHeader,
+      Authorization: `Bearer ${serviceKey}`,
     },
     body: JSON.stringify({
       templateName: params.templateName,
