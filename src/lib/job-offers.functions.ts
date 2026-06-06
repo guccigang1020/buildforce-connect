@@ -193,10 +193,12 @@ export const awardOffer = createServerFn({ method: 'POST' })
       .update({ status: 'awarded' })
       .eq('id', req.id)
 
+    // Only reject offers that are still submitted — withdrawn offers keep their status
     const { data: allOfferIds } = await supabaseAdmin
       .from('job_offers')
       .select('id')
       .eq('request_id', offer.request_id)
+      .eq('status', 'submitted')
       .neq('id', offer.id)
     const loserIds = (allOfferIds ?? []).map((o) => o.id)
     if (loserIds.length > 0) {
@@ -204,7 +206,9 @@ export const awardOffer = createServerFn({ method: 'POST' })
     }
     await supabaseAdmin.from('job_offers').update({ status: 'awarded' }).eq('id', offer.id)
 
-    // Create a project record so the attendance/delivery workflow can proceed
+    // Create a project record so the attendance/delivery workflow can proceed.
+    // req.start_date is a free-text field (e.g. "ASAP", "01/01/2026") — do NOT pass it
+    // to projects.start_date which is a DATE column; let it default to CURRENT_DATE.
     const { data: reqItems } = await supabaseAdmin
       .from('job_request_items')
       .select('count')
@@ -214,14 +218,13 @@ export const awardOffer = createServerFn({ method: 'POST' })
       contractor_id: req.user_id,
       corporation_id: offer.corporation_id,
       name: req.location,
-      start_date: req.start_date,
       expected_workers: totalWorkers,
       hourly_rate: Number(offer.price_per_hour),
       source_award_id: award.id,
       source_request_id: req.id,
       status: 'active',
     })
-    if (projErr) console.error('[awardOffer] project creation failed:', projErr.message)
+    if (projErr) throw new Error(`[awardOffer] project creation failed: ${projErr.message}`)
 
     // Fetch contact info from the dedicated table for the award notification.
     const { data: contact } = await supabaseAdmin

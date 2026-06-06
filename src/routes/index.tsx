@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Hammer, Layers, PaintRoller, Wrench, Building2,
   ShieldCheck, Zap, Star, ArrowLeft, CheckCircle2, Mail,
@@ -35,6 +37,15 @@ function SecureChatButton({ supplierName }: { supplierName: string }) {
 }
 
 function Home() {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && session) {
+      void navigate({ to: "/dashboard" });
+    }
+  }, [loading, session, navigate]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />

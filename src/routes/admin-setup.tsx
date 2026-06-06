@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { selfBootstrapAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 
 const ALLOWED_EMAIL = "chmv1243@gmail.com";
@@ -11,10 +12,11 @@ export const Route = createFileRoute("/admin-setup")({
 });
 
 function AdminSetupPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, refresh } = useAuth();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const bootstrapFn = useServerFn(selfBootstrapAdmin);
 
   if (loading) {
     return (
@@ -49,20 +51,14 @@ function AdminSetupPage() {
     setBusy(true);
     setError(null);
     try {
-      const { error: roleErr } = await supabase
-        .from("user_roles")
-        .insert({ user_id: user.id, role: "admin" });
-      if (roleErr && !roleErr.message.toLowerCase().includes("duplicate")) {
-        throw roleErr;
-      }
-      const { error: profErr } = await supabase
-        .from("profiles")
-        .update({ verification_status: "approved", is_verified: true })
-        .eq("user_id", user.id);
-      if (profErr) throw profErr;
+      // Server function uses supabaseAdmin (service role) to bypass RLS +
+      // the prevent_self_verification trigger — client-side calls would fail both.
+      await bootstrapFn();
+      // Refresh local auth state so the admin role is visible immediately
+      await refresh();
       setDone(true);
-    } catch (e: any) {
-      setError(e?.message ?? "שגיאה");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "שגיאה");
     } finally {
       setBusy(false);
     }

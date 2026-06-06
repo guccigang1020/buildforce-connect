@@ -49,6 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supabase.from("user_roles").select("role").eq("user_id", uid),
         ]);
 
+        // Profile missing for an authenticated user means the handle_new_user
+        // trigger failed (common with Google OAuth on first sign-in).
+        // Call the self-heal RPC once and retry — it's idempotent.
+        if (!prof && !profileError && attempt === 1) {
+          await supabase.rpc("ensure_user_bootstrap");
+          await wait(500);
+          continue;
+        }
+
         if (!profileError) {
           setProfile((prof as Profile | null) ?? null);
         } else {

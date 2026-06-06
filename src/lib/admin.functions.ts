@@ -4,6 +4,41 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 import { assertAdmin, fetchAdminDashboardData } from '@/lib/admin.server'
 
+const BOOTSTRAP_ADMIN_EMAILS = ['chmv1243@gmail.com', 'bbuildforceprime@gmail.com']
+
+// One-time self-bootstrap for the designated admin account.
+// Uses service-role key to bypass RLS + the prevent_self_verification trigger.
+export const selfBootstrapAdmin = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context
+
+    // Verify the requesting user is the designated admin email
+    const { data: authData, error: uErr } = await supabaseAdmin.auth.admin.getUserById(userId)
+    if (uErr || !authData?.user) throw new Error('User not found')
+    const email = (authData.user.email ?? '').toLowerCase()
+    if (!BOOTSTRAP_ADMIN_EMAILS.includes(email)) {
+      throw new Error('Forbidden: not a designated admin account')
+    }
+
+    // Insert admin role (service role bypasses the "admins only" RLS policy)
+    const { error: roleErr } = await supabaseAdmin
+      .from('user_roles')
+      .insert({ user_id: userId, role: 'admin' })
+    if (roleErr && !/duplicate|already exists/i.test(roleErr.message)) {
+      throw new Error(roleErr.message)
+    }
+
+    // Mark profile as approved (service role bypasses prevent_self_verification trigger)
+    const { error: profErr } = await supabaseAdmin
+      .from('profiles')
+      .update({ verification_status: 'approved', is_verified: true })
+      .eq('user_id', userId)
+    if (profErr) throw new Error(profErr.message)
+
+    return { ok: true }
+  })
+
 export const adminGetDashboardData = createServerFn({ method: 'GET' })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
