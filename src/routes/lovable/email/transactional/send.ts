@@ -44,8 +44,13 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
-        // Verify the caller has a valid Supabase auth token.
-        // In TanStack, there is no Supabase gateway — we validate the JWT ourselves.
+        // Authorize the caller. Accept two modes:
+        //   1. Trusted internal calls bearing the service-role key (used by
+        //      our own server functions which already enforce business logic).
+        //   2. An authenticated user who has the 'admin' role.
+        // Any other authenticated user (including verified corporations and
+        // contractors) MUST NOT be able to trigger arbitrary templates to
+        // arbitrary recipients from the BuildForce domain.
         const authHeader = request.headers.get('Authorization')
         if (!authHeader?.startsWith('Bearer ')) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -53,10 +58,22 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
 
         const token = authHeader.slice('Bearer '.length).trim()
         const supabase = createClient(supabaseUrl, supabaseServiceKey)
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token)
 
-        if (authError || !user) {
-          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        const isInternalServiceCall = token === supabaseServiceKey
+        if (!isInternalServiceCall) {
+          const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+          if (authError || !user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 })
+          }
+          const { data: roleRow, error: roleErr } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle()
+          if (roleErr || !roleRow) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 })
+          }
         }
 
         // Parse request body
