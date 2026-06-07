@@ -22,12 +22,17 @@ import {
   BarChart3,
   Zap,
   ArrowUpRight,
+  Activity,
+  AlertTriangle,
+  HardHat,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { listMyJobRequests } from "@/lib/job-requests.functions";
+import { getContractorDashboardStats } from "@/lib/analytics.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 type MyRequest = {
@@ -43,6 +48,8 @@ type MyRequest = {
   workers_count: number;
   roles: string[];
 };
+
+type ContractorStats = Awaited<ReturnType<typeof getContractorDashboardStats>>;
 
 type StatusFilter = "all" | "open" | "awarded" | "closed" | "cancelled";
 
@@ -87,15 +94,34 @@ function getGreeting() {
   return "ערב טוב";
 }
 
+function makeTrend(
+  current: number,
+  prev: number,
+  higherIsBetter: boolean,
+): { label: string; positive: boolean } | undefined {
+  if (prev === 0) return undefined;
+  const pct = Math.round(((current - prev) / prev) * 100);
+  if (pct === 0) return undefined;
+  const isPositive = higherIsBetter ? pct > 0 : pct < 0;
+  return { label: `${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}%`, positive: isPositive };
+}
+
 function DashboardPage() {
   const { hasRole, profile } = useAuth();
   const fetchMine = useServerFn(listMyJobRequests);
+  const fetchStats = useServerFn(getContractorDashboardStats);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-requests"],
     queryFn: () => fetchMine({ data: {} as never }),
   });
-  const isAdmin = hasRole("admin");
 
+  const { data: wsData, isLoading: wsLoading } = useQuery({
+    queryKey: ["contractor-dashboard-stats"],
+    queryFn: () => fetchStats(),
+  });
+
+  const isAdmin = hasRole("admin");
   const requests = (data?.requests ?? []) as MyRequest[];
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [q, setQ] = useState("");
@@ -144,6 +170,10 @@ function DashboardPage() {
     month: "long",
   });
 
+  const wsStats = wsData as ContractorStats | undefined;
+  const showWsPanel =
+    !wsLoading && wsStats && (wsStats.activeProjects > 0 || wsStats.monthly.total > 0);
+
   return (
     <AppShell
       title="לוח בקרה"
@@ -185,8 +215,8 @@ function DashboardPage() {
         </p>
       </div>
 
-      {/* KPI strip */}
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
+      {/* Marketplace KPI strip */}
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
         <KPICard
           icon={Briefcase}
           label="סה״כ בקשות"
@@ -226,6 +256,14 @@ function DashboardPage() {
           variant="accent"
         />
       </div>
+
+      {/* Workforce Intelligence Panel */}
+      {wsLoading && (
+        <div className="mb-4 h-36 animate-pulse rounded-2xl border border-border/40 bg-muted/30" />
+      )}
+      {showWsPanel && wsStats && (
+        <WorkforceIntelligencePanel stats={wsStats} />
+      )}
 
       {/* Insights chips */}
       {!isLoading && requests.length > 0 && (
@@ -313,6 +351,229 @@ function DashboardPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
+  const { monthly, prevMonthly } = stats;
+  const approvalRate =
+    monthly.total > 0 ? Math.round((monthly.approved / monthly.total) * 100) : null;
+  const monthName = new Date().toLocaleDateString("he-IL", { month: "long" });
+
+  const approvedTrend = makeTrend(monthly.approved, prevMonthly.approved, true);
+  const exceptionTrend = makeTrend(monthly.exceptions, prevMonthly.exceptions, false);
+  const hoursTrend = makeTrend(monthly.totalHours, prevMonthly.totalHours, true);
+  const costTrend = makeTrend(monthly.totalCost, prevMonthly.totalCost, true);
+
+  return (
+    <div className="mb-5 overflow-hidden rounded-2xl border border-border/60 bg-card animate-fade-up delay-150">
+      {/* Header bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
+            <Activity className="h-3.5 w-3.5 text-primary-foreground" />
+          </div>
+          <span className="text-sm font-bold">מודיעין כוח עבודה</span>
+          <span className="rounded-full border border-border/60 bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            {monthName}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {stats.projectsNeedingSite > 0 && (
+            <Link
+              to="/contractor-projects"
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 transition-colors hover:bg-amber-500/20"
+            >
+              <AlertTriangle className="h-3 w-3" />
+              {stats.projectsNeedingSite} פרויקטים ללא GPS
+              <ChevronRight className="h-3 w-3 rotate-180" />
+            </Link>
+          )}
+          <Link
+            to="/contractor-projects"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+          >
+            כל הפרויקטים <ChevronRight className="h-3 w-3 rotate-180" />
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 md:divide-x md:divide-x-reverse md:divide-border/40">
+        {/* Project health */}
+        <div className="p-5">
+          <div className="mb-3.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <HardHat className="h-3.5 w-3.5" /> פרויקטים פעילים
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <ProjectStat
+              label="פרויקטים"
+              value={String(stats.activeProjects)}
+              sub={stats.totalProjects > stats.activeProjects ? `מתוך ${stats.totalProjects}` : undefined}
+              variant={stats.activeProjects > 0 ? "primary" : "default"}
+            />
+            <ProjectStat
+              label="עובדים צפויים"
+              value={String(stats.expectedWorkers)}
+              variant={stats.expectedWorkers > 0 ? "primary" : "default"}
+            />
+            <ProjectStat
+              label="צוותות"
+              value={String(stats.totalTeams)}
+            />
+          </div>
+        </div>
+
+        {/* Attendance quality */}
+        <div className="border-t border-border/40 p-5 md:border-t-0">
+          <div className="mb-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5" /> נוכחות — {monthName}
+            </div>
+            {approvalRate != null && (
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                  approvalRate >= 90
+                    ? "bg-emerald-500/15 text-emerald-600"
+                    : approvalRate >= 70
+                      ? "bg-amber-500/15 text-amber-600"
+                      : "bg-destructive/15 text-destructive"
+                }`}
+              >
+                {approvalRate}% אישורים
+              </span>
+            )}
+          </div>
+          {monthly.total === 0 ? (
+            <p className="text-sm text-muted-foreground">אין נתוני נוכחות לחודש זה</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              <AttendanceStat
+                label="אושרו"
+                value={String(monthly.approved)}
+                trend={approvedTrend}
+                variant="success"
+              />
+              <AttendanceStat
+                label="חריגים"
+                value={String(monthly.exceptions)}
+                trend={exceptionTrend}
+                variant={monthly.exceptions > 0 ? "warning" : "default"}
+              />
+              <AttendanceStat
+                label="שעות"
+                value={
+                  monthly.totalHours > 0
+                    ? monthly.totalHours % 1 === 0
+                      ? monthly.totalHours.toLocaleString()
+                      : monthly.totalHours.toFixed(1)
+                    : "—"
+                }
+                trend={hoursTrend}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer: cost + pending alerts */}
+      {(monthly.totalCost > 0 || monthly.pending > 0 || monthly.rejected > 0) && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 bg-muted/20 px-5 py-3">
+          {monthly.totalCost > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">עלות כוח אדם החודש:</span>
+              <span className="text-sm font-extrabold">
+                ₪{Math.round(monthly.totalCost).toLocaleString()}
+              </span>
+              {costTrend && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    costTrend.positive
+                      ? "bg-emerald-500/15 text-emerald-600"
+                      : "bg-destructive/15 text-destructive"
+                  }`}
+                >
+                  {costTrend.label}
+                </span>
+              )}
+            </div>
+          )}
+          {monthly.pending > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-600">
+              <Clock className="h-3 w-3" /> {monthly.pending} ממתינים לאישור
+            </span>
+          )}
+          {monthly.rejected > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-semibold text-destructive">
+              <XCircle className="h-3 w-3" /> {monthly.rejected} נדחו — בדוק תיקונים
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProjectStat({
+  label,
+  value,
+  sub,
+  variant = "default",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  variant?: "default" | "primary";
+}) {
+  return (
+    <div>
+      <div
+        className={`text-2xl font-extrabold leading-none tracking-tight ${
+          variant === "primary" ? "text-primary" : "text-foreground"
+        }`}
+      >
+        {value}
+      </div>
+      {sub && <div className="mt-0.5 text-[10px] text-muted-foreground">{sub}</div>}
+      <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function AttendanceStat({
+  label,
+  value,
+  trend,
+  variant = "default",
+}: {
+  label: string;
+  value: string;
+  trend?: { label: string; positive: boolean };
+  variant?: "default" | "success" | "warning";
+}) {
+  return (
+    <div>
+      <div
+        className={`text-2xl font-extrabold leading-none tracking-tight ${
+          variant === "success"
+            ? "text-emerald-600"
+            : variant === "warning"
+              ? "text-amber-600"
+              : "text-foreground"
+        }`}
+      >
+        {value}
+      </div>
+      <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
+      {trend && (
+        <div
+          className={`mt-0.5 text-[10px] font-semibold ${
+            trend.positive ? "text-emerald-600" : "text-destructive"
+          }`}
+        >
+          {trend.label}
+        </div>
+      )}
+    </div>
   );
 }
 

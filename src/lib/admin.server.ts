@@ -13,26 +13,53 @@ export async function assertAdmin(userId: string) {
 }
 
 export async function fetchAdminDashboardData() {
-  const [profilesResult, rolesResult, auditResult, activeAuctionsResult, completedDealsResult] =
-    await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select(
-          "id, user_id, full_name, phone, business_name, business_id, company_name, city, contractor_license_number, contractor_classification, verification_status, is_verified, license_doc_url, insurance_doc_url, books_cert_url, admin_notes, created_at, email",
-        )
-        .order("created_at", { ascending: false }),
-      supabaseAdmin.from("user_roles").select("user_id, role"),
-      supabaseAdmin
-        .from("audit_log")
-        .select("id, action, entity_type, entity_id, actor_id, metadata, created_at")
-        .order("created_at", { ascending: false })
-        .limit(100),
-      supabaseAdmin
-        .from("job_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "open"),
-      supabaseAdmin.from("job_awards").select("id", { count: "exact", head: true }),
-    ]);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+
+  const [
+    profilesResult,
+    rolesResult,
+    auditResult,
+    activeAuctionsResult,
+    completedDealsResult,
+    recentAwardsResult,
+    monthlyAttendanceResult,
+    corporationsResult,
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select(
+        "id, user_id, full_name, phone, business_name, business_id, company_name, city, contractor_license_number, contractor_classification, verification_status, is_verified, license_doc_url, insurance_doc_url, books_cert_url, admin_notes, created_at, email",
+      )
+      .order("created_at", { ascending: false }),
+    supabaseAdmin.from("user_roles").select("user_id, role"),
+    supabaseAdmin
+      .from("audit_log")
+      .select("id, action, entity_type, entity_id, actor_id, metadata, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabaseAdmin
+      .from("job_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open"),
+    supabaseAdmin.from("job_awards").select("id", { count: "exact", head: true }),
+    // Deal velocity: awards in last 30 days
+    supabaseAdmin
+      .from("job_awards")
+      .select("id", { count: "exact", head: true })
+      .gte("awarded_at", thirtyDaysAgo),
+    // Monthly attendance value (workforce in motion)
+    supabaseAdmin
+      .from("attendance_records")
+      .select("total_cost, total_hours, workers_actual")
+      .gte("work_date", monthStart),
+    // Active corporations
+    supabaseAdmin
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "corporation"),
+  ]);
 
   if (profilesResult.error) throw new Error(profilesResult.error.message);
   if (rolesResult.error) throw new Error(rolesResult.error.message);
@@ -40,11 +67,25 @@ export async function fetchAdminDashboardData() {
   if (activeAuctionsResult.error) throw new Error(activeAuctionsResult.error.message);
   if (completedDealsResult.error) throw new Error(completedDealsResult.error.message);
 
+  const attendanceRecs = monthlyAttendanceResult.data ?? [];
+  const monthlyWorkforceValue = attendanceRecs.reduce(
+    (s, r) => s + Number(r.total_cost ?? 0),
+    0,
+  );
+  const monthlyWorkerHours = attendanceRecs.reduce(
+    (s, r) => s + Number(r.total_hours ?? 0),
+    0,
+  );
+
   return {
     profiles: profilesResult.data ?? [],
     roles: rolesResult.data ?? [],
     auditLog: auditResult.data ?? [],
     activeAuctions: activeAuctionsResult.count ?? 0,
     completedDeals: completedDealsResult.count ?? 0,
+    recentAwards: recentAwardsResult.count ?? 0,
+    monthlyWorkforceValue,
+    monthlyWorkerHours,
+    totalCorporations: corporationsResult.count ?? 0,
   };
 }

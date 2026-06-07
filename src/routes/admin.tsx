@@ -16,6 +16,7 @@ import {
   Gavel,
   Trophy,
   AlertCircle,
+  BarChart3,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -124,6 +125,10 @@ function AdminDashboard() {
   const auditLog = (data?.auditLog ?? []) as AuditEntry[];
   const activeAuctions = (data?.activeAuctions ?? 0) as number;
   const completedDeals = (data?.completedDeals ?? 0) as number;
+  const recentAwards = (data?.recentAwards ?? 0) as number;
+  const monthlyWorkforceValue = (data?.monthlyWorkforceValue ?? 0) as number;
+  const monthlyWorkerHours = (data?.monthlyWorkerHours ?? 0) as number;
+  const totalCorporations = (data?.totalCorporations ?? 0) as number;
 
   useEffect(() => {
     if (!error) return;
@@ -187,8 +192,8 @@ function AdminDashboard() {
         </div>
       }
     >
-      {/* KPI strip */}
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
+      {/* KPI strip — row 1: marketplace health */}
+      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
         <StatCard
           label="סה״כ משתמשים"
           value={stats.total}
@@ -209,6 +214,35 @@ function AdminDashboard() {
           label="עסקאות שנסגרו"
           value={completedDeals}
           icon={<Trophy className="h-5 w-5" />}
+        />
+      </div>
+
+      {/* KPI strip — row 2: platform activity */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
+        <StatCard
+          label="זכיות — 30 יום אחרון"
+          value={recentAwards}
+          icon={<Activity className="h-5 w-5" />}
+          sub={completedDeals > 0 ? `מתוך ${completedDeals} סה״כ` : undefined}
+        />
+        <StatCard
+          label="תאגידי כוח אדם"
+          value={totalCorporations}
+          icon={<Building2 className="h-5 w-5" />}
+          sub={`${stats.approved} ספקים מאושרים`}
+        />
+        <StatCard
+          label="שעות עבודה החודש"
+          value={monthlyWorkerHours > 0 ? Math.round(monthlyWorkerHours).toLocaleString() : 0}
+          icon={<BarChart3 className="h-5 w-5" />}
+          sub={monthlyWorkforceValue > 0 ? `₪${Math.round(monthlyWorkforceValue / 1000)}K ערך` : undefined}
+        />
+        <StatCard
+          label="מאושרים (%)"
+          value={stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}
+          icon={<HardHat className="h-5 w-5" />}
+          sub={`${stats.approved} מתוך ${stats.total}`}
+          suffix="%"
         />
       </div>
 
@@ -329,31 +363,39 @@ function StatCard({
   value,
   icon,
   highlight,
+  sub,
+  suffix,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   icon: React.ReactNode;
   highlight?: boolean;
+  sub?: string;
+  suffix?: string;
 }) {
+  const isHighlighted = highlight && Number(value) > 0;
   return (
     <div
       className={`rounded-2xl border p-5 transition-all hover:shadow-card ${
-        highlight && value > 0
+        isHighlighted
           ? "border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5"
           : "border-border/60 bg-card"
       }`}
     >
       <div
         className={`grid h-10 w-10 place-items-center rounded-xl ${
-          highlight && value > 0
+          isHighlighted
             ? "bg-gradient-primary text-primary-foreground shadow-elegant"
             : "bg-primary/15 text-primary"
         }`}
       >
         {icon}
       </div>
-      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">
+        {value}{suffix}
+      </div>
+      <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
+      {sub && <div className="mt-0.5 text-[10px] text-muted-foreground/70">{sub}</div>}
     </div>
   );
 }
