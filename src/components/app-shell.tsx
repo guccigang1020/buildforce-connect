@@ -139,7 +139,7 @@ function Sidebar({
 
   if (hasRole("labor_supplier") || hasRole("admin")) {
     mainNav.push({
-      to: "/labor-supplier",
+      to: "/labor-supplier/attendance",
       label: "ספק כוח אדם",
       icon: HardHat,
     });

@@ -381,7 +381,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
         <div className="flex items-center gap-2">
           {stats.projectsNeedingSite > 0 && (
             <Link
-              to="/contractor-projects"
+              to="/contractor/projects"
               className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 transition-colors hover:bg-amber-500/20"
             >
               <AlertTriangle className="h-3 w-3" />
@@ -390,7 +390,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
             </Link>
           )}
           <Link
-            to="/contractor-projects"
+            to="/contractor/projects"
             className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
             כל הפרויקטים <ChevronRight className="h-3 w-3 rotate-180" />
