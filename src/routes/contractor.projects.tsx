@@ -43,10 +43,10 @@ type Project = {
 type ProjectTeam = {
   id: string;
   name: string;
-  team_leader_name: string;
-  team_leader_phone: string;
+  team_leader_name: string | null;
+  team_leader_phone: string | null;
   expected_workers: number;
-  hourly_rate: number;
+  hourly_rate: number | null;
 };
 
 export const Route = createFileRoute("/contractor/projects")({
