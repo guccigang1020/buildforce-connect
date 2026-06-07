@@ -27,6 +27,7 @@ import {
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -171,7 +172,7 @@ function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6" dir="rtl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-primary shadow-elegant">
@@ -258,6 +259,7 @@ function AdminDashboard() {
           </div>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }
@@ -330,13 +332,25 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <Card className={`p-4 ${highlight && value > 0 ? "border-primary/50 bg-primary/5" : ""}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="text-muted-foreground">{icon}</span>
+    <div
+      className={`rounded-2xl border p-5 ${
+        highlight && value > 0
+          ? "border-primary/40 bg-primary/5"
+          : "border-border/60 bg-card"
+      }`}
+    >
+      <div
+        className={`grid h-10 w-10 place-items-center rounded-lg ${
+          highlight && value > 0
+            ? "bg-gradient-primary text-primary-foreground"
+            : "bg-primary/15 text-primary"
+        }`}
+      >
+        {icon}
       </div>
-      <div className="mt-1 text-3xl font-extrabold">{value}</div>
-    </Card>
+      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+    </div>
   );
 }
 

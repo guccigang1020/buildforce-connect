@@ -61,8 +61,8 @@ export function OpenTendersSection() {
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map((r) => (
-            <TenderRow key={r.id} req={r} />
+          {requests.map((r, idx) => (
+            <TenderRow key={r.id} req={r} rank={idx + 1} />
           ))}
         </div>
       )}
@@ -70,27 +70,34 @@ export function OpenTendersSection() {
   );
 }
 
-function TenderRow({ req }: { req: OpenRequest }) {
+function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 md:p-5">
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-muted-foreground">#{req.id.slice(0, 8)}</div>
-        <div className="mt-1 flex flex-wrap items-center gap-3 text-sm font-bold md:text-base">
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-4 w-4 text-primary" /> {req.location}
-          </span>
-          <span className="inline-flex items-center gap-1 text-muted-foreground font-normal text-xs">
-            <Calendar className="h-3 w-3" /> {req.start_date} · {req.duration}
-          </span>
-          {req.deadline_at && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-500">
-              <Clock className="h-3 w-3" /> סגירה{" "}
-              {new Date(req.deadline_at).toLocaleDateString("he-IL")}
-            </span>
-          )}
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/30 md:p-5">
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-sm font-bold text-muted-foreground">
+          {rank}
         </div>
-        <div className="mt-1 text-[11px] text-muted-foreground">
-          התחייבות {req.commitment_months} חודשים{req.budget ? ` · תקציב ${req.budget}` : ""}
+        <div className="min-w-0">
+          <div className="mt-0.5 flex flex-wrap items-center gap-3 text-sm font-bold md:text-base">
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-4 w-4 text-primary" /> {req.location}
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+              <Calendar className="h-3 w-3" /> {req.start_date} · {req.duration}
+            </span>
+            {req.deadline_at && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600">
+                <Clock className="h-3 w-3" /> סגירה{" "}
+                {new Date(req.deadline_at).toLocaleDateString("he-IL")}
+              </span>
+            )}
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            התחייבות {req.commitment_months} חודשים
+            {req.budget ? (
+              <span className="ms-1 font-semibold text-foreground">· תקציב {req.budget}</span>
+            ) : null}
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -185,7 +192,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="price">מחיר לשעה (₪) *</Label>
               <Input
                 id="price"
@@ -195,9 +202,11 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 value={pricePerHour}
                 onChange={(e) => setPricePerHour(e.target.value)}
                 required
+                className="h-11"
+                placeholder="₪"
               />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="workers">עובדים זמינים *</Label>
               <Input
                 id="workers"
@@ -206,10 +215,11 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 value={availableWorkers}
                 onChange={(e) => setAvailableWorkers(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
             <Input
               id="sd"
@@ -217,10 +227,11 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               required
+              className="h-11"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="rt">זמן תגובה (שעות)</Label>
               <Input
                 id="rt"
@@ -229,9 +240,10 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 max="168"
                 value={responseTimeHours}
                 onChange={(e) => setResponseTimeHours(e.target.value)}
+                className="h-11"
               />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="wd">אחריות (ימים)</Label>
               <Input
                 id="wd"
@@ -240,6 +252,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 max="365"
                 value={warrantyDays}
                 onChange={(e) => setWarrantyDays(e.target.value)}
+                className="h-11"
               />
             </div>
           </div>

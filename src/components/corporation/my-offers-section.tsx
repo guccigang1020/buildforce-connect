@@ -103,16 +103,24 @@ export function MyOffersSection() {
           {offers.map((o) => {
             const meta = STATUS_META[o.status] ?? STATUS_META.submitted;
             const Icon = meta.icon;
+            const isAwarded = o.status === "awarded";
             return (
-              <div key={o.id} className="rounded-2xl border border-border/60 bg-card p-4 md:p-5">
+              <div
+                key={o.id}
+                className={`rounded-2xl border p-4 md:p-5 transition-all ${
+                  isAwarded
+                    ? "border-primary/40 bg-primary/5"
+                    : "border-border/60 bg-card"
+                }`}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className={`gap-1 ${meta.className}`}>
                         <Icon className="h-3 w-3" /> {meta.label}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        #{o.request_id.slice(0, 8)}
+                        מכרז #{o.request_id.slice(0, 8)}
                       </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -134,30 +142,39 @@ export function MyOffersSection() {
                       עודכן: {formatDateTime(o.updated_at)}
                     </div>
                   </div>
-                  <div className="text-left text-xs">
-                    <div className="text-base font-extrabold">₪{Number(o.price_per_hour)}/שעה</div>
-                    <div className="text-[10px] text-muted-foreground">
+                  <div className="text-left">
+                    <div className={`text-xl font-extrabold ${isAwarded ? "text-primary" : ""}`}>
+                      ₪{Number(o.price_per_hour)}/שעה
+                    </div>
+                    <div className="text-xs text-muted-foreground">
                       {o.available_workers} עובדים
                     </div>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-border/50 pt-3">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/requests/$id" params={{ id: o.request_id }}>
-                      <Eye className="ml-1 h-4 w-4" /> צפייה במכרז
-                    </Link>
-                  </Button>
-                  {o.status === "submitted" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleWithdraw(o.id)}
-                      disabled={withdrawingId === o.id}
-                    >
-                      <Undo2 className="ml-1 h-4 w-4" />
-                      {withdrawingId === o.id ? "מושך…" : "משוך הצעה"}
-                    </Button>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
+                  {isAwarded && (
+                    <div className="text-xs font-semibold text-primary">
+                      זכית במכרז זה — בקרוב תקבל פרטי קשר של הקבלן
+                    </div>
                   )}
+                  <div className="flex flex-wrap gap-2 ms-auto">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to="/requests/$id" params={{ id: o.request_id }}>
+                        <Eye className="ml-1 h-4 w-4" /> צפייה במכרז
+                      </Link>
+                    </Button>
+                    {o.status === "submitted" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleWithdraw(o.id)}
+                        disabled={withdrawingId === o.id}
+                      >
+                        <Undo2 className="ml-1 h-4 w-4" />
+                        {withdrawingId === o.id ? "מושך…" : "משוך הצעה"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

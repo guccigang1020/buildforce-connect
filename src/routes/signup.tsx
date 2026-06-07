@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 
 const baseSchema = z.object({
   full_name: z.string().trim().min(2, "שם מלא נדרש").max(100),
@@ -192,7 +193,7 @@ function SignupPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto max-w-xl px-4 py-12">
+      <main className="mx-auto max-w-xl px-4 py-12" dir="rtl">
         <div className="text-center">
           <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
             <UserPlus className="h-6 w-6 text-primary-foreground" />
@@ -400,6 +401,7 @@ function SignupPage() {
           </Link>
         </p>
       </main>
+      <SiteFooter />
     </div>
   );
 }

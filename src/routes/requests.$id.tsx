@@ -76,7 +76,10 @@ function RequestPage() {
   if (isLoading) {
     return (
       <Shell>
-        <div className="py-16 text-center text-sm text-muted-foreground">טוען מכרז…</div>
+        <div className="flex flex-col items-center gap-3 py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">טוען מכרז…</p>
+        </div>
       </Shell>
     );
   }
@@ -298,13 +301,20 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-6 rounded-2xl border border-primary/30 bg-card p-5 space-y-3"
+      className="mt-6 space-y-4 rounded-2xl border border-primary/30 bg-card p-5 md:p-6"
     >
-      <h2 className="text-sm font-bold flex items-center gap-2">
-        <Send className="h-4 w-4 text-primary" /> הגשת הצעה
-      </h2>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex items-center gap-2">
+        <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 text-primary">
+          <Send className="h-4 w-4" />
+        </div>
         <div>
+          <h2 className="font-bold">הגשת הצעה למכרז</h2>
+          <p className="text-xs text-muted-foreground">כל הפרטים חסויים עד להכרזת זוכה</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
           <Label htmlFor="price">מחיר לשעה (₪) *</Label>
           <Input
             id="price"
@@ -314,9 +324,11 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
             value={pricePerHour}
             onChange={(e) => setPricePerHour(e.target.value)}
             required
+            className="h-11"
+            placeholder="₪ לשעה"
           />
         </div>
-        <div>
+        <div className="space-y-1.5">
           <Label htmlFor="workers">עובדים זמינים *</Label>
           <Input
             id="workers"
@@ -325,10 +337,13 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
             value={availableWorkers}
             onChange={(e) => setAvailableWorkers(e.target.value)}
             required
+            className="h-11"
+            placeholder="כמה עובדים"
           />
         </div>
       </div>
-      <div>
+
+      <div className="space-y-1.5">
         <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
         <Input
           id="sd"
@@ -336,10 +351,12 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           required
+          className="h-11"
         />
       </div>
+
       <div className="grid grid-cols-2 gap-3">
-        <div>
+        <div className="space-y-1.5">
           <Label htmlFor="rt">זמן תגובה (שעות)</Label>
           <Input
             id="rt"
@@ -348,9 +365,10 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
             max="168"
             value={responseTimeHours}
             onChange={(e) => setResponseTimeHours(e.target.value)}
+            className="h-11"
           />
         </div>
-        <div>
+        <div className="space-y-1.5">
           <Label htmlFor="wd">אחריות (ימים)</Label>
           <Input
             id="wd"
@@ -359,35 +377,52 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
             max="365"
             value={warrantyDays}
             onChange={(e) => setWarrantyDays(e.target.value)}
+            className="h-11"
           />
         </div>
       </div>
-      <div className="flex items-center gap-2">
+
+      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2.5">
         <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
-        <Label htmlFor="ins" className="cursor-pointer">
-          כלול ביטוח מלא
-        </Label>
-      </div>
-      <div>
-        <Label htmlFor="note">הערות</Label>
+        <span className="text-sm">
+          <span className="font-semibold">כלול ביטוח מלא</span>
+          <span className="text-muted-foreground"> — מגביר אמינות ההצעה</span>
+        </span>
+      </label>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="note">הערות להצעה</Label>
         <Textarea
           id="note"
           rows={3}
           maxLength={2000}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="פרטים נוספים על ההצעה..."
+          placeholder="ניסיון, יכולות מיוחדות, גמישות בתנאים…"
         />
       </div>
-      <Button type="submit" disabled={submitting} className="w-full bg-gradient-primary">
+
+      <Button
+        type="submit"
+        disabled={submitting}
+        size="lg"
+        className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+      >
         {submitting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" /> שולח…
           </>
         ) : (
-          "שלח הצעה"
+          <>
+            <Send className="ml-1 h-4 w-4" /> שלח הצעה
+          </>
         )}
       </Button>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+        ההצעה חסויה לחלוטין — הקבלן לא יראה את שמך עד שתיבחר
+      </div>
     </form>
   );
 }
