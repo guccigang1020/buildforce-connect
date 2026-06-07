@@ -14,6 +14,7 @@ import {
   Gavel,
   ClipboardList,
   HardHat,
+  Receipt,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -118,6 +119,11 @@ function Sidebar({
       label: "פרויקטים",
       icon: FolderOpen,
     });
+    mainNav.push({
+      to: "/contractor/accounts",
+      label: "חשבון יומי",
+      icon: ClipboardList,
+    });
   }
 
   if (hasRole("corporation") || hasRole("admin")) {
@@ -126,6 +132,11 @@ function Sidebar({
       label: "לוח תאגיד",
       icon: Building2,
       exact: true,
+    });
+    mainNav.push({
+      to: "/corporation/accounts",
+      label: "חשבונות",
+      icon: Receipt,
     });
   }
 
