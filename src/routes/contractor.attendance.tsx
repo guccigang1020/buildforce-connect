@@ -297,7 +297,7 @@ function ReportExceptionInline({
   onDone: () => void;
   fn: (args: {
     data: { recordId: string; reason: string; note: string };
-  }) => Promise<{ notify?: string } | undefined>;
+  }) => Promise<{ notify?: string | null } | undefined>;
 }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<

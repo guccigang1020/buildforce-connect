@@ -9,7 +9,8 @@ import { RecoveryEmail } from "@/lib/email-templates/recovery";
 import { EmailChangeEmail } from "@/lib/email-templates/email-change";
 import { ReauthenticationEmail } from "@/lib/email-templates/reauthentication";
 
-const EMAIL_TEMPLATES: Record<string, React.ComponentType<Record<string, unknown>>> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   signup: SignupEmail,
   invite: InviteEmail,
   magiclink: MagicLinkEmail,
@@ -29,7 +30,7 @@ const ROOT_DOMAIN = "buildforceprime.com";
 // even if the project's domain has changed since the template was scaffolded.
 const SAMPLE_PROJECT_URL = "https://2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovableproject.com";
 const SAMPLE_EMAIL = "user@example.test";
-const SAMPLE_DATA: Record<string, object> = {
+const SAMPLE_DATA: Record<string, Record<string, unknown>> = {
   signup: {
     siteName: SITE_NAME,
     siteUrl: SAMPLE_PROJECT_URL,
