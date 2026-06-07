@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, BadgeCheck, Zap, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SiteNav } from "@/components/site-nav";
 
 const loginSchema = z.object({
   email: z.string().trim().email("אימייל לא תקין").max(255),
@@ -66,39 +65,48 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12" dir="rtl">
-        <div className="w-full">
-          <div className="text-center">
-            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
-              <LogIn className="h-6 w-6 text-primary-foreground" />
+    <div className="flex h-screen overflow-hidden bg-background" dir="rtl">
+      {/* Form panel — RIGHT in RTL */}
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-10 md:px-10">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="mb-8 flex items-center gap-2 lg:hidden">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary shadow-glow-sm">
+              <Shield className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="mt-4 text-3xl font-extrabold">התחברות</h1>
-            <p className="mt-1 text-sm text-muted-foreground">חזרת? נכנסים בחזרה לפלטפורמה</p>
+            <span className="text-lg font-extrabold tracking-tight">BuildForce</span>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm shadow-elegant">
+          <div className="animate-fade-up">
+            <h1 className="text-3xl font-extrabold tracking-tight">ברוך הבא</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              חזרת לפלטפורמה? מתחברים.
+            </p>
+          </div>
+
+          <div className="mt-8 animate-fade-up delay-100 space-y-5">
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full h-11 gap-2 border-border/80 bg-card/60 font-semibold hover:bg-card"
               onClick={handleGoogle}
               disabled={submitting}
             >
-              <GoogleIcon /> המשך עם Google
+              <GoogleIcon />
+              המשך עם Google
             </Button>
 
-            <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-border" /> או{" "}
-              <span className="h-px flex-1 bg-border" />
+            <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
+              <span className="h-px flex-1 bg-border/60" /> או <span className="h-px flex-1 bg-border/60" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="email">אימייל</Label>
+                <Label htmlFor="email" className="text-sm font-semibold">
+                  כתובת אימייל
+                </Label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
                   <Input
                     id="email"
                     type="email"
@@ -106,20 +114,26 @@ function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pr-10"
+                    className="h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
+
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">סיסמה</Label>
-                  <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                  <Label htmlFor="password" className="text-sm font-semibold">
+                    סיסמה
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
                     שכחת סיסמה?
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
                   <Input
                     id="password"
                     type="password"
@@ -127,42 +141,101 @@ function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10"
+                    className="h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
                     placeholder="••••••••"
                   />
                 </div>
               </div>
+
               <Button
                 type="submit"
-                className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+                className="w-full h-11 bg-gradient-primary text-primary-foreground font-bold shadow-elegant hover:opacity-95 transition-opacity"
                 disabled={submitting}
               >
                 {submitting ? (
                   <>
-                    <Loader2 className="ml-2 h-4 w-4 animate-spin" /> מתחבר…
+                    <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מתחבר…
                   </>
                 ) : (
-                  "התחבר"
+                  "התחבר לחשבון"
                 )}
               </Button>
             </form>
+
+            <p className="text-center text-sm text-muted-foreground">
+              עדיין אין לך חשבון?{" "}
+              <Link to="/signup" className="font-bold text-primary hover:underline">
+                הירשם בחינם
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Branding panel — LEFT in RTL (hidden on mobile) */}
+      <aside className="relative hidden w-[42%] shrink-0 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[oklch(0.13_0.03_260)] via-[oklch(0.12_0.03_255)] to-[oklch(0.10_0.02_265)] lg:flex">
+        {/* Background decorations */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+          <div
+            className="absolute inset-0 opacity-[0.025]"
+            style={{
+              backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-xs px-8 text-center">
+          <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-primary shadow-elegant">
+            <Shield className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <div className="text-3xl font-extrabold tracking-tight text-foreground">BuildForce</div>
+          <div className="mt-2 text-sm font-medium text-muted-foreground">
+            פלטפורמת כוח האדם המובילה לענף הבנייה
           </div>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            עדיין אין לך חשבון?{" "}
-            <Link to="/signup" className="font-bold text-primary hover:underline">
-              הירשם בחינם
-            </Link>
-          </p>
+          <div className="mt-8 space-y-3">
+            {[
+              { icon: Zap, text: "הצעות תוך פחות מ-24 שעות" },
+              { icon: BadgeCheck, text: "תאגידים מאומתים בלבד" },
+              { icon: Shield, text: "עלות אפס לקבלן" },
+            ].map((item) => (
+              <div
+                key={item.text}
+                className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3 text-right"
+              >
+                <item.icon className="h-4 w-4 shrink-0 text-primary" />
+                <span className="text-sm font-medium text-foreground/90">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 border-t border-white/10 pt-6">
+            <div className="flex justify-center gap-8">
+              {[
+                { n: "12K+", l: "עובדים" },
+                { n: "47", l: "תאגידים" },
+                { n: "₪0", l: "לקבלן" },
+              ].map((s) => (
+                <div key={s.l} className="text-center">
+                  <div className="text-xl font-extrabold text-primary">{s.n}</div>
+                  <div className="text-xs text-muted-foreground">{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </main>
+      </aside>
     </div>
   );
 }
 
 function GoogleIcon() {
   return (
-    <svg className="ms-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
       <path
         fill="#EA4335"
         d="M12 11v3.6h5.1c-.2 1.4-1.6 4-5.1 4-3 0-5.5-2.5-5.5-5.6S8.9 7.4 12 7.4c1.7 0 2.9.7 3.5 1.3l2.4-2.3C16.4 5 14.4 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.7 0-.5-.1-.9-.1-1.3H12z"

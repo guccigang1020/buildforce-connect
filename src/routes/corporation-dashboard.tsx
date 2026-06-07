@@ -1,26 +1,19 @@
 import { useMemo } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Briefcase,
-  TrendingUp,
   Trophy,
   Building2,
   BadgeCheck,
-  ArrowLeft,
   Coins,
   Loader2,
-  Target,
-  Zap,
   BarChart3,
   AlertCircle,
-  ShieldCheck,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { AppShell } from "@/components/app-shell";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
 import { WorkforceInventorySection } from "@/components/corporation/workforce-inventory-section";
@@ -78,11 +71,11 @@ function CorporationDashboard() {
 
   if (loading || !user) {
     return (
-      <Shell>
+      <AppShell title="לוח תאגיד">
         <div className="grid place-items-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      </Shell>
+      </AppShell>
     );
   }
 
@@ -92,19 +85,19 @@ function CorporationDashboard() {
   const companyName = profile?.company_name || profile?.full_name || "התאגיד שלי";
 
   return (
-    <Shell>
+    <AppShell title="לוח תאגיד">
       {/* Company header card */}
-      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-card">
-        {/* Cover gradient */}
-        <div className="relative h-28 bg-gradient-to-br from-primary/40 via-primary/15 to-card md:h-36">
+      <div className="mb-6 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-card animate-fade-up">
+        <div className="relative h-28 bg-gradient-to-br from-primary/35 via-primary/12 to-card md:h-32">
           <div className="absolute inset-0 opacity-[0.03]" style={{
             backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
             backgroundSize: "24px 24px",
           }} />
-          <div className="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
+          <div className="absolute bottom-0 end-0 h-40 w-40 rounded-full bg-primary/25 blur-3xl" />
+          <div className="absolute top-0 start-0 h-24 w-24 rounded-full bg-accent/10 blur-3xl" />
         </div>
-        <div className="relative px-6 pb-6 md:px-8 md:pb-8">
-          <div className="-mt-12 flex flex-wrap items-end justify-between gap-4">
+        <div className="relative px-6 pb-6 md:px-8">
+          <div className="-mt-10 flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-end gap-4">
               <div className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl border-4 border-card bg-gradient-primary text-2xl font-extrabold text-primary-foreground shadow-elegant">
                 {companyInitial}
@@ -119,6 +112,10 @@ function CorporationDashboard() {
                   )}
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Building2 className="h-3 w-3" />
+                    תאגיד כוח אדם
+                  </span>
                   {profile?.city && <span>{profile.city}</span>}
                   <span>
                     {isLoading ? "…" : `${stats.totalActiveWorkers} עובדים פעילים`}
@@ -126,32 +123,26 @@ function CorporationDashboard() {
                 </div>
               </div>
             </div>
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-3 w-3 rotate-180" /> לוח ראשי
-            </Link>
           </div>
         </div>
       </div>
 
       {/* Status alerts */}
       {!isCorporation && (
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין להפעלת התפקיד.</span>
         </div>
       )}
       {isCorporation && !isApproved && (
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.</span>
         </div>
       )}
 
       {/* KPI strip */}
-      <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-200">
         <CorpKPI
           icon={Briefcase}
           label="הצעות פתוחות"
@@ -166,7 +157,7 @@ function CorporationDashboard() {
           variant="accent"
         />
 
-        {/* Win rate ring card */}
+        {/* Win rate ring */}
         <div className="col-span-2 flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-5 md:col-span-1">
           <WinRateRing rate={isLoading ? 0 : stats.winRate} />
           <div>
@@ -191,7 +182,7 @@ function CorporationDashboard() {
 
       {/* Revenue breakdown bar */}
       {stats.totalActiveWorkers > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
+        <div className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary" />
             <span className="text-xs font-bold text-foreground">חישוב עמלה:</span>
@@ -214,7 +205,7 @@ function CorporationDashboard() {
       <OpenTendersSection />
       <MyOffersSection />
       {isCorporation && <WorkforceInventorySection />}
-    </Shell>
+    </AppShell>
   );
 }
 
@@ -230,16 +221,16 @@ function WinRateRing({ rate }: { rate: number }) {
         <circle
           cx="30" cy="30" r={radius}
           fill="none"
-          strokeWidth="4"
+          strokeWidth="5"
           style={{ stroke: "oklch(0.21 0.028 265)" }}
         />
         <circle
           cx="30" cy="30" r={radius}
           fill="none"
-          strokeWidth="4"
+          strokeWidth="5"
           strokeLinecap="round"
           strokeDasharray={`${filled} ${empty}`}
-          style={{ stroke: "oklch(0.66 0.22 258)", transition: "stroke-dasharray 0.8s ease" }}
+          style={{ stroke: "oklch(0.62 0.24 258)", transition: "stroke-dasharray 0.8s ease" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -283,16 +274,6 @@ function CorpKPI({
       <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
       <div className="mt-0.5 text-xs font-medium text-muted-foreground">{label}</div>
       {sub && <div className="mt-1 text-[11px] text-muted-foreground/70">{sub}</div>}
-    </div>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-background text-foreground" dir="rtl">
-      <SiteNav />
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">{children}</main>
-      <SiteFooter />
     </div>
   );
 }

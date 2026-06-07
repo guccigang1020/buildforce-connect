@@ -26,8 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { AppShell } from "@/components/app-shell";
 import { listMyJobRequests } from "@/lib/job-requests.functions";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -146,182 +145,174 @@ function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground" dir="rtl">
-      <SiteNav />
-
-      {/* Dashboard header zone */}
-      <div className="border-b border-border/60 bg-card/30 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-medium">{formattedDate}</span>
-                {isAdmin && (
-                  <Badge
-                    variant="outline"
-                    className="border-primary/50 text-primary normal-case tracking-normal"
-                  >
-                    <ShieldCheck className="ms-1 h-3.5 w-3.5" /> מנהל מערכת
-                  </Badge>
-                )}
-              </div>
-              <h1 className="mt-1 text-2xl font-extrabold tracking-tight md:text-3xl">
-                {greeting}
-                {firstName ? `, ${firstName}` : ""}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {isLoading
-                  ? "טוען נתונים…"
-                  : stats.total === 0
-                    ? "עדיין לא פרסמת בקשות — התחל עכשיו וקבל הצעות תוך שעות."
-                    : `${stats.open} בקשות פתוחות · ${stats.totalOffers} הצעות שהתקבלו`}
-              </p>
-            </div>
-            <Button
-              asChild
-              size="lg"
-              className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95"
+    <AppShell
+      title="לוח בקרה"
+      action={
+        <Button
+          asChild
+          size="sm"
+          className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95 gap-1"
+        >
+          <Link to="/new-request">
+            <Plus className="h-4 w-4" /> בקשה חדשה
+          </Link>
+        </Button>
+      }
+    >
+      {/* Greeting header */}
+      <div className="mb-6 animate-fade-up">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-1">
+          <span>{formattedDate}</span>
+          {isAdmin && (
+            <Badge
+              variant="outline"
+              className="border-primary/50 text-primary normal-case tracking-normal gap-1"
             >
-              <Link to="/new-request">
-                <Plus className="ml-1 h-4 w-4" /> בקשה חדשה
-              </Link>
-            </Button>
-          </div>
+              <ShieldCheck className="h-3 w-3" /> מנהל מערכת
+            </Badge>
+          )}
+        </div>
+        <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+          {greeting}
+          {firstName ? `, ${firstName}` : ""}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isLoading
+            ? "טוען נתונים…"
+            : stats.total === 0
+              ? "עדיין לא פרסמת בקשות — התחל עכשיו וקבל הצעות תוך שעות."
+              : `${stats.open} בקשות פתוחות · ${stats.totalOffers} הצעות שהתקבלו`}
+        </p>
+      </div>
 
-          {/* KPI strip */}
-          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <KPICard
-              icon={Briefcase}
-              label="סה״כ בקשות"
-              value={isLoading ? "…" : String(stats.total)}
-              sub="כל הזמנים"
-            />
-            <KPICard
-              icon={Zap}
-              label="פתוחות למכרז"
-              value={isLoading ? "…" : String(stats.open)}
-              sub={
-                isLoading
-                  ? ""
-                  : stats.openWithOffers > 0
-                    ? `${stats.openWithOffers} קיבלו הצעות`
-                    : "ממתינות לספקים"
-              }
-              variant={stats.open > 0 ? "live" : "default"}
-            />
-            <KPICard
-              icon={BarChart3}
-              label="הצעות שהתקבלו"
-              value={isLoading ? "…" : String(stats.totalOffers)}
-              sub={
-                isLoading
-                  ? ""
-                  : stats.bestPrice != null
-                    ? `מינ׳ ₪${stats.bestPrice}/שעה`
-                    : "עדיין לא התקבלו"
-              }
-            />
-            <KPICard
-              icon={Trophy}
-              label="זכיות הוקצו"
-              value={isLoading ? "…" : String(stats.awarded)}
-              sub={isLoading ? "" : stats.total > 0 ? `${stats.convRate}% המרה` : ""}
-              variant="accent"
-            />
-          </div>
+      {/* KPI strip */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
+        <KPICard
+          icon={Briefcase}
+          label="סה״כ בקשות"
+          value={isLoading ? "…" : String(stats.total)}
+          sub="כל הזמנים"
+        />
+        <KPICard
+          icon={Zap}
+          label="פתוחות למכרז"
+          value={isLoading ? "…" : String(stats.open)}
+          sub={
+            isLoading
+              ? ""
+              : stats.openWithOffers > 0
+                ? `${stats.openWithOffers} קיבלו הצעות`
+                : "ממתינות לספקים"
+          }
+          variant={stats.open > 0 ? "live" : "default"}
+        />
+        <KPICard
+          icon={BarChart3}
+          label="הצעות שהתקבלו"
+          value={isLoading ? "…" : String(stats.totalOffers)}
+          sub={
+            isLoading
+              ? ""
+              : stats.bestPrice != null
+                ? `מינ׳ ₪${stats.bestPrice}/שעה`
+                : "עדיין לא התקבלו"
+          }
+        />
+        <KPICard
+          icon={Trophy}
+          label="זכיות הוקצו"
+          value={isLoading ? "…" : String(stats.awarded)}
+          sub={isLoading ? "" : stats.total > 0 ? `${stats.convRate}% המרה` : ""}
+          variant="accent"
+        />
+      </div>
+
+      {/* Insights chips */}
+      {!isLoading && requests.length > 0 && (
+        <div className="mb-5 flex flex-wrap gap-2 animate-fade-up delay-200">
+          {stats.openWithOffers > 0 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              {stats.openWithOffers} בקשות ממתינות להחלטה שלך
+            </span>
+          )}
+          {stats.bestPrice != null && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600">
+              <TrendingUp className="h-3.5 w-3.5" />
+              ההצעה הטובה ביותר: ₪{stats.bestPrice}/שעה
+            </span>
+          )}
+          {stats.open > 0 && stats.openWithOffers === 0 && (
+            <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              הבקשות הפתוחות ממתינות להצעות
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Filter + search bar */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex flex-wrap rounded-xl border border-border/60 bg-card/60 p-1">
+          {(
+            [
+              { id: "all", label: "הכל" },
+              { id: "open", label: "פתוחות" },
+              { id: "awarded", label: "זוכה נבחר" },
+              { id: "closed", label: "סגורות" },
+              { id: "cancelled", label: "בוטלו" },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors md:px-4 md:text-sm ${
+                filter === f.id
+                  ? "bg-gradient-primary text-primary-foreground shadow-sm-app"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {f.label}
+              {filterCounts[f.id] > 0 && (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                    filter === f.id ? "bg-white/20" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {filterCounts[f.id]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="חפש לפי עיר, תפקיד או מספר"
+            className="h-10 pr-9 bg-card/60"
+          />
         </div>
       </div>
 
-      {/* Content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
-        {/* Insights chips */}
-        {!isLoading && requests.length > 0 && (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {stats.openWithOffers > 0 && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
-                <Sparkles className="h-3.5 w-3.5" />
-                {stats.openWithOffers} בקשות ממתינות להחלטה שלך
-              </span>
-            )}
-            {stats.bestPrice != null && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600">
-                <TrendingUp className="h-3.5 w-3.5" />
-                ההצעה הטובה ביותר: ₪{stats.bestPrice}/שעה
-              </span>
-            )}
-            {stats.open > 0 && stats.openWithOffers === 0 && (
-              <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                הבקשות הפתוחות ממתינות להצעות
-              </span>
-            )}
+      {/* Request list */}
+      <div className="space-y-2.5">
+        {isLoading ? (
+          <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
+            <Loader2 className="ms-2 h-4 w-4 animate-spin" /> טוען בקשות…
           </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+            שגיאה בטעינת בקשות: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
+          </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState hasAny={requests.length > 0} />
+        ) : (
+          filtered.map((r) => <RequestCard key={r.id} request={r} />)
         )}
-
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex flex-wrap rounded-xl border border-border/60 bg-card p-1">
-            {(
-              [
-                { id: "all", label: "הכל" },
-                { id: "open", label: "פתוחות" },
-                { id: "awarded", label: "נבחר זוכה" },
-                { id: "closed", label: "סגורות" },
-                { id: "cancelled", label: "בוטלו" },
-              ] as const
-            ).map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors md:px-4 md:text-sm ${
-                  filter === f.id
-                    ? "bg-gradient-primary text-primary-foreground shadow-elegant"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {f.label}
-                {filterCounts[f.id] > 0 && (
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                      filter === f.id ? "bg-white/20" : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {filterCounts[f.id]}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="חפש לפי עיר, תפקיד או מספר"
-              className="h-10 pr-9"
-            />
-          </div>
-        </div>
-
-        {/* Request list */}
-        <div className="mt-4 space-y-2.5">
-          {isLoading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" /> טוען בקשות…
-            </div>
-          ) : error ? (
-            <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
-              שגיאה בטעינת בקשות: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState hasAny={requests.length > 0} />
-          ) : (
-            filtered.map((r) => <RequestCard key={r.id} request={r} />)
-          )}
-        </div>
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
@@ -353,7 +344,7 @@ function KPICard({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border p-5 transition-all hover:shadow-card ${containerCls}`}
+      className={`relative overflow-hidden rounded-2xl border p-5 transition-all hover:shadow-card ${containerCls}`}
     >
       <div className="flex items-start justify-between">
         <div className={`grid h-10 w-10 place-items-center rounded-xl ${iconCls}`}>
@@ -385,7 +376,6 @@ function RequestCard({ request: r }: { request: MyRequest }) {
       className="group block rounded-2xl border border-border/60 bg-card p-5 transition-all hover:border-primary/40 hover:shadow-card"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        {/* Left: request details */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className={`gap-1 text-xs ${meta.className}`}>
@@ -441,8 +431,7 @@ function RequestCard({ request: r }: { request: MyRequest }) {
           )}
         </div>
 
-        {/* Right: offer count + price + action */}
-        <div className="flex flex-col items-end gap-2 text-left">
+        <div className="flex flex-col items-end gap-2">
           <div className="text-center">
             <div className="text-2xl font-extrabold text-primary leading-none">{r.offers_count}</div>
             <div className="mt-0.5 text-[10px] text-muted-foreground">
@@ -484,12 +473,12 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-gradient-primary text-primary-foreground shadow-elegant">
               <Link to="/new-request">
-                <Plus className="ml-1 h-4 w-4" /> פרסם בקשה ראשונה
+                <Plus className="ms-1 h-4 w-4" /> פרסם בקשה ראשונה
               </Link>
             </Button>
             <Button asChild variant="outline">
               <Link to="/" hash="how">
-                <ArrowUpRight className="ml-1 h-4 w-4" /> איך זה עובד
+                <ArrowUpRight className="ms-1 h-4 w-4" /> איך זה עובד
               </Link>
             </Button>
           </div>

@@ -26,8 +26,7 @@ import {
 } from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -85,17 +84,26 @@ function AdminPage() {
 
   if (!session || (loading && !hasRole("admin"))) {
     return (
-      <div className="min-h-screen bg-background">
-        <SiteNav />
+      <AppShell title="מנהל מערכת">
         <div className="grid place-items-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      </div>
+      </AppShell>
     );
   }
 
   return <AdminDashboard />;
 }
+
+type AuditEntry = {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  actor_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
 
 function AdminDashboard() {
   const qc = useQueryClient();
@@ -119,7 +127,6 @@ function AdminDashboard() {
 
   useEffect(() => {
     if (!error) return;
-
     const message = error instanceof Error ? error.message : "שגיאה לא ידועה";
     if (/forbidden|admin role required|unauthorized/i.test(message)) {
       toast.error("אין הרשאת גישה");
@@ -170,109 +177,102 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6" dir="rtl">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-primary shadow-elegant">
-              <ShieldCheck className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight">דשבורד אדמין</h1>
-              <p className="text-sm text-muted-foreground">ניהול משתמשים, אימות תאגידים וקבלנים</p>
-            </div>
-          </div>
-          <div className="rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm">
-            שלום,{" "}
-            <span className="font-semibold text-foreground">{profile?.full_name ?? "אדמין"}</span>
-            <span className="mx-2 text-muted-foreground">|</span>
-            <span className="font-semibold text-primary">אדמין</span>
-          </div>
+    <AppShell
+      title="מנהל מערכת"
+      action={
+        <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs">
+          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+          <span className="font-semibold text-primary">אדמין</span>
+          <span className="text-muted-foreground">· {profile?.full_name ?? ""}</span>
         </div>
+      }
+    >
+      {/* KPI strip */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
+        <StatCard
+          label="סה״כ משתמשים"
+          value={stats.total}
+          icon={<Users className="h-5 w-5" />}
+        />
+        <StatCard
+          label="ממתינים לאישור"
+          value={stats.pending}
+          icon={<AlertCircle className="h-5 w-5" />}
+          highlight
+        />
+        <StatCard
+          label="מכרזים פעילים"
+          value={activeAuctions}
+          icon={<Gavel className="h-5 w-5" />}
+        />
+        <StatCard
+          label="עסקאות שנסגרו"
+          value={completedDeals}
+          icon={<Trophy className="h-5 w-5" />}
+        />
+      </div>
 
-        <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard label="סה״כ משתמשים" value={stats.total} icon={<Users className="h-5 w-5" />} />
-          <StatCard
-            label="ממתינים לאישור"
-            value={stats.pending}
-            icon={<AlertCircle className="h-5 w-5" />}
-            highlight
-          />
-          <StatCard
-            label="מכרזים פעילים"
-            value={activeAuctions}
-            icon={<Gavel className="h-5 w-5" />}
-          />
-          <StatCard
-            label="עסקאות שנסגרו"
-            value={completedDeals}
-            icon={<Trophy className="h-5 w-5" />}
+      {/* Tab bar + search */}
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-up delay-100">
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="bg-card/60 border border-border/60">
+            <TabsTrigger value="pending">
+              ממתינים
+              {stats.pending > 0 && (
+                <span className="ms-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {stats.pending}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
+            <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
+            <TabsTrigger value="all">הכל ({stats.total})</TabsTrigger>
+            <TabsTrigger value="activity">
+              <Activity className="me-1 h-3.5 w-3.5" /> פעולות
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className={`relative w-full md:w-72 ${tab === "activity" ? "invisible" : ""}`}>
+          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="חיפוש לפי שם / ח.פ / רישיון..."
+            className="pr-10 bg-card/60"
           />
         </div>
+      </div>
 
-        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList>
-              <TabsTrigger value="pending">ממתינים ({stats.pending})</TabsTrigger>
-              <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
-              <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
-              <TabsTrigger value="all">הכל ({stats.total})</TabsTrigger>
-              <TabsTrigger value="activity">
-                <Activity className="me-1 h-3.5 w-3.5" /> פעולות
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className={`relative w-full md:w-72 ${tab === "activity" ? "invisible" : ""}`}>
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="חיפוש לפי שם / ח.פ / רישיון..."
-              className="pr-10"
+      {/* Content */}
+      {tab === "activity" ? (
+        <ActivityLog entries={auditLog} isLoading={isLoading} />
+      ) : error ? (
+        <Card className="p-6 text-sm text-destructive">
+          שגיאה בטעינת ניהול: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
+        </Card>
+      ) : isLoading ? (
+        <div className="grid place-items-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center text-muted-foreground">
+          אין משתמשים בקטגוריה זו
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((p) => (
+            <UserRow
+              key={p.id}
+              profile={p}
+              roles={rolesByUser.get(p.user_id) ?? []}
+              onChange={refresh}
             />
-          </div>
+          ))}
         </div>
-
-        {tab === "activity" ? (
-          <ActivityLog entries={auditLog} isLoading={isLoading} />
-        ) : error ? (
-          <Card className="p-6 text-sm text-destructive">
-            שגיאה בטעינת ניהול: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
-          </Card>
-        ) : isLoading ? (
-          <div className="grid place-items-center py-24">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <Card className="p-12 text-center text-muted-foreground">אין משתמשים בקטגוריה זו</Card>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((p) => (
-              <UserRow
-                key={p.id}
-                profile={p}
-                roles={rolesByUser.get(p.user_id) ?? []}
-                onChange={refresh}
-              />
-            ))}
-          </div>
-        )}
-      </main>
-      <SiteFooter />
-    </div>
+      )}
+    </AppShell>
   );
 }
-
-type AuditEntry = {
-  id: string;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  actor_id: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-};
 
 function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading: boolean }) {
   if (isLoading) {
@@ -283,13 +283,17 @@ function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading:
     );
   }
   if (entries.length === 0) {
-    return <Card className="p-12 text-center text-muted-foreground">אין פעולות להצגה</Card>;
+    return (
+      <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center text-muted-foreground">
+        אין פעולות להצגה
+      </div>
+    );
   }
 
   return (
-    <Card className="divide-y divide-border/60">
+    <Card className="divide-y divide-border/60 overflow-hidden">
       {entries.map((e) => (
-        <div key={e.id} className="flex flex-wrap items-start justify-between gap-3 p-4">
+        <div key={e.id} className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-card/60 transition-colors">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="font-mono text-xs">
@@ -311,7 +315,7 @@ function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading:
               </pre>
             )}
           </div>
-          <div className="text-xs text-muted-foreground whitespace-nowrap">
+          <div className="whitespace-nowrap text-xs text-muted-foreground">
             {new Date(e.created_at).toLocaleString("he-IL")}
           </div>
         </div>
@@ -333,16 +337,16 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border p-5 ${
+      className={`rounded-2xl border p-5 transition-all hover:shadow-card ${
         highlight && value > 0
-          ? "border-primary/40 bg-primary/5"
+          ? "border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5"
           : "border-border/60 bg-card"
       }`}
     >
       <div
-        className={`grid h-10 w-10 place-items-center rounded-lg ${
+        className={`grid h-10 w-10 place-items-center rounded-xl ${
           highlight && value > 0
-            ? "bg-gradient-primary text-primary-foreground"
+            ? "bg-gradient-primary text-primary-foreground shadow-elegant"
             : "bg-primary/15 text-primary"
         }`}
       >
@@ -369,11 +373,14 @@ function UserRow({
   const isAdmin = roles.includes("admin");
 
   return (
-    <Card className="p-4">
+    <div className="rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-border hover:bg-card/80">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-bold">{profile.full_name}</h3>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
+              {profile.full_name[0]}
+            </div>
+            <h3 className="text-base font-bold">{profile.full_name}</h3>
             <StatusBadge status={profile.verification_status} />
             {isAdmin && (
               <Badge variant="outline" className="border-primary/50 text-primary">
@@ -393,39 +400,26 @@ function UserRow({
           </div>
           <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
             {profile.business_name && (
-              <span>
-                עסק: <span className="text-foreground">{profile.business_name}</span>
-              </span>
+              <span>עסק: <span className="text-foreground">{profile.business_name}</span></span>
             )}
             {profile.business_id && (
-              <span>
-                ח.פ: <span className="text-foreground">{profile.business_id}</span>
-              </span>
+              <span>ח.פ: <span className="text-foreground">{profile.business_id}</span></span>
             )}
             {profile.contractor_license_number && (
-              <span>
-                רישיון קבלן:{" "}
-                <span className="text-foreground">{profile.contractor_license_number}</span>
-              </span>
-            )}
-            {profile.contractor_classification && (
-              <span>
-                סיווג: <span className="text-foreground">{profile.contractor_classification}</span>
-              </span>
+              <span>רישיון: <span className="text-foreground">{profile.contractor_license_number}</span></span>
             )}
             {profile.phone && (
-              <span>
-                טלפון: <span className="text-foreground">{profile.phone}</span>
-              </span>
+              <span>טלפון: <span className="text-foreground">{profile.phone}</span></span>
             )}
             {profile.city && (
-              <span>
-                עיר: <span className="text-foreground">{profile.city}</span>
-              </span>
+              <span>עיר: <span className="text-foreground">{profile.city}</span></span>
             )}
+            <span className="text-[11px]">
+              {new Date(profile.created_at).toLocaleDateString("he-IL")}
+            </span>
           </div>
         </div>
-        <Button onClick={() => setOpen(true)} variant="outline" size="sm">
+        <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
           פתח לבדיקה
         </Button>
       </div>
@@ -437,7 +431,7 @@ function UserRow({
           onChange={onChange}
         />
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -542,8 +536,8 @@ function ReviewDialog({
 
         <div className="space-y-4 text-sm">
           <section>
-            <h4 className="mb-2 font-semibold">פרטי עסק</h4>
-            <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+            <h4 className="mb-2 font-semibold text-foreground/80">פרטי עסק</h4>
+            <div className="grid grid-cols-2 gap-2 rounded-xl border border-border/60 bg-muted/30 p-3">
               <Field label="שם עסק" value={profile.business_name} />
               <Field label="ח.פ / ע.מ" value={profile.business_id} />
               <Field label="רישיון קבלן" value={profile.contractor_license_number} />
@@ -554,12 +548,12 @@ function ReviewDialog({
           </section>
 
           <section>
-            <h4 className="mb-2 font-semibold">מסמכים</h4>
+            <h4 className="mb-2 font-semibold text-foreground/80">מסמכים</h4>
             <div className="space-y-2">
               {docs.map((d) => (
                 <div
                   key={d.label}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2"
+                  className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2"
                 >
                   <span>{d.label}</span>
                   {d.url ? (
@@ -567,12 +561,12 @@ function ReviewDialog({
                       href={d.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                      className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
                     >
-                      <ExternalLink className="h-4 w-4" /> צפה
+                      <ExternalLink className="h-3.5 w-3.5" /> צפה
                     </a>
                   ) : (
-                    <span className="text-muted-foreground">לא הועלה</span>
+                    <span className="text-xs text-muted-foreground">לא הועלה</span>
                   )}
                 </div>
               ))}
@@ -580,17 +574,18 @@ function ReviewDialog({
           </section>
 
           <section>
-            <h4 className="mb-2 font-semibold">הערות אדמין</h4>
+            <h4 className="mb-2 font-semibold text-foreground/80">הערות אדמין</h4>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="סיבת דחייה / הערות פנימיות..."
+              className="bg-card/60"
             />
           </section>
 
           <section>
-            <h4 className="mb-2 font-semibold">תפקידים</h4>
+            <h4 className="mb-2 font-semibold text-foreground/80">תפקידים</h4>
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
@@ -628,7 +623,7 @@ function ReviewDialog({
           <Button
             onClick={() => setStatus("approved")}
             disabled={busy}
-            className="bg-gradient-primary"
+            className="bg-gradient-primary text-primary-foreground"
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />

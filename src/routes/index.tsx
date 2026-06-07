@@ -352,7 +352,7 @@ function CompetitionAdvantage() {
           ].map((it) => (
             <div
               key={it.title}
-              className="rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur hover-lift"
+              className="enterprise-card hover-lift rounded-2xl p-6"
             >
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
                 <it.icon className="h-6 w-6" />
@@ -731,7 +731,7 @@ function SectionHeader({
       <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
         {eyebrow}
       </div>
-      <h2 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
+      <h2 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl text-gradient-primary">
         {title}
       </h2>
       {subtitle && <p className="mt-4 text-base text-muted-foreground md:text-lg">{subtitle}</p>}
