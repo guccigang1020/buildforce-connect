@@ -4,8 +4,19 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft, MapPin, Calendar, Users, Briefcase, CheckCircle2,
-  Trophy, Clock, ShieldCheck, Coins, X, Lock, AlertTriangle,
+  ArrowLeft,
+  MapPin,
+  Calendar,
+  Users,
+  Briefcase,
+  CheckCircle2,
+  Trophy,
+  Clock,
+  ShieldCheck,
+  Coins,
+  X,
+  Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +99,9 @@ function MyRequestPage() {
           <p className="mt-3 text-sm text-muted-foreground">
             {error instanceof Error ? error.message : "ייתכן שהבקשה נמחקה או שאין לך הרשאה."}
           </p>
-          <Button asChild className="mt-6"><Link to="/dashboard">חזרה ללוח הבקרה</Link></Button>
+          <Button asChild className="mt-6">
+            <Link to="/dashboard">חזרה ללוח הבקרה</Link>
+          </Button>
         </main>
         <SiteFooter />
       </div>
@@ -98,7 +111,9 @@ function MyRequestPage() {
   const { request, items, offers, isOwner } = data;
   const status = STATUS_LABEL[request.status] ?? STATUS_LABEL.open;
   const totalWorkers = items.reduce((s, it) => s + (it.count ?? 0), 0);
-  const sortedOffers = [...offers].sort((a, b) => Number(a.price_per_hour) - Number(b.price_per_hour));
+  const sortedOffers = [...offers].sort(
+    (a, b) => Number(a.price_per_hour) - Number(b.price_per_hour),
+  );
   const winningOffer = offers.find((o) => o.status === "awarded");
 
   return (
@@ -106,22 +121,42 @@ function MyRequestPage() {
       <SiteNav />
       <main className="mx-auto max-w-5xl px-4 py-10 md:px-6 md:py-14">
         <Button asChild variant="ghost" size="sm" className="mb-4">
-          <Link to="/dashboard"><ArrowLeft className="ml-1 h-4 w-4" /> ללוח הבקרה</Link>
+          <Link to="/dashboard">
+            <ArrowLeft className="ml-1 h-4 w-4" /> ללוח הבקרה
+          </Link>
         </Button>
 
         <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${status.color}`}>
-                {request.status === "awarded" ? <Trophy className="h-3.5 w-3.5" /> : <Clock className="h-3.5 w-3.5" />}
+              <div
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${status.color}`}
+              >
+                {request.status === "awarded" ? (
+                  <Trophy className="h-3.5 w-3.5" />
+                ) : (
+                  <Clock className="h-3.5 w-3.5" />
+                )}
                 {status.label}
               </div>
               <h1 className="mt-3 text-2xl font-extrabold md:text-3xl">בקשת כוח אדם</h1>
               <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{request.location}</span>
-                <span className="inline-flex items-center gap-1"><Calendar className="h-4 w-4" />התחלה: {request.start_date}</span>
-                <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{request.duration}</span>
-                <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" />{totalWorkers} עובדים</span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {request.location}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  התחלה: {request.start_date}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {request.duration}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  {totalWorkers} עובדים
+                </span>
               </div>
             </div>
             {isOwner && request.status === "open" && (
@@ -134,9 +169,13 @@ function MyRequestPage() {
           {items.length > 0 && (
             <div className="mt-6 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
               {items.map((it) => (
-                <div key={it.id} className="rounded-xl border border-border/60 bg-secondary/30 p-3 text-sm">
+                <div
+                  key={it.id}
+                  className="rounded-xl border border-border/60 bg-secondary/30 p-3 text-sm"
+                >
                   <div className="flex items-center gap-2 font-semibold">
-                    <Briefcase className="h-4 w-4 text-primary" />{it.role}
+                    <Briefcase className="h-4 w-4 text-primary" />
+                    {it.role}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {it.count} × {it.nationality}
@@ -147,7 +186,9 @@ function MyRequestPage() {
           )}
 
           {request.description && (
-            <p className="mt-6 whitespace-pre-line text-sm text-muted-foreground">{request.description}</p>
+            <p className="mt-6 whitespace-pre-line text-sm text-muted-foreground">
+              {request.description}
+            </p>
           )}
         </div>
 
@@ -157,7 +198,10 @@ function MyRequestPage() {
             <h2 className="text-xl font-bold">הצעות שהתקבלו ({offers.length})</h2>
             {sortedOffers[0] && (
               <div className="text-sm text-muted-foreground">
-                מהצעה הזולה: <span className="font-bold text-foreground">{sortedOffers[0].price_per_hour} ₪/שעה</span>
+                מהצעה הזולה:{" "}
+                <span className="font-bold text-foreground">
+                  {sortedOffers[0].price_per_hour} ₪/שעה
+                </span>
               </div>
             )}
           </div>
@@ -192,15 +236,21 @@ function MyRequestPage() {
                         <div>
                           <div className="flex items-center gap-2 font-bold">
                             תאגיד אנונימי
-                            {isWinner && <Badge className="bg-primary text-primary-foreground">זוכה</Badge>}
+                            {isWinner && (
+                              <Badge className="bg-primary text-primary-foreground">זוכה</Badge>
+                            )}
                             {o.status === "withdrawn" && <Badge variant="outline">בוטלה</Badge>}
                             {o.status === "rejected" && <Badge variant="outline">לא נבחרה</Badge>}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {isOwner && request.status === "open" ? (
-                              <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> הזהות נחשפת אחרי בחירה</span>
+                              <span className="inline-flex items-center gap-1">
+                                <Lock className="h-3 w-3" /> הזהות נחשפת אחרי בחירה
+                              </span>
                             ) : (
-                              <span>הצעה התקבלה {new Date(o.created_at).toLocaleDateString("he-IL")}</span>
+                              <span>
+                                הצעה התקבלה {new Date(o.created_at).toLocaleDateString("he-IL")}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -208,7 +258,9 @@ function MyRequestPage() {
                       <div className="flex items-center gap-4">
                         <div className="text-left">
                           <div className="text-xs text-muted-foreground">מחיר לשעה</div>
-                          <div className="text-xl font-extrabold text-primary">{o.price_per_hour} ₪</div>
+                          <div className="text-xl font-extrabold text-primary">
+                            {o.price_per_hour} ₪
+                          </div>
                         </div>
                         <div className="text-left">
                           <div className="text-xs text-muted-foreground">עובדים</div>
@@ -218,10 +270,24 @@ function MyRequestPage() {
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{o.start_date}</span>
-                      <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" />תגובה תוך {o.response_time_hours}ש'</span>
-                      <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />אחריות {o.warranty_days} ימים</span>
-                      {o.insurance && <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5" />ביטוח</span>}
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {o.start_date}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" />
+                        תגובה תוך {o.response_time_hours}ש'
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        אחריות {o.warranty_days} ימים
+                      </span>
+                      {o.insurance && (
+                        <span className="inline-flex items-center gap-1 text-emerald-600">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          ביטוח
+                        </span>
+                      )}
                     </div>
 
                     {(o.requires_personal_guarantee || o.requires_security_check) && (
@@ -238,7 +304,9 @@ function MyRequestPage() {
                     )}
 
                     {o.note && (
-                      <p className="mt-3 rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">{o.note}</p>
+                      <p className="mt-3 rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
+                        {o.note}
+                      </p>
                     )}
 
                     {isOwner && request.status === "open" && o.status === "submitted" && (
@@ -262,10 +330,12 @@ function MyRequestPage() {
 
         {winningOffer && isOwner && (
           <div className="mt-8 rounded-2xl border border-primary/40 bg-primary/5 p-5">
-            <div className="flex items-center gap-2 font-bold"><Coins className="h-5 w-5 text-primary" /> הזכייה הושלמה</div>
+            <div className="flex items-center gap-2 font-bold">
+              <Coins className="h-5 w-5 text-primary" /> הזכייה הושלמה
+            </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              התאגיד הזוכה קיבל את פרטי הקשר שלך במייל. אנא צור איתו קשר תוך 48 שעות.
-              כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
+              התאגיד הזוכה קיבל את פרטי הקשר שלך במייל. אנא צור איתו קשר תוך 48 שעות. כל תקשורת
+              מסחרית חייבת לעבור דרך הפלטפורמה.
             </p>
           </div>
         )}

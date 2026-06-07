@@ -76,7 +76,11 @@
   --surface-elevated: oklch(0.21 0.03 265);
   --gradient-primary: linear-gradient(135deg, oklch(0.66 0.22 258), oklch(0.74 0.18 245));
   --gradient-accent: linear-gradient(135deg, oklch(0.66 0.22 258), oklch(0.86 0.22 132));
-  --gradient-hero: linear-gradient(180deg, oklch(0.11 0.025 265 / 0.55) 0%, oklch(0.13 0.025 265 / 0.95) 100%);
+  --gradient-hero: linear-gradient(
+    180deg,
+    oklch(0.11 0.025 265 / 0.55) 0%,
+    oklch(0.13 0.025 265 / 0.95) 100%
+  );
   --shadow-elegant: 0 20px 60px -20px oklch(0.66 0.22 258 / 0.5);
   --shadow-glow: 0 0 60px -10px oklch(0.74 0.18 245 / 0.45);
   --shadow-card: 0 8px 30px -10px oklch(0 0 0 / 0.55);
@@ -111,8 +115,16 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 1200px 600px at top right, oklch(0.66 0.22 258 / 0.18), transparent 60%),
-      radial-gradient(ellipse 900px 500px at bottom left, oklch(0.86 0.22 132 / 0.10), transparent 60%),
+      radial-gradient(
+        ellipse 1200px 600px at top right,
+        oklch(0.66 0.22 258 / 0.18),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 900px 500px at bottom left,
+        oklch(0.86 0.22 132 / 0.1),
+        transparent 60%
+      ),
       radial-gradient(ellipse 800px 400px at center, oklch(0.74 0.18 245 / 0.06), transparent 70%);
     background-attachment: fixed;
   }
@@ -125,16 +137,25 @@
     background-clip: text;
     color: transparent;
   }
-  .bg-gradient-primary { background: var(--gradient-primary); }
-  .shadow-elegant { box-shadow: var(--shadow-elegant); }
-  .shadow-card { box-shadow: var(--shadow-card); }
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
   .glass-card {
     background: oklch(0.22 0.014 250 / 0.65);
     backdrop-filter: blur(14px);
     border: 1px solid oklch(0.35 0.015 250 / 0.4);
   }
   .hover-lift {
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), border-color 0.3s;
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.3s;
   }
   .hover-lift:hover {
     transform: translateY(-4px);

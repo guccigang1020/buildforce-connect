@@ -21,16 +21,36 @@ type MyOffer = {
 };
 
 const STATUS_META: Record<string, { label: string; icon: typeof Send; className: string }> = {
-  submitted: { label: "נשלחה", icon: Send, className: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-  withdrawn: { label: "נסוגה", icon: Ban, className: "bg-muted text-muted-foreground border-border" },
-  awarded: { label: "נבחרה", icon: Trophy, className: "bg-primary/15 text-primary border-primary/30" },
-  rejected: { label: "נדחתה", icon: XCircle, className: "bg-destructive/15 text-destructive border-destructive/30" },
+  submitted: {
+    label: "נשלחה",
+    icon: Send,
+    className: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+  },
+  withdrawn: {
+    label: "נסוגה",
+    icon: Ban,
+    className: "bg-muted text-muted-foreground border-border",
+  },
+  awarded: {
+    label: "נבחרה",
+    icon: Trophy,
+    className: "bg-primary/15 text-primary border-primary/30",
+  },
+  rejected: {
+    label: "נדחתה",
+    icon: XCircle,
+    className: "bg-destructive/15 text-destructive border-destructive/30",
+  },
 };
 
 function formatDateTime(iso: string) {
   try {
     return new Date(iso).toLocaleString("he-IL", {
-      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   } catch {
     return iso;
@@ -84,24 +104,29 @@ export function MyOffersSection() {
             const meta = STATUS_META[o.status] ?? STATUS_META.submitted;
             const Icon = meta.icon;
             return (
-              <div
-                key={o.id}
-                className="rounded-2xl border border-border/60 bg-card p-4 md:p-5"
-              >
+              <div key={o.id} className="rounded-2xl border border-border/60 bg-card p-4 md:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className={`gap-1 ${meta.className}`}>
                         <Icon className="h-3 w-3" /> {meta.label}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">#{o.request_id.slice(0, 8)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        #{o.request_id.slice(0, 8)}
+                      </span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       {o.request?.location && (
-                        <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{o.request.location}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {o.request.location}
+                        </span>
                       )}
                       {o.request?.start_date && (
-                        <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{o.request.start_date}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {o.request.start_date}
+                        </span>
                       )}
                       {o.request?.duration && <span>{o.request.duration}</span>}
                     </div>
@@ -111,7 +136,9 @@ export function MyOffersSection() {
                   </div>
                   <div className="text-left text-xs">
                     <div className="text-base font-extrabold">₪{Number(o.price_per_hour)}/שעה</div>
-                    <div className="text-[10px] text-muted-foreground">{o.available_workers} עובדים</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {o.available_workers} עובדים
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-border/50 pt-3">

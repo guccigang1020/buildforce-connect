@@ -5,10 +5,10 @@ export type ChatMessage = {
   id: string;
   threadKey: string; // requestId__corpId
   from: "customer" | "corporation" | "system";
-  text: string;        // already-redacted text shown to all
+  text: string; // already-redacted text shown to all
   rawFlagged: boolean; // whether redaction triggered
   reasons: string[];
-  at: string;          // ISO
+  at: string; // ISO
 };
 
 const KEY = "bf_chat_v1";

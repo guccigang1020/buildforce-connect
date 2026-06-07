@@ -5,7 +5,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -44,16 +48,26 @@ export function WorkforceInventorySection() {
   const rows = data ?? [];
   const total = useMemo(() => rows.reduce((s, r) => s + (r.count ?? 0), 0), [rows]);
 
-  useEffect(() => { setEdits({}); }, [data]);
+  useEffect(() => {
+    setEdits({});
+  }, [data]);
 
   async function addRow() {
     if (!user?.id) return;
-    if (draftCount < 1) { toast.error("הכמות חייבת להיות לפחות 1"); return; }
-    const { error } = await supabase.from("corporation_workforce").upsert(
-      { corporation_id: user.id, role: draftRole, nationality: draftNat, count: draftCount },
-      { onConflict: "corporation_id,role,nationality" },
-    );
-    if (error) { toast.error(error.message); return; }
+    if (draftCount < 1) {
+      toast.error("הכמות חייבת להיות לפחות 1");
+      return;
+    }
+    const { error } = await supabase
+      .from("corporation_workforce")
+      .upsert(
+        { corporation_id: user.id, role: draftRole, nationality: draftNat, count: draftCount },
+        { onConflict: "corporation_id,role,nationality" },
+      );
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("נוסף למלאי");
     setDraftCount(1);
     qc.invalidateQueries({ queryKey: ["corp-workforce", user.id] });
@@ -66,14 +80,20 @@ export function WorkforceInventorySection() {
       .from("corporation_workforce")
       .update({ count: Math.max(0, next) })
       .eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("עודכן");
     qc.invalidateQueries({ queryKey: ["corp-workforce", user!.id] });
   }
 
   async function removeRow(id: string) {
     const { error } = await supabase.from("corporation_workforce").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("נמחק");
     qc.invalidateQueries({ queryKey: ["corp-workforce", user!.id] });
   }
@@ -101,25 +121,38 @@ export function WorkforceInventorySection() {
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">תפקיד</label>
           <Select value={draftRole} onValueChange={setDraftRole}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              {ROLES.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">לאום</label>
           <Select value={draftNat} onValueChange={setDraftNat}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {NATIONALITIES.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+              {NATIONALITIES.map((n) => (
+                <SelectItem key={n} value={n}>
+                  {n}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">כמות</label>
           <Input
-            type="number" min={1}
+            type="number"
+            min={1}
             value={draftCount}
             onChange={(e) => setDraftCount(Math.max(1, Number(e.target.value) || 1))}
           />
@@ -134,7 +167,9 @@ export function WorkforceInventorySection() {
       {/* List */}
       <div className="mt-5">
         {isLoading ? (
-          <div className="grid place-items-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          <div className="grid place-items-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
         ) : rows.length === 0 ? (
           <div className="rounded-xl border border-border/60 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
             עוד לא הצהרת על פועלים זמינים. הוסף שורה ראשונה למעלה.
@@ -160,18 +195,23 @@ export function WorkforceInventorySection() {
                       <td className="px-4 py-2 text-muted-foreground">{r.nationality}</td>
                       <td className="px-4 py-2">
                         <Input
-                          type="number" min={0}
+                          type="number"
+                          min={0}
                           className="h-9 w-24"
                           value={editVal ?? r.count}
                           onChange={(e) =>
-                            setEdits((p) => ({ ...p, [r.id]: Math.max(0, Number(e.target.value) || 0) }))
+                            setEdits((p) => ({
+                              ...p,
+                              [r.id]: Math.max(0, Number(e.target.value) || 0),
+                            }))
                           }
                         />
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex gap-2">
                           <Button
-                            size="sm" variant={dirty ? "default" : "secondary"}
+                            size="sm"
+                            variant={dirty ? "default" : "secondary"}
                             disabled={!dirty}
                             onClick={() => saveRow(r.id)}
                           >

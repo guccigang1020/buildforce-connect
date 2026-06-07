@@ -1,73 +1,75 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { supabaseAdmin } from '@/integrations/supabase/client.server'
-import { timingSafeEqual } from 'crypto'
+import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { timingSafeEqual } from "crypto";
 
 function isAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get('authorization')
-  if (!authHeader?.startsWith('Bearer ')) return false
-  const token = authHeader.slice('Bearer '.length).trim()
-  const expected = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!expected || !token) return false
-  const a = Buffer.from(token)
-  const b = Buffer.from(expected)
-  if (a.length !== b.length) return false
-  return timingSafeEqual(a, b)
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice("Bearer ".length).trim();
+  const expected = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!expected || !token) return false;
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 // Daily 15:00 reminder: for every contractor with pending/exception records
 // (end_time submitted but not approved), log a reminder notification row.
 // External WhatsApp/SMS delivery is intentionally out-of-scope here — this
 // creates the auditable reminder + powers the in-app banner.
-export const Route = createFileRoute('/api/public/hooks/contractor-daily-reminder')({
+export const Route = createFileRoute("/api/public/hooks/contractor-daily-reminder")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         if (!isAuthorized(request)) {
-          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+          return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
-        const today = new Date().toISOString().slice(0, 10)
+        const today = new Date().toISOString().slice(0, 10);
         const { data: rows, error } = await supabaseAdmin
-          .from('attendance_records')
-          .select('id, contractor_id, project_id, projects:project_id(name, site_manager_phone)')
-          .eq('work_date', today)
-          .in('status', ['pending', 'exception'])
-          .is('frozen_at', null)
-          .not('end_time', 'is', null)
-        if (error) return Response.json({ ok: false, error: error.message }, { status: 500 })
-        const list = rows ?? []
-        if (list.length === 0) return Response.json({ ok: true, sent: 0 })
+          .from("attendance_records")
+          .select("id, contractor_id, project_id, projects:project_id(name, site_manager_phone)")
+          .eq("work_date", today)
+          .in("status", ["pending", "exception"])
+          .is("frozen_at", null)
+          .not("end_time", "is", null);
+        if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
+        const list = rows ?? [];
+        if (list.length === 0) return Response.json({ ok: true, sent: 0 });
 
         // group by contractor for one notification per contractor
-        const byContractor = new Map<string, typeof list>()
+        const byContractor = new Map<string, typeof list>();
         for (const r of list) {
-          const arr = byContractor.get(r.contractor_id) ?? []
-          arr.push(r)
-          byContractor.set(r.contractor_id, arr)
+          const arr = byContractor.get(r.contractor_id) ?? [];
+          arr.push(r);
+          byContractor.set(r.contractor_id, arr);
         }
 
         const inserts: Array<{
-          record_id: string
-          kind: string
-          channel: string
-          recipient_phone: string
-          recipient_role: string
-          payload: Record<string, unknown>
-        }> = []
+          record_id: string;
+          kind: string;
+          channel: string;
+          recipient_phone: string;
+          recipient_role: string;
+          payload: Record<string, unknown>;
+        }> = [];
         for (const [, recs] of byContractor) {
-          const head = recs[0]
-          const phone = (head.projects as { site_manager_phone?: string | null } | null)?.site_manager_phone ?? ''
+          const head = recs[0];
+          const phone =
+            (head.projects as { site_manager_phone?: string | null } | null)?.site_manager_phone ??
+            "";
           inserts.push({
             record_id: head.id,
-            kind: 'reminder_15h',
-            channel: 'in_app',
-            recipient_phone: phone || 'n/a',
-            recipient_role: 'contractor',
+            kind: "reminder_15h",
+            channel: "in_app",
+            recipient_phone: phone || "n/a",
+            recipient_role: "contractor",
             payload: { count: recs.length, work_date: today, record_ids: recs.map((r) => r.id) },
-          })
+          });
         }
-        await supabaseAdmin.from('attendance_notifications').insert(inserts as never)
-        return Response.json({ ok: true, sent: inserts.length, contractors: byContractor.size })
+        await supabaseAdmin.from("attendance_notifications").insert(inserts as never);
+        return Response.json({ ok: true, sent: inserts.length, contractors: byContractor.size });
       },
     },
   },
-})
+});

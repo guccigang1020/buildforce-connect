@@ -3,9 +3,22 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Plus, Search, MapPin, Calendar, Users, Briefcase, Clock,
-  Trophy, CheckCircle2, XCircle, Loader2, Inbox, ArrowLeft, ShieldCheck,
-  TrendingUp, Filter,
+  Plus,
+  Search,
+  MapPin,
+  Calendar,
+  Users,
+  Briefcase,
+  Clock,
+  Trophy,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Inbox,
+  ArrowLeft,
+  ShieldCheck,
+  TrendingUp,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,10 +45,26 @@ type MyRequest = {
 type StatusFilter = "all" | "open" | "awarded" | "closed" | "cancelled";
 
 const STATUS_META: Record<string, { label: string; className: string; icon: typeof Clock }> = {
-  open: { label: "פתוחה למכרז", className: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30", icon: Clock },
-  awarded: { label: "נבחר זוכה", className: "bg-primary/15 text-primary border-primary/30", icon: Trophy },
-  closed: { label: "סגורה", className: "bg-muted text-muted-foreground border-border", icon: CheckCircle2 },
-  cancelled: { label: "בוטלה", className: "bg-destructive/15 text-destructive border-destructive/30", icon: XCircle },
+  open: {
+    label: "פתוחה למכרז",
+    className: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+    icon: Clock,
+  },
+  awarded: {
+    label: "נבחר זוכה",
+    className: "bg-primary/15 text-primary border-primary/30",
+    icon: Trophy,
+  },
+  closed: {
+    label: "סגורה",
+    className: "bg-muted text-muted-foreground border-border",
+    icon: CheckCircle2,
+  },
+  cancelled: {
+    label: "בוטלה",
+    className: "bg-destructive/15 text-destructive border-destructive/30",
+    icon: XCircle,
+  },
 };
 
 export const Route = createFileRoute("/dashboard")({
@@ -85,7 +114,9 @@ function DashboardPage() {
       <main className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-14">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-primary">לוח בקרה</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+              לוח בקרה
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">הבקשות שלי</h1>
               {isAdmin && (
@@ -98,7 +129,11 @@ function DashboardPage() {
               עקוב אחרי כל בקשות העבודה שפרסמת, ההצעות שהתקבלו וסטטוס הזכיות.
             </p>
           </div>
-          <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant">
+          <Button
+            asChild
+            size="lg"
+            className="bg-gradient-primary text-primary-foreground shadow-elegant"
+          >
             <Link to="/new-request">
               <Plus className="ml-1 h-4 w-4" /> בקשה חדשה
             </Link>
@@ -172,7 +207,10 @@ function DashboardPage() {
 }
 
 function KPI({
-  icon: Icon, label, value, accent,
+  icon: Icon,
+  label,
+  value,
+  accent,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -180,8 +218,12 @@ function KPI({
   accent?: boolean;
 }) {
   return (
-    <div className={`rounded-2xl border p-5 ${accent ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}>
-      <div className={`grid h-10 w-10 place-items-center rounded-lg ${accent ? "bg-gradient-primary text-primary-foreground" : "bg-primary/15 text-primary"}`}>
+    <div
+      className={`rounded-2xl border p-5 ${accent ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
+    >
+      <div
+        className={`grid h-10 w-10 place-items-center rounded-lg ${accent ? "bg-gradient-primary text-primary-foreground" : "bg-primary/15 text-primary"}`}
+      >
         <Icon className="h-5 w-5" />
       </div>
       <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
@@ -208,7 +250,8 @@ function RequestCard({ request: r }: { request: MyRequest }) {
             <span className="text-xs text-muted-foreground">#{r.id.slice(0, 8)}</span>
             {r.deadline_at && r.status === "open" && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600">
-                <Clock className="h-3 w-3" /> סגירה {new Date(r.deadline_at).toLocaleDateString("he-IL")}
+                <Clock className="h-3 w-3" /> סגירה{" "}
+                {new Date(r.deadline_at).toLocaleDateString("he-IL")}
               </span>
             )}
           </div>
@@ -228,7 +271,10 @@ function RequestCard({ request: r }: { request: MyRequest }) {
           {r.roles.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {r.roles.map((role) => (
-                <span key={role} className="inline-flex items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-[11px] font-semibold text-foreground/80">
+                <span
+                  key={role}
+                  className="inline-flex items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-[11px] font-semibold text-foreground/80"
+                >
                   <Briefcase className="h-3 w-3" /> {role}
                 </span>
               ))}
@@ -269,7 +315,9 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
       </p>
       {!hasAny && (
         <Button asChild className="mt-4 bg-gradient-primary text-primary-foreground">
-          <Link to="/new-request"><Plus className="ml-1 h-4 w-4" /> פרסם בקשה</Link>
+          <Link to="/new-request">
+            <Plus className="ml-1 h-4 w-4" /> פרסם בקשה
+          </Link>
         </Button>
       )}
     </div>

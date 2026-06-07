@@ -15,8 +15,7 @@ export function SiteFooter() {
             </span>
           </Link>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-            שוק כוח האדם החכם של ענף הבנייה בישראל. מחבר קבלנים ויזמים עם תאגידי
-            כוח אדם מאומתים.
+            שוק כוח האדם החכם של ענף הבנייה בישראל. מחבר קבלנים ויזמים עם תאגידי כוח אדם מאומתים.
           </p>
         </div>
         <div>

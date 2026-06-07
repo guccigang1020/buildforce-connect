@@ -125,7 +125,10 @@ export function addSelection(input: AddSelectionInput): SelectionRecord {
           commitmentMonths: months,
           penaltyAmount: circumventionPenalty(input.count),
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
-          timezone: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
+          timezone:
+            typeof Intl !== "undefined"
+              ? Intl.DateTimeFormat().resolvedOptions().timeZone
+              : undefined,
         }
       : undefined,
   };

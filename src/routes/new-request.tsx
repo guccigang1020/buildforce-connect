@@ -4,8 +4,20 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { createJobRequest } from "@/lib/job-requests.functions";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, MapPin, Calendar, Users,
-  Briefcase, FileText, Sparkles, ShieldCheck, Plus, Trash2, Lock, Globe2,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  MapPin,
+  Calendar,
+  Users,
+  Briefcase,
+  FileText,
+  Sparkles,
+  ShieldCheck,
+  Plus,
+  Trash2,
+  Lock,
+  Globe2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +31,10 @@ export const Route = createFileRoute("/new-request")({
   head: () => ({
     meta: [
       { title: "פרסום בקשת כוח אדם — BuildForce" },
-      { name: "description", content: "פרסם בקשה ל-60 שניות וקבל הצעות מתאגידי כוח אדם מאומתים תוך שעות." },
+      {
+        name: "description",
+        content: "פרסם בקשה ל-60 שניות וקבל הצעות מתאגידי כוח אדם מאומתים תוך שעות.",
+      },
     ],
   }),
   component: NewRequestPage,
@@ -75,18 +90,25 @@ function NewRequestPage() {
     setForm((f) => ({ ...f, [k]: v }));
 
   const updateItem = (id: string, patch: Partial<RequestItem>) =>
-    setForm((f) => ({ ...f, items: f.items.map((it) => (it.id === id ? { ...it, ...patch } : it)) }));
+    setForm((f) => ({
+      ...f,
+      items: f.items.map((it) => (it.id === id ? { ...it, ...patch } : it)),
+    }));
 
   const addItem = () => setForm((f) => ({ ...f, items: [...f.items, newItem()] }));
   const removeItem = (id: string) =>
-    setForm((f) => ({ ...f, items: f.items.length > 1 ? f.items.filter((it) => it.id !== id) : f.items }));
+    setForm((f) => ({
+      ...f,
+      items: f.items.length > 1 ? f.items.filter((it) => it.id !== id) : f.items,
+    }));
 
   const itemsValid = form.items.every((it) => it.role && it.nationality && it.count > 0);
   const totalWorkers = form.items.reduce((s, it) => s + (Number(it.count) || 0), 0);
 
   const canNext = () => {
     if (step === 1) return itemsValid && form.items.length > 0;
-    if (step === 2) return form.location && form.startDate && form.duration && form.commitmentMonths;
+    if (step === 2)
+      return form.location && form.startDate && form.duration && form.commitmentMonths;
     if (step === 3) return true;
     if (step === 4) return form.contactName && form.contactPhone && form.acceptTerms;
     return false;
@@ -136,11 +158,14 @@ function NewRequestPage() {
           </div>
           <h1 className="mt-6 text-3xl font-extrabold md:text-4xl">הבקשה פורסמה בהצלחה</h1>
           <p className="mt-3 max-w-md text-muted-foreground">
-            תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך
-            במייל ובלוח הבקרה.
+            תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך במייל ובלוח הבקרה.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant">
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-primary text-primary-foreground shadow-elegant"
+            >
               <Link to="/dashboard">לצפייה בלוח הבקרה</Link>
             </Button>
             <Button
@@ -150,8 +175,16 @@ function NewRequestPage() {
                 setSubmitted(false);
                 setStep(1);
                 setForm({
-                  items: [newItem()], location: "", startDate: "", duration: "", commitmentMonths: "",
-                  budget: "", description: "", contactName: "", contactPhone: "", acceptTerms: false,
+                  items: [newItem()],
+                  location: "",
+                  startDate: "",
+                  duration: "",
+                  commitmentMonths: "",
+                  budget: "",
+                  description: "",
+                  contactName: "",
+                  contactPhone: "",
+                  acceptTerms: false,
                 });
               }}
             >
@@ -193,7 +226,9 @@ function NewRequestPage() {
               >
                 {s.n < step ? <CheckCircle2 className="h-4 w-4" /> : s.n}
               </div>
-              <div className={`text-center text-[11px] font-medium md:text-xs ${s.n <= step ? "text-foreground" : "text-muted-foreground"}`}>
+              <div
+                className={`text-center text-[11px] font-medium md:text-xs ${s.n <= step ? "text-foreground" : "text-muted-foreground"}`}
+              >
                 {s.label}
               </div>
             </div>
@@ -210,7 +245,11 @@ function NewRequestPage() {
           <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card lg:col-span-2 md:p-8">
             {step === 1 && (
               <div className="space-y-6">
-                <StepHeader icon={Briefcase} title="איזה צוות אתה צריך?" subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות. ניתן לערבב כמה שורות." />
+                <StepHeader
+                  icon={Briefcase}
+                  title="איזה צוות אתה צריך?"
+                  subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות. ניתן לערבב כמה שורות."
+                />
                 <div className="space-y-3">
                   {form.items.map((it, idx) => (
                     <ItemRow
@@ -232,8 +271,9 @@ function NewRequestPage() {
                 </div>
                 {totalWorkers > 0 && (
                   <div className="rounded-xl bg-secondary/40 p-3 text-xs text-muted-foreground">
-                    סה״כ <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על פני {form.items.length} שורות.
-                    התאגידים יגישו מחיר לשעה <span className="font-semibold text-foreground">לכל שורה בנפרד</span>.
+                    סה״כ <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על
+                    פני {form.items.length} שורות. התאגידים יגישו מחיר לשעה{" "}
+                    <span className="font-semibold text-foreground">לכל שורה בנפרד</span>.
                   </div>
                 )}
               </div>
@@ -262,12 +302,28 @@ function NewRequestPage() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="start" className="mb-2 block">תאריך התחלה</Label>
-                    <Input id="start" type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} className="h-12" />
+                    <Label htmlFor="start" className="mb-2 block">
+                      תאריך התחלה
+                    </Label>
+                    <Input
+                      id="start"
+                      type="date"
+                      value={form.startDate}
+                      onChange={(e) => update("startDate", e.target.value)}
+                      className="h-12"
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="duration" className="mb-2 block">משך עבודה</Label>
-                    <Input id="duration" placeholder="לדוגמה: 3 חודשים" value={form.duration} onChange={(e) => update("duration", e.target.value)} className="h-12" />
+                    <Label htmlFor="duration" className="mb-2 block">
+                      משך עבודה
+                    </Label>
+                    <Input
+                      id="duration"
+                      placeholder="לדוגמה: 3 חודשים"
+                      value={form.duration}
+                      onChange={(e) => update("duration", e.target.value)}
+                      className="h-12"
+                    />
                   </div>
                 </div>
                 <div>
@@ -289,36 +345,83 @@ function NewRequestPage() {
                     ))}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
-                    זו התקופה שאתה מתחייב להעסקה דרך הפלטפורמה. מגדיר ביטחון לתאגידים — ומחיר טוב יותר עבורך.
+                    זו התקופה שאתה מתחייב להעסקה דרך הפלטפורמה. מגדיר ביטחון לתאגידים — ומחיר טוב
+                    יותר עבורך.
                   </p>
                 </div>
               </div>
             )}
             {step === 3 && (
               <div className="space-y-6">
-                <StepHeader icon={FileText} title="פרטים נוספים" subtitle="תקציב מוערך ופרטי הפרויקט (אופציונלי, אבל עוזר לקבל הצעות מדויקות)." />
+                <StepHeader
+                  icon={FileText}
+                  title="פרטים נוספים"
+                  subtitle="תקציב מוערך ופרטי הפרויקט (אופציונלי, אבל עוזר לקבל הצעות מדויקות)."
+                />
                 <div>
-                  <Label htmlFor="budget" className="mb-2 block">תקציב לשעת עובד (₪)</Label>
-                  <Input id="budget" placeholder="לדוגמה: 180-210" value={form.budget} onChange={(e) => update("budget", e.target.value)} className="h-12" />
+                  <Label htmlFor="budget" className="mb-2 block">
+                    תקציב לשעת עובד (₪)
+                  </Label>
+                  <Input
+                    id="budget"
+                    placeholder="לדוגמה: 180-210"
+                    value={form.budget}
+                    onChange={(e) => update("budget", e.target.value)}
+                    className="h-12"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="desc" className="mb-2 block">תיאור הפרויקט</Label>
-                  <Textarea id="desc" rows={5} placeholder="ספר לתאגידים על הפרויקט: סוג בנייה, גודל, דרישות מיוחדות..." value={form.description} onChange={(e) => update("description", e.target.value)} maxLength={1000} />
-                  <div className="mt-1 text-xs text-muted-foreground">{form.description.length}/1000</div>
+                  <Label htmlFor="desc" className="mb-2 block">
+                    תיאור הפרויקט
+                  </Label>
+                  <Textarea
+                    id="desc"
+                    rows={5}
+                    placeholder="ספר לתאגידים על הפרויקט: סוג בנייה, גודל, דרישות מיוחדות..."
+                    value={form.description}
+                    onChange={(e) => update("description", e.target.value)}
+                    maxLength={1000}
+                  />
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {form.description.length}/1000
+                  </div>
                 </div>
               </div>
             )}
             {step === 4 && (
               <div className="space-y-6">
-                <StepHeader icon={Users} title="איך נחזור אליך?" subtitle="פרטי הקשר יוצגו רק לתאגידים שאישרת." />
+                <StepHeader
+                  icon={Users}
+                  title="איך נחזור אליך?"
+                  subtitle="פרטי הקשר יוצגו רק לתאגידים שאישרת."
+                />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="name" className="mb-2 block">שם מלא</Label>
-                    <Input id="name" placeholder="ישראל ישראלי" value={form.contactName} onChange={(e) => update("contactName", e.target.value)} className="h-12" maxLength={100} />
+                    <Label htmlFor="name" className="mb-2 block">
+                      שם מלא
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="ישראל ישראלי"
+                      value={form.contactName}
+                      onChange={(e) => update("contactName", e.target.value)}
+                      className="h-12"
+                      maxLength={100}
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="phone" className="mb-2 block">טלפון נייד</Label>
-                    <Input id="phone" type="tel" placeholder="050-0000000" value={form.contactPhone} onChange={(e) => update("contactPhone", e.target.value)} className="h-12" maxLength={20} />
+                    <Label htmlFor="phone" className="mb-2 block">
+                      טלפון נייד
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="050-0000000"
+                      value={form.contactPhone}
+                      onChange={(e) => update("contactPhone", e.target.value)}
+                      className="h-12"
+                      maxLength={20}
+                    />
                   </div>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-secondary/40 p-4 text-sm text-muted-foreground">
@@ -333,25 +436,42 @@ function NewRequestPage() {
                     className="mt-0.5 h-4 w-4 accent-primary"
                   />
                   <span className="text-muted-foreground">
-                    <span className="font-bold text-foreground">אני מתחייב לסעיף אי-עקיפה (Non-Circumvention):</span>
-                    {" "}כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך הפלטפורמה למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק. עקיפה ישירה של הפלטפורמה מהווה הפרת תנאי שימוש.
+                    <span className="font-bold text-foreground">
+                      אני מתחייב לסעיף אי-עקיפה (Non-Circumvention):
+                    </span>{" "}
+                    כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך הפלטפורמה
+                    למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק. עקיפה ישירה של הפלטפורמה
+                    מהווה הפרת תנאי שימוש.
                   </span>
                 </label>
               </div>
             )}
 
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-border/60 pt-6">
-              <Button type="button" variant="ghost" onClick={() => (step === 1 ? navigate({ to: "/" }) : setStep(step - 1))}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => (step === 1 ? navigate({ to: "/" }) : setStep(step - 1))}
+              >
                 <ArrowRight className="ml-1 h-4 w-4" />
                 {step === 1 ? "ביטול" : "הקודם"}
               </Button>
               {step < STEPS.length ? (
-                <Button type="button" disabled={!canNext()} onClick={() => setStep(step + 1)} className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50">
+                <Button
+                  type="button"
+                  disabled={!canNext()}
+                  onClick={() => setStep(step + 1)}
+                  className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
+                >
                   הבא
                   <ArrowLeft className="mr-1 h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={!canNext() || submitting} className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50">
+                <Button
+                  type="submit"
+                  disabled={!canNext() || submitting}
+                  className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
+                >
                   {submitting ? "שולח..." : "פרסם בקשה"}
                   <CheckCircle2 className="mr-1 h-4 w-4" />
                 </Button>
@@ -361,14 +481,21 @@ function NewRequestPage() {
 
           {/* Live preview */}
           <aside className="rounded-2xl border border-border/60 bg-card p-6 shadow-card md:p-7 lg:sticky lg:top-20 lg:h-fit">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">תצוגה מקדימה</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              תצוגה מקדימה
+            </div>
             <h3 className="mt-2 text-lg font-bold">בקשה · {totalWorkers} עובדים</h3>
             <div className="mt-3 space-y-2">
               {form.items.map((it, i) => (
-                <div key={it.id} className="rounded-lg border border-border/60 bg-secondary/40 px-3 py-2 text-xs">
+                <div
+                  key={it.id}
+                  className="rounded-lg border border-border/60 bg-secondary/40 px-3 py-2 text-xs"
+                >
                   <span className="font-bold text-foreground">{it.count || "?"} ×</span>{" "}
                   {it.role || "—"} · <span className="text-primary">{it.nationality || "—"}</span>
-                  {!it.role && !it.nationality && <span className="text-muted-foreground">פריט {i + 1} ריק</span>}
+                  {!it.role && !it.nationality && (
+                    <span className="text-muted-foreground">פריט {i + 1} ריק</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -376,7 +503,11 @@ function NewRequestPage() {
               <Row icon={MapPin} label="מיקום" value={form.location || "—"} />
               <Row icon={Calendar} label="התחלה" value={form.startDate || "—"} />
               <Row icon={Calendar} label="משך" value={form.duration || "—"} />
-              <Row icon={Lock} label="התחייבות" value={form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"} />
+              <Row
+                icon={Lock}
+                label="התחייבות"
+                value={form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}
+              />
               <Row icon={Briefcase} label="תקציב" value={form.budget ? `₪${form.budget}` : "—"} />
             </ul>
             <div className="mt-6 rounded-xl bg-secondary/40 p-4 text-xs text-muted-foreground">
@@ -396,7 +527,11 @@ function NewRequestPage() {
 }
 
 function ItemRow({
-  idx, item, onChange, onRemove, removable,
+  idx,
+  item,
+  onChange,
+  onRemove,
+  removable,
 }: {
   idx: number;
   item: RequestItem;
@@ -409,7 +544,11 @@ function ItemRow({
       <div className="mb-3 flex items-center justify-between">
         <div className="text-xs font-bold text-muted-foreground">שורה {idx}</div>
         {removable && (
-          <button type="button" onClick={onRemove} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive">
+          <button
+            type="button"
+            onClick={onRemove}
+            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive"
+          >
             <Trash2 className="h-3 w-3" /> הסר
           </button>
         )}
@@ -423,7 +562,11 @@ function ItemRow({
             className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
           >
             <option value="">בחר תחום…</option>
-            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -437,7 +580,11 @@ function ItemRow({
             className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
           >
             <option value="">בחר לאום…</option>
-            {NATIONALITIES.map((n) => <option key={n} value={n}>{n}</option>)}
+            {NATIONALITIES.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -456,7 +603,15 @@ function ItemRow({
   );
 }
 
-function StepHeader({ icon: Icon, title, subtitle }: { icon: React.ComponentType<{ className?: string }>; title: string; subtitle: string }) {
+function StepHeader({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <div>
       <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/15 text-primary">
@@ -468,7 +623,15 @@ function StepHeader({ icon: Icon, title, subtitle }: { icon: React.ComponentType
   );
 }
 
-function Row({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+function Row({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
   return (
     <li className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 last:border-0">
       <span className="inline-flex items-center gap-2 text-muted-foreground">

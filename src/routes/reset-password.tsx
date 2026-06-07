@@ -33,10 +33,12 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = z.object({
-      password: z.string().min(6, "סיסמה לפחות 6 תווים").max(72),
-      confirm: z.string(),
-    }).refine((d) => d.password === d.confirm, { message: "הסיסמאות לא תואמות", path: ["confirm"] })
+    const parsed = z
+      .object({
+        password: z.string().min(6, "סיסמה לפחות 6 תווים").max(72),
+        confirm: z.string(),
+      })
+      .refine((d) => d.password === d.confirm, { message: "הסיסמאות לא תואמות", path: ["confirm"] })
       .safeParse({ password, confirm });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "פרטים לא תקינים");
@@ -70,8 +72,18 @@ function ResetPasswordPage() {
               <p className="text-center text-sm text-muted-foreground">מאמת את הקישור…</p>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <PasswordField id="password" label="סיסמה חדשה" value={password} onChange={setPassword} />
-                <PasswordField id="confirm" label="אימות סיסמה" value={confirm} onChange={setConfirm} />
+                <PasswordField
+                  id="password"
+                  label="סיסמה חדשה"
+                  value={password}
+                  onChange={setPassword}
+                />
+                <PasswordField
+                  id="confirm"
+                  label="אימות סיסמה"
+                  value={confirm}
+                  onChange={setConfirm}
+                />
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "עדכן סיסמה"}
                 </Button>
@@ -84,13 +96,30 @@ function ResetPasswordPage() {
   );
 }
 
-function PasswordField({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (v: string) => void }) {
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
       <div className="relative">
         <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input id={id} type="password" required value={value} onChange={(e) => onChange(e.target.value)} className="pr-10" />
+        <Input
+          id={id}
+          type="password"
+          required
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="pr-10"
+        />
       </div>
     </div>
   );

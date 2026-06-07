@@ -138,9 +138,7 @@ export function AuctionPanel({
       .slice(0, 6);
   }, [priceLog]);
 
-  const lowest = offers.length
-    ? Math.min(...offers.map((o) => Number(o.price_per_hour)))
-    : 0;
+  const lowest = offers.length ? Math.min(...offers.map((o) => Number(o.price_per_hour))) : 0;
   const opening = priceLog.length
     ? Math.max(...priceLog.map((p) => Number(p.price_per_hour)))
     : lowest;
@@ -220,7 +218,8 @@ export function AuctionPanel({
             מחיר זול ביותר לאורך זמן
           </div>
           <div className="text-[11px] text-muted-foreground">
-            ₪{opening} <span className="mx-1">→</span> <span className="font-extrabold text-emerald-400">₪{lowest}</span>
+            ₪{opening} <span className="mx-1">→</span>{" "}
+            <span className="font-extrabold text-emerald-400">₪{lowest}</span>
           </div>
         </div>
         <Sparkline points={series.map((p) => p.price)} />
@@ -255,12 +254,18 @@ export function AuctionPanel({
                   <Flame className="h-3.5 w-3.5" />
                 </span>
               )}
-              <span className="font-mono text-[10px] text-muted-foreground">{maskedId(e.corporation_id)}</span>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {maskedId(e.corporation_id)}
+              </span>
               <span className="flex-1 truncate">
                 {e.event_type === "joined" ? (
-                  <>הצטרף למכרז עם <b className="text-foreground">₪{Number(e.price_per_hour)}/שעה</b></>
+                  <>
+                    הצטרף למכרז עם{" "}
+                    <b className="text-foreground">₪{Number(e.price_per_hour)}/שעה</b>
+                  </>
                 ) : e.event_type === "drop" ? (
-                  <>הוריד ל-<b className="text-emerald-400">₪{Number(e.price_per_hour)}/שעה</b>{" "}
+                  <>
+                    הוריד ל-<b className="text-emerald-400">₪{Number(e.price_per_hour)}/שעה</b>{" "}
                     {e.previous_price != null && (
                       <span className="text-muted-foreground">
                         ({Math.round(Number(e.price_per_hour) - Number(e.previous_price))}₪)
@@ -268,10 +273,14 @@ export function AuctionPanel({
                     )}
                   </>
                 ) : (
-                  <>עדכן ל-<b className="text-foreground">₪{Number(e.price_per_hour)}/שעה</b></>
+                  <>
+                    עדכן ל-<b className="text-foreground">₪{Number(e.price_per_hour)}/שעה</b>
+                  </>
                 )}
               </span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">{relTime(new Date(e.created_at).getTime())}</span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">
+                {relTime(new Date(e.created_at).getTime())}
+              </span>
             </li>
           ))}
         </ul>
@@ -282,7 +291,9 @@ export function AuctionPanel({
 
 function TimeBox({ v, label, pulse }: { v: number; label: string; pulse?: boolean }) {
   return (
-    <span className={`grid place-items-center rounded-md bg-gradient-primary px-2 py-1 text-primary-foreground shadow-elegant ${pulse ? "animate-pulse" : ""}`}>
+    <span
+      className={`grid place-items-center rounded-md bg-gradient-primary px-2 py-1 text-primary-foreground shadow-elegant ${pulse ? "animate-pulse" : ""}`}
+    >
       <span className="text-base font-extrabold leading-none">{String(v).padStart(2, "0")}</span>
       <span className="text-[8px] font-bold opacity-80">{label}</span>
     </span>
@@ -290,16 +301,24 @@ function TimeBox({ v, label, pulse }: { v: number; label: string; pulse?: boolea
 }
 
 function KpiTile({
-  icon: Icon, label, value, sub, tone,
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone,
 }: {
   icon: React.ComponentType<{ className?: string }>;
-  label: string; value: string; sub: string;
+  label: string;
+  value: string;
+  sub: string;
   tone: "primary" | "success" | "gold";
 }) {
   const palette =
-    tone === "success" ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-    : tone === "gold" ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
-    : "border-primary/40 bg-primary/10 text-primary";
+    tone === "success"
+      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+      : tone === "gold"
+        ? "border-amber-500/40 bg-amber-500/10 text-amber-400"
+        : "border-primary/40 bg-primary/10 text-primary";
   return (
     <div className={`rounded-2xl border p-3 md:p-4 ${palette}`}>
       <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider opacity-80">
@@ -312,7 +331,9 @@ function KpiTile({
 }
 
 function Sparkline({ points }: { points: number[] }) {
-  const w = 600, h = 80, pad = 6;
+  const w = 600,
+    h = 80,
+    pad = 6;
   if (points.length < 2) {
     return <div className="mt-3 h-20 rounded-md bg-secondary/40" />;
   }
@@ -325,7 +346,9 @@ function Sparkline({ points }: { points: number[] }) {
     const y = pad + (h - pad * 2) * (1 - (p - min) / range);
     return [x, y] as const;
   });
-  const path = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`).join(" ");
+  const path = coords
+    .map((c, i) => `${i === 0 ? "M" : "L"} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`)
+    .join(" ");
   const area = `${path} L ${coords[coords.length - 1][0].toFixed(1)} ${h - pad} L ${coords[0][0].toFixed(1)} ${h - pad} Z`;
   const last = coords[coords.length - 1];
   return (
@@ -337,7 +360,14 @@ function Sparkline({ points }: { points: number[] }) {
         </linearGradient>
       </defs>
       <path d={area} fill="url(#sparkFill)" />
-      <path d={path} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={path}
+        fill="none"
+        stroke="var(--primary)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <circle cx={last[0]} cy={last[1]} r="5" fill="var(--primary)" />
       <circle cx={last[0]} cy={last[1]} r="9" fill="var(--primary)" opacity="0.25">
         <animate attributeName="r" values="6;12;6" dur="1.6s" repeatCount="indefinite" />

@@ -25,8 +25,8 @@ export function maskedRegions(_regions: string): string {
 
 // Redact phone / email / URL / @handle patterns from free text
 // so corporations and customers can't share contact info via chat.
-const PHONE_RE = /(\+?\d[\d\s\-().]{6,}\d)/g;
-const EMAIL_RE = /[\w.+\-]+@[\w-]+\.[\w.-]+/g;
+const PHONE_RE = /(\+?\d[\d\s().+-]{6,}\d)/g;
+const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 const URL_RE = /\b(?:https?:\/\/|www\.)\S+/gi;
 const HANDLE_RE = /@[\w.]{3,}/g;
 const WHATSAPP_HINT_RE = /\b(whats?app|וואטסאפ|ווצאפ|טלגרם|telegram|signal|סיגנל)\b/gi;

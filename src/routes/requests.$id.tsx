@@ -5,8 +5,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import {
-  ArrowLeft, MapPin, Calendar, Clock, Users, Briefcase,
-  Send, Loader2, ShieldCheck, Coins,
+  ArrowLeft,
+  MapPin,
+  Calendar,
+  Clock,
+  Users,
+  Briefcase,
+  Send,
+  Loader2,
+  ShieldCheck,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,15 +62,23 @@ function RequestPage() {
       <Shell>
         <div className="rounded-2xl border border-border/60 bg-card p-8 text-center">
           <h1 className="text-xl font-bold">נדרשת התחברות</h1>
-          <p className="mt-2 text-sm text-muted-foreground">יש להתחבר כדי לצפות במכרז ולהגיש הצעה.</p>
-          <Button asChild className="mt-4 bg-gradient-primary"><Link to="/login">התחברות</Link></Button>
+          <p className="mt-2 text-sm text-muted-foreground">
+            יש להתחבר כדי לצפות במכרז ולהגיש הצעה.
+          </p>
+          <Button asChild className="mt-4 bg-gradient-primary">
+            <Link to="/login">התחברות</Link>
+          </Button>
         </div>
       </Shell>
     );
   }
 
   if (isLoading) {
-    return <Shell><div className="py-16 text-center text-sm text-muted-foreground">טוען מכרז…</div></Shell>;
+    return (
+      <Shell>
+        <div className="py-16 text-center text-sm text-muted-foreground">טוען מכרז…</div>
+      </Shell>
+    );
   }
 
   if (error || !data) {
@@ -70,8 +86,12 @@ function RequestPage() {
       <Shell>
         <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-8 text-center">
           <h1 className="text-xl font-bold">המכרז לא נמצא</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{error instanceof Error ? error.message : "ייתכן שהוסר או שאין לך הרשאה."}</p>
-          <Button asChild variant="outline" className="mt-4"><Link to="/dashboard">חזרה</Link></Button>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error instanceof Error ? error.message : "ייתכן שהוסר או שאין לך הרשאה."}
+          </p>
+          <Button asChild variant="outline" className="mt-4">
+            <Link to="/dashboard">חזרה</Link>
+          </Button>
         </div>
       </Shell>
     );
@@ -79,7 +99,12 @@ function RequestPage() {
 
   const { request: req, items, offers, isOwner } = data;
   const offersCount = (data as { offers_count?: number }).offers_count ?? offers.length;
-  if (isOwner) return <Shell><div className="py-16 text-center text-sm text-muted-foreground">מעביר ל…</div></Shell>;
+  if (isOwner)
+    return (
+      <Shell>
+        <div className="py-16 text-center text-sm text-muted-foreground">מעביר ל…</div>
+      </Shell>
+    );
 
   const isCorporation = hasRole("corporation");
   const totalWorkers = items.reduce((s, it) => s + (it.count ?? 0), 0);
@@ -88,17 +113,35 @@ function RequestPage() {
 
   return (
     <Shell>
-      <Link to="/corporation-dashboard" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+      <Link
+        to="/corporation-dashboard"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-3 w-3 rotate-180" /> חזרה ללוח התאגיד
       </Link>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold text-muted-foreground">מכרז #{req.id.slice(0, 8)}</div>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight md:text-3xl">{req.location}</h1>
+          <div className="text-xs font-semibold text-muted-foreground">
+            מכרז #{req.id.slice(0, 8)}
+          </div>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight md:text-3xl">
+            {req.location}
+          </h1>
         </div>
-        <Badge variant={isOpen ? "default" : "secondary"} className={isOpen ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30" : ""}>
-          {isOpen ? "פתוח להצעות" : req.status === "awarded" ? "נבחר זוכה" : req.status === "closed" ? "סגור" : "בוטל"}
+        <Badge
+          variant={isOpen ? "default" : "secondary"}
+          className={
+            isOpen ? "bg-emerald-500/15 text-emerald-700 border border-emerald-500/30" : ""
+          }
+        >
+          {isOpen
+            ? "פתוח להצעות"
+            : req.status === "awarded"
+              ? "נבחר זוכה"
+              : req.status === "closed"
+                ? "סגור"
+                : "בוטל"}
         </Badge>
       </div>
 
@@ -110,21 +153,31 @@ function RequestPage() {
       </div>
 
       <section className="mt-8 rounded-2xl border border-border/60 bg-card p-5">
-        <h2 className="text-sm font-bold flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> דרישות כוח אדם ({totalWorkers} עובדים)</h2>
+        <h2 className="text-sm font-bold flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> דרישות כוח אדם ({totalWorkers} עובדים)
+        </h2>
         <div className="mt-3 space-y-2">
           {items.map((it) => (
-            <div key={it.id} className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm">
+            <div
+              key={it.id}
+              className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm"
+            >
               <span className="font-semibold">{it.role}</span>
-              <span className="text-xs text-muted-foreground">{it.nationality} · {it.count} עובדים</span>
+              <span className="text-xs text-muted-foreground">
+                {it.nationality} · {it.count} עובדים
+              </span>
             </div>
           ))}
         </div>
         {req.description && (
-          <p className="mt-4 whitespace-pre-line border-t border-border/60 pt-4 text-sm text-muted-foreground">{req.description}</p>
+          <p className="mt-4 whitespace-pre-line border-t border-border/60 pt-4 text-sm text-muted-foreground">
+            {req.description}
+          </p>
         )}
         {req.deadline_at && (
           <div className="mt-4 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-700">
-            <Clock className="h-3 w-3" /> סגירת המכרז: {new Date(req.deadline_at).toLocaleString("he-IL")}
+            <Clock className="h-3 w-3" /> סגירת המכרז:{" "}
+            {new Date(req.deadline_at).toLocaleString("he-IL")}
           </div>
         )}
       </section>
@@ -134,13 +187,13 @@ function RequestPage() {
         {offersCount === 0 ? (
           <p className="mt-2 text-xs text-muted-foreground">עדיין לא הוגשו הצעות.</p>
         ) : (
-          <p className="mt-2 text-xs text-muted-foreground">פרטי ההצעות חסויים — רק מזמין המכרז יכול לראותם.</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            פרטי ההצעות חסויים — רק מזמין המכרז יכול לראותם.
+          </p>
         )}
       </section>
 
-      {isCorporation && isOpen && !myOffer && (
-        <SubmitOfferCard requestId={req.id} />
-      )}
+      {isCorporation && isOpen && !myOffer && <SubmitOfferCard requestId={req.id} />}
 
       {myOffer && (
         <div className="mt-6 rounded-2xl border border-primary/40 bg-primary/5 p-5">
@@ -148,7 +201,10 @@ function RequestPage() {
             <ShieldCheck className="h-4 w-4 text-primary" /> כבר הגשת הצעה למכרז זה
           </div>
           <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <span><Coins className="inline h-3 w-3" /> ₪{Number(myOffer.price_per_hour).toLocaleString()}/שעה</span>
+            <span>
+              <Coins className="inline h-3 w-3" /> ₪
+              {Number(myOffer.price_per_hour).toLocaleString()}/שעה
+            </span>
             <span>{myOffer.available_workers} עובדים</span>
             <span>סטטוס: {myOffer.status}</span>
           </div>
@@ -177,10 +233,20 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Info({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+function Info({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-xl border border-border/60 bg-card p-3">
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Icon className="h-3 w-3" /> {label}</div>
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <Icon className="h-3 w-3" /> {label}
+      </div>
       <div className="mt-1 text-sm font-bold">{value}</div>
     </div>
   );
@@ -230,48 +296,97 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 rounded-2xl border border-primary/30 bg-card p-5 space-y-3">
-      <h2 className="text-sm font-bold flex items-center gap-2"><Send className="h-4 w-4 text-primary" /> הגשת הצעה</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="mt-6 rounded-2xl border border-primary/30 bg-card p-5 space-y-3"
+    >
+      <h2 className="text-sm font-bold flex items-center gap-2">
+        <Send className="h-4 w-4 text-primary" /> הגשת הצעה
+      </h2>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="price">מחיר לשעה (₪) *</Label>
-          <Input id="price" type="number" min="1" step="0.5" value={pricePerHour}
-            onChange={(e) => setPricePerHour(e.target.value)} required />
+          <Input
+            id="price"
+            type="number"
+            min="1"
+            step="0.5"
+            value={pricePerHour}
+            onChange={(e) => setPricePerHour(e.target.value)}
+            required
+          />
         </div>
         <div>
           <Label htmlFor="workers">עובדים זמינים *</Label>
-          <Input id="workers" type="number" min="1" value={availableWorkers}
-            onChange={(e) => setAvailableWorkers(e.target.value)} required />
+          <Input
+            id="workers"
+            type="number"
+            min="1"
+            value={availableWorkers}
+            onChange={(e) => setAvailableWorkers(e.target.value)}
+            required
+          />
         </div>
       </div>
       <div>
         <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
-        <Input id="sd" placeholder="למשל: 01/06/2026" value={startDate}
-          onChange={(e) => setStartDate(e.target.value)} required />
+        <Input
+          id="sd"
+          placeholder="למשל: 01/06/2026"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          required
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="rt">זמן תגובה (שעות)</Label>
-          <Input id="rt" type="number" min="1" max="168" value={responseTimeHours}
-            onChange={(e) => setResponseTimeHours(e.target.value)} />
+          <Input
+            id="rt"
+            type="number"
+            min="1"
+            max="168"
+            value={responseTimeHours}
+            onChange={(e) => setResponseTimeHours(e.target.value)}
+          />
         </div>
         <div>
           <Label htmlFor="wd">אחריות (ימים)</Label>
-          <Input id="wd" type="number" min="0" max="365" value={warrantyDays}
-            onChange={(e) => setWarrantyDays(e.target.value)} />
+          <Input
+            id="wd"
+            type="number"
+            min="0"
+            max="365"
+            value={warrantyDays}
+            onChange={(e) => setWarrantyDays(e.target.value)}
+          />
         </div>
       </div>
       <div className="flex items-center gap-2">
         <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
-        <Label htmlFor="ins" className="cursor-pointer">כלול ביטוח מלא</Label>
+        <Label htmlFor="ins" className="cursor-pointer">
+          כלול ביטוח מלא
+        </Label>
       </div>
       <div>
         <Label htmlFor="note">הערות</Label>
-        <Textarea id="note" rows={3} maxLength={2000} value={note}
-          onChange={(e) => setNote(e.target.value)} placeholder="פרטים נוספים על ההצעה..." />
+        <Textarea
+          id="note"
+          rows={3}
+          maxLength={2000}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="פרטים נוספים על ההצעה..."
+        />
       </div>
       <Button type="submit" disabled={submitting} className="w-full bg-gradient-primary">
-        {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> שולח…</> : "שלח הצעה"}
+        {submitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> שולח…
+          </>
+        ) : (
+          "שלח הצעה"
+        )}
       </Button>
     </form>
   );

@@ -55,7 +55,9 @@ function ForgotPasswordPage() {
             {sent ? (
               <div className="text-center">
                 <p className="text-sm">בדוק את תיבת המייל שלך — שלחנו קישור לאיפוס סיסמה.</p>
-                <p className="mt-2 text-xs text-muted-foreground">לא הגיע? בדוק בספאם או נסה שוב.</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  לא הגיע? בדוק בספאם או נסה שוב.
+                </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,8 +65,15 @@ function ForgotPasswordPage() {
                   <Label htmlFor="email">אימייל</Label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="email" type="email" required value={email}
-                      onChange={(e) => setEmail(e.target.value)} className="pr-10" placeholder="you@example.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pr-10"
+                      placeholder="you@example.com"
+                    />
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
@@ -75,7 +84,9 @@ function ForgotPasswordPage() {
           </div>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            <Link to="/login" className="font-bold text-primary hover:underline">חזור להתחברות</Link>
+            <Link to="/login" className="font-bold text-primary hover:underline">
+              חזור להתחברות
+            </Link>
           </p>
         </div>
       </main>

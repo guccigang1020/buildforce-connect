@@ -2,23 +2,23 @@
 // SSRF-safe: never derived from request headers (Origin/Host could be spoofed
 // to exfiltrate the caller's Authorization JWT).
 const ALLOWED_BASE_URLS = [
-  'https://buildforceprime.com',
-  'https://www.buildforceprime.com',
-  'https://project--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app',
-  'https://id-preview--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app',
-]
+  "https://buildforceprime.com",
+  "https://www.buildforceprime.com",
+  "https://project--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app",
+  "https://id-preview--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app",
+];
 
 function resolveBaseUrl(): string {
-  const fromEnv = process.env.SITE_URL
-  if (fromEnv && ALLOWED_BASE_URLS.includes(fromEnv)) return fromEnv
-  return ALLOWED_BASE_URLS[0]
+  const fromEnv = process.env.SITE_URL;
+  if (fromEnv && ALLOWED_BASE_URLS.includes(fromEnv)) return fromEnv;
+  return ALLOWED_BASE_URLS[0];
 }
 
 interface ServerSendParams {
-  templateName: string
-  recipientEmail: string
-  idempotencyKey?: string
-  templateData?: Record<string, unknown>
+  templateName: string;
+  recipientEmail: string;
+  idempotencyKey?: string;
+  templateData?: Record<string, unknown>;
 }
 
 /**
@@ -31,13 +31,13 @@ export async function sendTransactionalEmailServer(params: ServerSendParams) {
   // accepts this as proof the call originated from a trusted server context
   // (validated business logic in our server functions), bypassing the
   // per-user admin requirement that gates external callers.
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-  const baseUrl = resolveBaseUrl()
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const baseUrl = resolveBaseUrl();
 
   const res = await fetch(`${baseUrl}/lovable/email/transactional/send`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${serviceKey}`,
     },
     body: JSON.stringify({
@@ -46,6 +46,6 @@ export async function sendTransactionalEmailServer(params: ServerSendParams) {
       idempotencyKey: params.idempotencyKey,
       templateData: params.templateData,
     }),
-  }).catch(() => null)
-  return res?.ok ?? false
+  }).catch(() => null);
+  return res?.ok ?? false;
 }

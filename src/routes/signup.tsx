@@ -1,7 +1,25 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { UserPlus, Mail, Lock, User, Phone, Building2, MapPin, Loader2, HardHat, Briefcase, FileText, ShieldCheck, BookOpen, Hash, Award, Upload, CheckCircle2 } from "lucide-react";
+import {
+  UserPlus,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  Building2,
+  MapPin,
+  Loader2,
+  HardHat,
+  Briefcase,
+  FileText,
+  ShieldCheck,
+  BookOpen,
+  Hash,
+  Award,
+  Upload,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -14,13 +32,23 @@ import { SiteNav } from "@/components/site-nav";
 const baseSchema = z.object({
   full_name: z.string().trim().min(2, "שם מלא נדרש").max(100),
   email: z.string().trim().email("אימייל לא תקין").max(255),
-  phone: z.string().trim().min(9, "מספר טלפון לא תקין").max(20).regex(/^[0-9+\-\s()]+$/, "מספר טלפון לא תקין"),
+  phone: z
+    .string()
+    .trim()
+    .min(9, "מספר טלפון לא תקין")
+    .max(20)
+    .regex(/^[0-9+\-\s()]+$/, "מספר טלפון לא תקין"),
   password: z.string().min(6, "סיסמה לפחות 6 תווים").max(72),
   city: z.string().trim().min(2, "עיר נדרשת").max(100),
   role: z.enum(["contractor", "corporation"]),
   // Business details — required for both
   business_name: z.string().trim().min(2, "שם עסק נדרש").max(150),
-  business_id: z.string().trim().min(8, "ח.פ / ע.מ חייב להיות 9 ספרות").max(15).regex(/^[0-9]+$/, "רק ספרות"),
+  business_id: z
+    .string()
+    .trim()
+    .min(8, "ח.פ / ע.מ חייב להיות 9 ספרות")
+    .max(15)
+    .regex(/^[0-9]+$/, "רק ספרות"),
   // Contractor-only — required when role=contractor
   contractor_license_number: z.string().trim().max(30).optional().or(z.literal("")),
   contractor_classification: z.string().trim().max(50).optional().or(z.literal("")),
@@ -29,7 +57,11 @@ const baseSchema = z.object({
 const signupSchema = baseSchema.superRefine((d, ctx) => {
   if (d.role === "contractor") {
     if (!d.contractor_license_number || d.contractor_license_number.length < 3) {
-      ctx.addIssue({ code: "custom", path: ["contractor_license_number"], message: "מספר קבלן רשום נדרש" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["contractor_license_number"],
+        message: "מספר קבלן רשום נדרש",
+      });
     }
     if (!d.contractor_classification) {
       ctx.addIssue({ code: "custom", path: ["contractor_classification"], message: "סיווג נדרש" });
@@ -48,9 +80,15 @@ function SignupPage() {
   const { session, loading } = useAuth();
   const [role, setRole] = useState<RoleChoice>("contractor");
   const [form, setForm] = useState({
-    full_name: "", email: "", phone: "", password: "", city: "",
-    business_name: "", business_id: "",
-    contractor_license_number: "", contractor_classification: "",
+    full_name: "",
+    email: "",
+    phone: "",
+    password: "",
+    city: "",
+    business_name: "",
+    business_id: "",
+    contractor_license_number: "",
+    contractor_classification: "",
   });
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
   const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
@@ -101,7 +139,9 @@ function SignupPage() {
     });
     if (error) {
       setSubmitting(false);
-      toast.error(error.message.includes("already") ? "המשתמש כבר רשום — נסה להתחבר" : error.message);
+      toast.error(
+        error.message.includes("already") ? "המשתמש כבר רשום — נסה להתחבר" : error.message,
+      );
       return;
     }
 
@@ -113,17 +153,20 @@ function SignupPage() {
         const ext = file.name.split(".").pop() || "bin";
         const path = `${userId}/${kind}-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("contractor-docs").upload(path, file);
-        if (!upErr) (uploaded as any)[kind] = path;
+        if (!upErr) uploaded[kind] = path;
       };
       if (licenseFile) await upload(licenseFile, "license");
       if (insuranceFile) await upload(insuranceFile, "insurance");
       if (booksFile) await upload(booksFile, "books");
       if (Object.keys(uploaded).length > 0) {
-        await supabase.from("profiles").update({
-          license_doc_url: uploaded.license ?? null,
-          insurance_doc_url: uploaded.insurance ?? null,
-          books_cert_url: uploaded.books ?? null,
-        }).eq("user_id", userId);
+        await supabase
+          .from("profiles")
+          .update({
+            license_doc_url: uploaded.license ?? null,
+            insurance_doc_url: uploaded.insurance ?? null,
+            books_cert_url: uploaded.books ?? null,
+          })
+          .eq("user_id", userId);
       }
     }
 
@@ -163,14 +206,30 @@ function SignupPage() {
           <div className="mb-5">
             <Label className="mb-2 block">אני…</Label>
             <div className="grid grid-cols-2 gap-2">
-              <RoleCard active={role === "contractor"} onClick={() => setRole("contractor")}
-                icon={HardHat} title="קבלן / יזם" sub="פותח בקשות לפועלים" />
-              <RoleCard active={role === "corporation"} onClick={() => setRole("corporation")}
-                icon={Briefcase} title="תאגיד כוח אדם" sub="שולח הצעות לקבלנים" />
+              <RoleCard
+                active={role === "contractor"}
+                onClick={() => setRole("contractor")}
+                icon={HardHat}
+                title="קבלן / יזם"
+                sub="פותח בקשות לפועלים"
+              />
+              <RoleCard
+                active={role === "corporation"}
+                onClick={() => setRole("corporation")}
+                icon={Briefcase}
+                title="תאגיד כוח אדם"
+                sub="שולח הצעות לקבלנים"
+              />
             </div>
           </div>
 
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={submitting}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogle}
+            disabled={submitting}
+          >
             <GoogleIcon /> הרשמה עם Google
           </Button>
 
@@ -179,12 +238,45 @@ function SignupPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Field id="full_name" label="שם מלא" icon={User} required value={form.full_name} onChange={update("full_name")} />
+            <Field
+              id="full_name"
+              label="שם מלא"
+              icon={User}
+              required
+              value={form.full_name}
+              onChange={update("full_name")}
+            />
             <div className="grid gap-4 md:grid-cols-2">
-              <Field id="email" label="אימייל" type="email" icon={Mail} required value={form.email} onChange={update("email")} />
-              <Field id="phone" label="טלפון" type="tel" icon={Phone} required value={form.phone} onChange={update("phone")} placeholder="050-1234567" />
+              <Field
+                id="email"
+                label="אימייל"
+                type="email"
+                icon={Mail}
+                required
+                value={form.email}
+                onChange={update("email")}
+              />
+              <Field
+                id="phone"
+                label="טלפון"
+                type="tel"
+                icon={Phone}
+                required
+                value={form.phone}
+                onChange={update("phone")}
+                placeholder="050-1234567"
+              />
             </div>
-            <Field id="password" label="סיסמה" type="password" icon={Lock} required value={form.password} onChange={update("password")} placeholder="לפחות 6 תווים" />
+            <Field
+              id="password"
+              label="סיסמה"
+              type="password"
+              icon={Lock}
+              required
+              value={form.password}
+              onChange={update("password")}
+              placeholder="לפחות 6 תווים"
+            />
 
             {/* Business block — required for everyone */}
             <div className="rounded-2xl border border-border/60 bg-secondary/30 p-4 space-y-4">
@@ -192,11 +284,32 @@ function SignupPage() {
                 <Building2 className="h-4 w-4 text-primary" /> פרטי העסק
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <Field id="business_name" label={role === "corporation" ? "שם התאגיד" : "שם העסק"} icon={Building2}
-                  required value={form.business_name} onChange={update("business_name")} />
-                <Field id="business_id" label="ח.פ / ע.מ" icon={Hash} required value={form.business_id} onChange={update("business_id")} placeholder="9 ספרות" />
+                <Field
+                  id="business_name"
+                  label={role === "corporation" ? "שם התאגיד" : "שם העסק"}
+                  icon={Building2}
+                  required
+                  value={form.business_name}
+                  onChange={update("business_name")}
+                />
+                <Field
+                  id="business_id"
+                  label="ח.פ / ע.מ"
+                  icon={Hash}
+                  required
+                  value={form.business_id}
+                  onChange={update("business_id")}
+                  placeholder="9 ספרות"
+                />
               </div>
-              <Field id="city" label="עיר" icon={MapPin} required value={form.city} onChange={update("city")} />
+              <Field
+                id="city"
+                label="עיר"
+                icon={MapPin}
+                required
+                value={form.city}
+                onChange={update("city")}
+              />
             </div>
 
             {/* Contractor verification block — only for contractors */}
@@ -212,29 +325,65 @@ function SignupPage() {
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field id="contractor_license_number" label="מס' קבלן רשום" icon={Award} required
-                    value={form.contractor_license_number} onChange={update("contractor_license_number")} placeholder="לדוגמה: 12345" />
-                  <Field id="contractor_classification" label="סיווג" icon={Briefcase} required
-                    value={form.contractor_classification} onChange={update("contractor_classification")} placeholder="100 / 131 / ..." />
+                  <Field
+                    id="contractor_license_number"
+                    label="מס' קבלן רשום"
+                    icon={Award}
+                    required
+                    value={form.contractor_license_number}
+                    onChange={update("contractor_license_number")}
+                    placeholder="לדוגמה: 12345"
+                  />
+                  <Field
+                    id="contractor_classification"
+                    label="סיווג"
+                    icon={Briefcase}
+                    required
+                    value={form.contractor_classification}
+                    onChange={update("contractor_classification")}
+                    placeholder="100 / 131 / ..."
+                  />
                 </div>
 
-                <FileField id="license_file" label="תעודת קבלן רשום" icon={FileText} required
-                  file={licenseFile} onFile={setLicenseFile} accept=".pdf,image/*" />
-                <FileField id="insurance_file" label="ביטוח צד ג' (אופציונלי כעת)" icon={ShieldCheck}
-                  file={insuranceFile} onFile={setInsuranceFile} accept=".pdf,image/*" />
-                <FileField id="books_file" label="אישור ניהול ספרים (אופציונלי כעת)" icon={BookOpen}
-                  file={booksFile} onFile={setBooksFile} accept=".pdf,image/*" />
+                <FileField
+                  id="license_file"
+                  label="תעודת קבלן רשום"
+                  icon={FileText}
+                  required
+                  file={licenseFile}
+                  onFile={setLicenseFile}
+                  accept=".pdf,image/*"
+                />
+                <FileField
+                  id="insurance_file"
+                  label="ביטוח צד ג' (אופציונלי כעת)"
+                  icon={ShieldCheck}
+                  file={insuranceFile}
+                  onFile={setInsuranceFile}
+                  accept=".pdf,image/*"
+                />
+                <FileField
+                  id="books_file"
+                  label="אישור ניהול ספרים (אופציונלי כעת)"
+                  icon={BookOpen}
+                  file={booksFile}
+                  onFile={setBooksFile}
+                  accept=".pdf,image/*"
+                />
               </div>
             )}
 
             {/* Terms — exclusivity / no circumvention */}
             <label className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/40 p-3 cursor-pointer">
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-border accent-primary" />
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-border accent-primary"
+              />
               <span className="text-xs text-muted-foreground leading-relaxed">
-                אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce.
-                עקיפת הפלטפורמה (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש
-                ומחייבת בקנס לפי המוסכם.
+                אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת הפלטפורמה
+                (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס לפי המוסכם.
               </span>
             </label>
 
@@ -245,25 +394,44 @@ function SignupPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          כבר יש לך חשבון? <Link to="/login" className="font-bold text-primary hover:underline">התחבר</Link>
+          כבר יש לך חשבון?{" "}
+          <Link to="/login" className="font-bold text-primary hover:underline">
+            התחבר
+          </Link>
         </p>
       </main>
     </div>
   );
 }
 
-function RoleCard({ active, onClick, icon: Icon, title, sub }: {
-  active: boolean; onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>; title: string; sub: string;
+function RoleCard({
+  active,
+  onClick,
+  icon: Icon,
+  title,
+  sub,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  sub: string;
 }) {
   return (
-    <button type="button" onClick={onClick}
+    <button
+      type="button"
+      onClick={onClick}
       className={`group rounded-2xl border p-4 text-right transition-all ${
-        active ? "border-primary bg-primary/10 shadow-elegant" : "border-border bg-card/40 hover:border-primary/50"
-      }`}>
-      <div className={`mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl ${
-        active ? "bg-gradient-primary text-primary-foreground" : "bg-secondary text-foreground"
-      }`}>
+        active
+          ? "border-primary bg-primary/10 shadow-elegant"
+          : "border-border bg-card/40 hover:border-primary/50"
+      }`}
+    >
+      <div
+        className={`mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl ${
+          active ? "bg-gradient-primary text-primary-foreground" : "bg-secondary text-foreground"
+        }`}
+      >
         <Icon className="h-4 w-4" />
       </div>
       <div className="text-sm font-extrabold">{title}</div>
@@ -273,21 +441,41 @@ function RoleCard({ active, onClick, icon: Icon, title, sub }: {
 }
 
 function Field({
-  id, label, icon: Icon, type = "text", required, value, onChange, placeholder,
+  id,
+  label,
+  icon: Icon,
+  type = "text",
+  required,
+  value,
+  onChange,
+  placeholder,
 }: {
-  id: string; label: string;
+  id: string;
+  label: string;
   icon: React.ComponentType<{ className?: string }>;
-  type?: string; required?: boolean;
-  value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  required?: boolean;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}{required && <span className="ms-1 text-destructive">*</span>}</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required && <span className="ms-1 text-destructive">*</span>}
+      </Label>
       <div className="relative">
         <Icon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input id={id} type={type} required={required} value={value} onChange={onChange}
-          className="pr-10" placeholder={placeholder} />
+        <Input
+          id={id}
+          type={type}
+          required={required}
+          value={value}
+          onChange={onChange}
+          className="pr-10"
+          placeholder={placeholder}
+        />
       </div>
     </div>
   );
@@ -296,15 +484,25 @@ function Field({
 function GoogleIcon() {
   return (
     <svg className="ms-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="#EA4335" d="M12 11v3.6h5.1c-.2 1.4-1.6 4-5.1 4-3 0-5.5-2.5-5.5-5.6S8.9 7.4 12 7.4c1.7 0 2.9.7 3.5 1.3l2.4-2.3C16.4 5 14.4 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.7 0-.5-.1-.9-.1-1.3H12z"/>
+      <path
+        fill="#EA4335"
+        d="M12 11v3.6h5.1c-.2 1.4-1.6 4-5.1 4-3 0-5.5-2.5-5.5-5.6S8.9 7.4 12 7.4c1.7 0 2.9.7 3.5 1.3l2.4-2.3C16.4 5 14.4 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.7 0-.5-.1-.9-.1-1.3H12z"
+      />
     </svg>
   );
 }
 
 function FileField({
-  id, label, icon: Icon, required, file, onFile, accept,
+  id,
+  label,
+  icon: Icon,
+  required,
+  file,
+  onFile,
+  accept,
 }: {
-  id: string; label: string;
+  id: string;
+  label: string;
   icon: React.ComponentType<{ className?: string }>;
   required?: boolean;
   file: File | null;
@@ -313,11 +511,18 @@ function FileField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}{required && <span className="ms-1 text-destructive">*</span>}</Label>
-      <label htmlFor={id}
+      <Label htmlFor={id}>
+        {label}
+        {required && <span className="ms-1 text-destructive">*</span>}
+      </Label>
+      <label
+        htmlFor={id}
         className={`flex items-center gap-3 rounded-xl border border-dashed px-3 py-2.5 cursor-pointer transition-colors ${
-          file ? "border-emerald-500/60 bg-emerald-500/5" : "border-border bg-card/40 hover:border-primary/50"
-        }`}>
+          file
+            ? "border-emerald-500/60 bg-emerald-500/5"
+            : "border-border bg-card/40 hover:border-primary/50"
+        }`}
+      >
         {file ? (
           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
         ) : (
@@ -327,7 +532,11 @@ function FileField({
         <span className="flex-1 truncate text-xs">
           {file ? file.name : "בחר קובץ (PDF / תמונה, עד 5MB)"}
         </span>
-        <input id={id} type="file" accept={accept} className="hidden"
+        <input
+          id={id}
+          type="file"
+          accept={accept}
+          className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0] ?? null;
             if (f && f.size > 5 * 1024 * 1024) {
@@ -335,7 +544,8 @@ function FileField({
               return;
             }
             onFile(f);
-          }} />
+          }}
+        />
       </label>
     </div>
   );

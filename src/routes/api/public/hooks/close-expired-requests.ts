@@ -32,15 +32,15 @@ export const Route = createFileRoute("/api/public/hooks/close-expired-requests")
           .lt("deadline_at", nowIso)
           .select("id");
         if (error) {
-          return new Response(
-            JSON.stringify({ ok: false, error: error.message }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          );
+          return new Response(JSON.stringify({ ok: false, error: error.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         }
-        return new Response(
-          JSON.stringify({ ok: true, closed: data?.length ?? 0, at: nowIso }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ ok: true, closed: data?.length ?? 0, at: nowIso }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       },
       GET: () =>
         new Response(JSON.stringify({ ok: true }), {

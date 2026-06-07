@@ -43,8 +43,11 @@ export function CookieConsent() {
         <div className="min-w-0 flex-1 text-sm">
           <div className="font-bold">אנחנו משתמשים בעוגיות</div>
           <p className="mt-1 text-xs text-muted-foreground">
-            אנו משתמשים בעוגיות חיוניות לתפעול האתר ובעוגיות אופציונליות לשיפור החוויה.
-            ניתן לקרוא ב<Link to="/privacy" className="underline hover:text-foreground">מדיניות הפרטיות</Link> שלנו.
+            אנו משתמשים בעוגיות חיוניות לתפעול האתר ובעוגיות אופציונליות לשיפור החוויה. ניתן לקרוא ב
+            <Link to="/privacy" className="underline hover:text-foreground">
+              מדיניות הפרטיות
+            </Link>{" "}
+            שלנו.
           </p>
         </div>
         <button
@@ -56,8 +59,14 @@ export function CookieConsent() {
         </button>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={() => decide("rejected")}>דחה לא-חיוניות</Button>
-        <Button size="sm" className="bg-gradient-primary text-primary-foreground" onClick={() => decide("accepted")}>
+        <Button variant="outline" size="sm" onClick={() => decide("rejected")}>
+          דחה לא-חיוניות
+        </Button>
+        <Button
+          size="sm"
+          className="bg-gradient-primary text-primary-foreground"
+          onClick={() => decide("accepted")}
+        >
           אשר הכל
         </Button>
       </div>

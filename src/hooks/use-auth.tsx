@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -44,10 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       for (let attempt = 1; attempt <= 3; attempt += 1) {
-        const [{ data: prof, error: profileError }, { data: roleRows, error: rolesError }] = await Promise.all([
-          supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
-          supabase.from("user_roles").select("role").eq("user_id", uid),
-        ]);
+        const [{ data: prof, error: profileError }, { data: roleRows, error: rolesError }] =
+          await Promise.all([
+            supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
+            supabase.from("user_roles").select("role").eq("user_id", uid),
+          ]);
 
         // Profile missing for an authenticated user means the handle_new_user
         // trigger failed (common with Google OAuth on first sign-in).
@@ -127,8 +136,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const channel = supabase
       .channel(`auth-sync-${uid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${uid}` }, refreshInBackground)
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${uid}` }, refreshInBackground)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${uid}` },
+        refreshInBackground,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles", filter: `user_id=eq.${uid}` },
+        refreshInBackground,
+      )
       .subscribe();
 
     window.addEventListener("focus", refreshInBackground);

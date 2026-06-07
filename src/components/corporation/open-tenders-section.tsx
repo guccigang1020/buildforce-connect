@@ -10,7 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { listOpenJobRequests } from "@/lib/job-requests.functions";
 import { submitOffer } from "@/lib/job-offers.functions";
@@ -56,7 +61,9 @@ export function OpenTendersSection() {
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map((r) => <TenderRow key={r.id} req={r} />)}
+          {requests.map((r) => (
+            <TenderRow key={r.id} req={r} />
+          ))}
         </div>
       )}
     </div>
@@ -69,13 +76,16 @@ function TenderRow({ req }: { req: OpenRequest }) {
       <div className="min-w-0">
         <div className="text-xs font-semibold text-muted-foreground">#{req.id.slice(0, 8)}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-sm font-bold md:text-base">
-          <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4 text-primary" /> {req.location}</span>
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-4 w-4 text-primary" /> {req.location}
+          </span>
           <span className="inline-flex items-center gap-1 text-muted-foreground font-normal text-xs">
             <Calendar className="h-3 w-3" /> {req.start_date} · {req.duration}
           </span>
           {req.deadline_at && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-500">
-              <Clock className="h-3 w-3" /> סגירה {new Date(req.deadline_at).toLocaleDateString("he-IL")}
+              <Clock className="h-3 w-3" /> סגירה{" "}
+              {new Date(req.deadline_at).toLocaleDateString("he-IL")}
             </span>
           )}
         </div>
@@ -114,9 +124,15 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
   const submitFn = useServerFn(submitOffer);
 
   const reset = () => {
-    setPricePerHour(""); setAvailableWorkers(""); setStartDate("");
-    setResponseTimeHours("24"); setWarrantyDays("30"); setInsurance(true); setNote("");
-    setRequiresPersonalGuarantee(false); setRequiresSecurityCheck(false);
+    setPricePerHour("");
+    setAvailableWorkers("");
+    setStartDate("");
+    setResponseTimeHours("24");
+    setWarrantyDays("30");
+    setInsurance(true);
+    setNote("");
+    setRequiresPersonalGuarantee(false);
+    setRequiresSecurityCheck(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,45 +187,85 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="price">מחיר לשעה (₪) *</Label>
-              <Input id="price" type="number" min="1" step="0.5" value={pricePerHour}
-                onChange={(e) => setPricePerHour(e.target.value)} required />
+              <Input
+                id="price"
+                type="number"
+                min="1"
+                step="0.5"
+                value={pricePerHour}
+                onChange={(e) => setPricePerHour(e.target.value)}
+                required
+              />
             </div>
             <div>
               <Label htmlFor="workers">עובדים זמינים *</Label>
-              <Input id="workers" type="number" min="1" value={availableWorkers}
-                onChange={(e) => setAvailableWorkers(e.target.value)} required />
+              <Input
+                id="workers"
+                type="number"
+                min="1"
+                value={availableWorkers}
+                onChange={(e) => setAvailableWorkers(e.target.value)}
+                required
+              />
             </div>
           </div>
           <div>
             <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
-            <Input id="sd" placeholder="למשל: 01/06/2026" value={startDate}
-              onChange={(e) => setStartDate(e.target.value)} required />
+            <Input
+              id="sd"
+              placeholder="למשל: 01/06/2026"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              required
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="rt">זמן תגובה (שעות)</Label>
-              <Input id="rt" type="number" min="1" max="168" value={responseTimeHours}
-                onChange={(e) => setResponseTimeHours(e.target.value)} />
+              <Input
+                id="rt"
+                type="number"
+                min="1"
+                max="168"
+                value={responseTimeHours}
+                onChange={(e) => setResponseTimeHours(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="wd">אחריות (ימים)</Label>
-              <Input id="wd" type="number" min="0" max="365" value={warrantyDays}
-                onChange={(e) => setWarrantyDays(e.target.value)} />
+              <Input
+                id="wd"
+                type="number"
+                min="0"
+                max="365"
+                value={warrantyDays}
+                onChange={(e) => setWarrantyDays(e.target.value)}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
-            <Label htmlFor="ins" className="cursor-pointer">כלול ביטוח מלא</Label>
+            <Checkbox
+              id="ins"
+              checked={insurance}
+              onCheckedChange={(v) => setInsurance(v === true)}
+            />
+            <Label htmlFor="ins" className="cursor-pointer">
+              כלול ביטוח מלא
+            </Label>
           </div>
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
-            <div className="text-xs font-bold text-amber-600">דרישות לערבות העסקה (במידה והקבלן יבחר בהצעתך)</div>
+            <div className="text-xs font-bold text-amber-600">
+              דרישות לערבות העסקה (במידה והקבלן יבחר בהצעתך)
+            </div>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="pg"
                 checked={requiresPersonalGuarantee}
                 onCheckedChange={(v) => setRequiresPersonalGuarantee(v === true)}
               />
-              <Label htmlFor="pg" className="cursor-pointer text-sm">דורש ערבות אישית מהקבלן</Label>
+              <Label htmlFor="pg" className="cursor-pointer text-sm">
+                דורש ערבות אישית מהקבלן
+              </Label>
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -217,7 +273,9 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 checked={requiresSecurityCheck}
                 onCheckedChange={(v) => setRequiresSecurityCheck(v === true)}
               />
-              <Label htmlFor="sc" className="cursor-pointer text-sm">דורש צ׳ק לבטחון מהקבלן</Label>
+              <Label htmlFor="sc" className="cursor-pointer text-sm">
+                דורש צ׳ק לבטחון מהקבלן
+              </Label>
             </div>
             <div className="text-[10px] text-muted-foreground">
               ניתן לסמן אחד מהם, את שניהם, או אף אחד. הדרישות יוצגו לקבלן יחד עם ההצעה.
@@ -225,15 +283,32 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
           </div>
           <div>
             <Label htmlFor="note">הערות</Label>
-            <Textarea id="note" rows={3} maxLength={2000} value={note}
-              onChange={(e) => setNote(e.target.value)} placeholder="פרטים נוספים על ההצעה..." />
+            <Textarea
+              id="note"
+              rows={3}
+              maxLength={2000}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="פרטים נוספים על ההצעה..."
+            />
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={submitting}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={submitting}
+            >
               ביטול
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> שולח...</> : "שלח הצעה"}
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> שולח...
+                </>
+              ) : (
+                "שלח הצעה"
+              )}
             </Button>
           </DialogFooter>
         </form>

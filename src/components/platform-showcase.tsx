@@ -11,8 +11,7 @@ const FEATURES = [
   {
     eyebrow: "מכרז הפוך · LIVE",
     title: "תאגידים נלחמים על המחיר שלך",
-    body:
-      "פותח בקשה אחת — ועשרות תאגידים מתחילים להוריד הצעות זה מול זה. אתה רואה את המחיר יורד בזמן אמת, עם טיימר 48 שעות וגרף חי שמראה כל הורדה.",
+    body: "פותח בקשה אחת — ועשרות תאגידים מתחילים להוריד הצעות זה מול זה. אתה רואה את המחיר יורד בזמן אמת, עם טיימר 48 שעות וגרף חי שמראה כל הורדה.",
     image: featureAuction,
     bullets: [
       { icon: Flame, text: "ספירה לאחור חיה — ככל שמתקרבים לדדליין, ההצעות הופכות אגרסיביות יותר" },
@@ -25,13 +24,12 @@ const FEATURES = [
   {
     eyebrow: "עובדים אמיתיים · ספקים מאומתים",
     title: "פועלים שמגיעים לאתר. נקודה.",
-    body:
-      "כל ספק ב-BuildForce עובר אימות מקצועי, ביטוחי ורגולטורי. אם פועל לא הופיע — אנחנו שולחים מחליף תוך 4 שעות, על חשבון התאגיד.",
+    body: "כל ספק ב-BuildForce עובר אימות מקצועי, ביטוחי ורגולטורי. אם פועל לא הופיע — אנחנו שולחים מחליף תוך 4 שעות, על חשבון התאגיד.",
     image: featureWorkers,
     bullets: [
       { icon: ShieldCheck, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות" },
       { icon: Users, text: "דירוג פועל-לפי-פועל, לא רק תאגיד" },
-      { icon: Flame, text: "\"Crew Memory\" — בקש את אותו צוות שוב בלחיצה" },
+      { icon: Flame, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה' },
     ],
     accent: "from-emerald-500 to-teal-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(45,212,168,0.45)]",
@@ -39,8 +37,7 @@ const FEATURES = [
   {
     eyebrow: "צ׳אט מאובטח · אנונימיות מלאה",
     title: "השליטה אצלך — תמיד",
-    body:
-      "מספרי טלפון, מיילים וקישורים נחסמים אוטומטית בצ׳אט עד החתימה. שיחות עוברות דרך מספרים וירטואליים שלנו. אף אחד לא עוקף אותך.",
+    body: "מספרי טלפון, מיילים וקישורים נחסמים אוטומטית בצ׳אט עד החתימה. שיחות עוברות דרך מספרים וירטואליים שלנו. אף אחד לא עוקף אותך.",
     image: featureChat,
     bullets: [
       { icon: ShieldCheck, text: "מסיכת זהות עד חתימת הסכם" },
@@ -73,7 +70,10 @@ export function PlatformShowcase() {
             <PlayCircle className="h-3.5 w-3.5" /> פלטפורמה בפעולה
           </div>
           <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
-            איך BuildForce <span className="bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 bg-clip-text text-transparent">משנה את המשחק</span>
+            איך BuildForce{" "}
+            <span className="bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
+              משנה את המשחק
+            </span>
           </h2>
           <p className="mt-4 text-base text-muted-foreground md:text-lg">
             שלוש מערכות שעובדות יחד כדי שהשליטה תישאר אצלך, והמחיר ימשיך לרדת.
@@ -114,8 +114,17 @@ export function PlatformShowcase() {
               className={`grid gap-10 md:grid-cols-2 md:items-center md:gap-16 ${i % 2 === 1 ? "md:[&>div:first-child]:order-2" : ""}`}
             >
               {/* Image card */}
-              <div className={`relative overflow-hidden rounded-3xl border border-border/60 ${f.glow}`}>
-                <img src={f.image} alt={f.title} className="h-full w-full object-cover" loading="lazy" width={1280} height={896} />
+              <div
+                className={`relative overflow-hidden rounded-3xl border border-border/60 ${f.glow}`}
+              >
+                <img
+                  src={f.image}
+                  alt={f.title}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  width={1280}
+                  height={896}
+                />
                 <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${f.accent}`} />
                 <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
                   <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${f.accent}`} />
@@ -125,15 +134,24 @@ export function PlatformShowcase() {
 
               {/* Copy */}
               <div>
-                <div className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${f.accent} bg-clip-text px-0 py-0 text-[11px] font-extrabold uppercase tracking-wider text-transparent`}>
+                <div
+                  className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${f.accent} bg-clip-text px-0 py-0 text-[11px] font-extrabold uppercase tracking-wider text-transparent`}
+                >
                   {f.eyebrow}
                 </div>
-                <h3 className="mt-2 text-2xl font-extrabold leading-tight md:text-4xl">{f.title}</h3>
+                <h3 className="mt-2 text-2xl font-extrabold leading-tight md:text-4xl">
+                  {f.title}
+                </h3>
                 <p className="mt-3 text-base text-muted-foreground md:text-lg">{f.body}</p>
                 <ul className="mt-6 space-y-3">
                   {f.bullets.map(({ icon: Icon, text }) => (
-                    <li key={text} className="flex items-start gap-3 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur-sm">
-                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-white shadow-elegant`}>
+                    <li
+                      key={text}
+                      className="flex items-start gap-3 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur-sm"
+                    >
+                      <span
+                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-white shadow-elegant`}
+                      >
                         <Icon className="h-4 w-4" />
                       </span>
                       <span className="pt-1.5 text-sm font-medium">{text}</span>

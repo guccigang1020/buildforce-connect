@@ -17,14 +17,20 @@ export function exportComparisonPdf(req: WorkforceRequest, rows: Row[]) {
 
   const title = `BuildForce — סיכום השוואת הצעות #${req.id}`;
   const date = new Date().toLocaleDateString("he-IL", {
-    day: "numeric", month: "long", year: "numeric",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
-  const itemsBlock = req.items && req.items.length > 0
-    ? `<ul class="items">${req.items
-        .map((it) => `<li><b>${it.count} ×</b> ${escapeHtml(it.role)} · <span class="nat">${escapeHtml(it.nationality)}</span></li>`)
-        .join("")}</ul>`
-    : "";
+  const itemsBlock =
+    req.items && req.items.length > 0
+      ? `<ul class="items">${req.items
+          .map(
+            (it) =>
+              `<li><b>${it.count} ×</b> ${escapeHtml(it.role)} · <span class="nat">${escapeHtml(it.nationality)}</span></li>`,
+          )
+          .join("")}</ul>`
+      : "";
 
   const tableRows = rows
     .map((r, i) => {

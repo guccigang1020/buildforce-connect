@@ -7,11 +7,7 @@ export type RequestDetails = {
   startDate: string;
 };
 
-export function buildWhatsAppUrl(
-  phone: string,
-  supplierName: string,
-  r: RequestDetails,
-) {
+export function buildWhatsAppUrl(phone: string, supplierName: string, r: RequestDetails) {
   const msg =
     `שלום ${supplierName}, פנייה דרך BuildForce 👷\n\n` +
     `מספר בקשה: ${r.id}\n` +
