@@ -13,10 +13,8 @@ import {
   CalendarDays,
   AlertTriangle,
   Filter,
-  Download,
   BarChart3,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 type CorpAttendanceRecord = {
   id: string;
@@ -75,8 +73,24 @@ function Page() {
         data: { role: "corporation", year: today.getFullYear(), month: today.getMonth() + 1 },
       }),
   });
+
+  // Previous month for real trend computation
+  const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const { data: prevM } = useQuery({
+    queryKey: ["corp-monthly", prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1],
+    queryFn: () =>
+      monthly({
+        data: {
+          role: "corporation",
+          year: prevMonthDate.getFullYear(),
+          month: prevMonthDate.getMonth() + 1,
+        },
+      }),
+  });
+
   const records: CorpAttendanceRecord[] = data?.records ?? [];
   const sum = m?.summary;
+  const prevSum = prevM?.summary;
 
   // Filter records by tab
   const filteredRecords = records.filter((r) => {
@@ -99,6 +113,22 @@ function Page() {
   const totalActual = records.reduce((s, r) => s + (r.workers_actual ?? 0), 0);
   const totalExpected = records.reduce((s, r) => s + r.workers_expected, 0);
   const attendanceRate = totalExpected > 0 ? Math.round((totalActual / totalExpected) * 100) : null;
+
+  // Real trend computation — undefined when no prior data exists
+  function makeTrend(
+    current: number | undefined,
+    prev: number | undefined,
+    higherIsBetter: boolean,
+  ): { label: string; positive: boolean } | undefined {
+    if (current == null || prev == null || prev === 0) return undefined;
+    const pct = Math.round(((current - prev) / prev) * 100);
+    if (pct === 0) return undefined;
+    const isPositive = higherIsBetter ? pct > 0 : pct < 0;
+    return {
+      label: `${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}% מחודש שעבר`,
+      positive: isPositive,
+    };
+  }
 
   const tabs: { key: FilterTab; label: string }[] = [
     { key: "all", label: "הכל" },
@@ -129,49 +159,44 @@ function Page() {
               icon={CalendarDays}
               label="ימים מאושרים החודש"
               value={String(sum.approved)}
-              trend={{ label: "↑ 8% מחודש שעבר", positive: true }}
+              trend={makeTrend(sum.approved, prevSum?.approved, true)}
               highlight
             />
             <KpiCard
               icon={TrendingUp}
               label="חריגות"
               value={String(sum.exceptions)}
-              trend={{ label: "↓ 2 מחודש שעבר", positive: false }}
+              trend={makeTrend(sum.exceptions, prevSum?.exceptions, false)}
               warn
             />
             <KpiCard
               icon={Clock}
               label="שעות בסה״כ"
               value={sum.totalHours.toFixed(1)}
-              trend={{ label: "↑ 5% מחודש שעבר", positive: true }}
+              trend={makeTrend(sum.totalHours, prevSum?.totalHours, true)}
             />
             <KpiCard
               icon={Coins}
               label="עלות מאושרת"
               value={`₪${sum.totalCost.toLocaleString()}`}
-              trend={{ label: "↑ 3% מחודש שעבר", positive: true }}
+              trend={makeTrend(sum.totalCost, prevSum?.totalCost, true)}
             />
           </div>
         )}
 
         {/* Today's records */}
         <div className="animate-fade-up delay-200">
-          {/* Header + export */}
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
-                <Clock className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="font-bold">היום</h3>
-              {attendanceRate !== null && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
-                  <BarChart3 className="h-3 w-3" /> {attendanceRate}% נוכחות כוללת
-                </div>
-              )}
+          {/* Section header */}
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
+              <Clock className="h-4 w-4 text-primary" />
             </div>
-            <Button variant="outline" size="sm" disabled className="gap-1.5 opacity-50">
-              <Download className="h-4 w-4" /> ייצוא לאקסל
-            </Button>
+            <h3 className="font-bold">היום</h3>
+            {attendanceRate !== null && (
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-bold text-primary">
+                <BarChart3 className="h-3 w-3" /> {attendanceRate}% נוכחות כוללת
+              </div>
+            )}
           </div>
 
           {/* Filter tabs */}

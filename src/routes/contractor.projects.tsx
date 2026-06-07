@@ -185,6 +185,9 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
   const [smName, setSmName] = useState(project.site_manager_name ?? "");
   const [smPhone, setSmPhone] = useState(project.site_manager_phone ?? "");
   const [savingSite, setSavingSite] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "captured" | "error">(
+    project.site_lat ? "captured" : "idle",
+  );
 
   // Accordion state
   const [gpsOpen, setGpsOpen] = useState(!project.site_lat);
@@ -206,20 +209,29 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
   const stepsComplete = [gpsConfigured, managerConfigured, teamsConfigured].filter(Boolean).length;
 
   const useGps = () => {
-    if (!navigator.geolocation) return toast.error("דפדפן לא תומך ב-GPS");
+    if (!navigator.geolocation) {
+      toast.error("הדפדפן לא תומך ב-GPS — הזן מיקום ידנית");
+      setGpsStatus("error");
+      return;
+    }
+    setGpsStatus("loading");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLng(pos.coords.longitude.toFixed(6));
-        toast.success("המיקום הנוכחי נלכד");
+        setGpsStatus("captured");
+        toast.success("מיקום GPS נלכד בהצלחה");
       },
-      () => toast.error("לא ניתן לקבל מיקום"),
-      { enableHighAccuracy: true },
+      () => {
+        setGpsStatus("error");
+        toast.error("לא ניתן לקבל מיקום — ודא שאישרת גישה בדפדפן");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 
   const saveSite = async () => {
-    if (!lat || !lng) return toast.error("יש להזין מיקום");
+    if (gpsStatus !== "captured" || !lat || !lng) return toast.error("יש ללכוד מיקום GPS תחילה");
     if (!smPhone || !smName) return toast.error("יש להזין שם וטלפון של מנהל האתר");
     setSavingSite(true);
     try {
@@ -313,37 +325,65 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           summary={gpsConfigured ? `${Number(lat || project.site_lat).toFixed(4)}, ${Number(lng || project.site_lng).toFixed(4)} · רדיוס ${radius}מ'` : "לא הוגדר"}
         >
           <div className="space-y-3 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={useGps}
-              className="gap-2"
-            >
-              <LocateFixed className="h-4 w-4" /> קח מיקום נוכחי
-            </Button>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="mb-1.5 block text-xs">קו רוחב</Label>
-                <Input
-                  value={lat}
-                  onChange={(e) => setLat(e.target.value)}
-                  placeholder="32.0853"
-                  className="h-10"
-                />
+            {gpsStatus === "idle" && (
+              <Button
+                type="button"
+                onClick={useGps}
+                className="w-full gap-2 bg-gradient-primary text-primary-foreground shadow-elegant"
+              >
+                <LocateFixed className="h-4 w-4" /> קח מיקום נוכחי אוטומטית
+              </Button>
+            )}
+
+            {gpsStatus === "loading" && (
+              <div className="flex items-center justify-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                מאתר מיקום GPS… ודא שאתה באתר הבנייה
               </div>
-              <div>
-                <Label className="mb-1.5 block text-xs">קו אורך</Label>
-                <Input
-                  value={lng}
-                  onChange={(e) => setLng(e.target.value)}
-                  placeholder="34.7818"
-                  className="h-10"
-                />
+            )}
+
+            {gpsStatus === "captured" && lat && lng && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-bold text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" /> מיקום GPS נלכד
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setGpsStatus("idle")}
+                    className="text-xs text-muted-foreground underline hover:text-foreground"
+                  >
+                    שנה מיקום
+                  </button>
+                </div>
+                <div className="mt-2 font-mono text-xs text-muted-foreground">
+                  {Number(lat).toFixed(5)}, {Number(lng).toFixed(5)}
+                </div>
               </div>
-            </div>
+            )}
+
+            {gpsStatus === "error" && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+                <div className="text-sm font-semibold text-destructive">
+                  לא ניתן לקבל מיקום GPS
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  ודא שאישרת גישה למיקום בהגדרות הדפדפן שלך.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={useGps}
+                  className="mt-3 gap-2"
+                >
+                  <LocateFixed className="h-3.5 w-3.5" /> נסה שוב
+                </Button>
+              </div>
+            )}
+
             <div>
-              <Label className="mb-1.5 block text-xs">רדיוס מותר (מטר)</Label>
+              <Label className="mb-1.5 block text-xs">רדיוס גאו-פנס מותר (מטר)</Label>
               <Input
                 type="number"
                 min={50}
@@ -352,6 +392,9 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
                 onChange={(e) => setRadius(Number(e.target.value))}
                 className="h-10"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                ראש הצוות חייב להיות בטווח זה מהמיקום שסימנת כדי לרשום נוכחות
+              </p>
             </div>
           </div>
         </AccordionSection>

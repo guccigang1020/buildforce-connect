@@ -426,22 +426,35 @@ function HowItWorks() {
           title="ארבעה שלבים. אפס סיבוכים."
           subtitle="תהליך עבודה ישיר ומאובטח שתוכנן לקצב של אתר בנייה אמיתי."
         />
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s, i) => (
-            <div
-              key={s.n}
-              className="hover-lift group relative rounded-2xl border border-border/60 bg-card p-6"
-            >
-              <div className="text-5xl font-extrabold text-primary/20 transition-colors group-hover:text-primary/40">
-                {s.n}
+
+        {/* Timeline layout */}
+        <div className="relative mt-16">
+          {/* Horizontal connector line — desktop only */}
+          <div className="absolute right-[calc(12.5%)] left-[calc(12.5%)] top-8 hidden h-px bg-gradient-to-l from-primary/10 via-primary/50 to-primary/10 lg:block" />
+
+          <div className="grid gap-0 lg:grid-cols-4">
+            {steps.map((s, i) => (
+              <div key={s.n} className="flex flex-col items-center">
+                {/* Vertical connector — mobile only */}
+                {i > 0 && (
+                  <div className="h-8 w-px bg-gradient-to-b from-primary/50 to-primary/10 lg:hidden" />
+                )}
+
+                {/* Circle */}
+                <div className="relative z-10 grid h-16 w-16 shrink-0 place-items-center rounded-full bg-gradient-primary text-xl font-extrabold text-primary-foreground shadow-glow transition-transform duration-200 hover:scale-110">
+                  {s.n}
+                  {/* Outer ring */}
+                  <div className="absolute inset-0 rounded-full ring-4 ring-primary/20" />
+                </div>
+
+                {/* Content */}
+                <div className="mt-5 px-4 text-center">
+                  <h3 className="text-lg font-bold">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+                </div>
               </div>
-              <h3 className="mt-3 text-lg font-bold">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-              {i < steps.length - 1 && (
-                <div className="absolute -left-3 top-1/2 hidden h-px w-6 bg-gradient-to-l from-primary/40 to-transparent lg:block" />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -451,62 +464,73 @@ function HowItWorks() {
 /* ---------- CATEGORIES ---------- */
 function Categories() {
   const cats = [
-    {
-      icon: Hammer,
-      name: "טפסנים",
-      count: "3,200+ עובדים",
-      desc: "טפסנות מודולרית, יציקות, קונסטרוקציה.",
-    },
-    {
-      icon: Wrench,
-      name: "ברזלנים",
-      count: "2,800+ עובדים",
-      desc: "כיפוף, קשירה, רשתות, מוטות מאמץ.",
-    },
-    {
-      icon: Layers,
-      name: "רצפים",
-      count: "1,950+ עובדים",
-      desc: "קרמיקה, גרניט פורצלן, אבן טבעית.",
-    },
-    {
-      icon: PaintRoller,
-      name: "טייחים",
-      count: "1,500+ עובדים",
-      desc: "טיח פנים, חוץ, שכבות יסוד וגמר.",
-    },
-    {
-      icon: Building2,
-      name: "עובדי גמר",
-      count: "2,100+ עובדים",
-      desc: "גבס, צבע, מסגרות פנים, עבודות עדינות.",
-    },
+    { icon: Hammer, name: "טפסנים", count: 3200, desc: "טפסנות מודולרית, יציקות, קונסטרוקציה." },
+    { icon: Wrench, name: "ברזלנים", count: 2800, desc: "כיפוף, קשירה, רשתות, מוטות מאמץ." },
+    { icon: Layers, name: "רצפים", count: 1950, desc: "קרמיקה, גרניט פורצלן, אבן טבעית." },
+    { icon: PaintRoller, name: "טייחים", count: 1500, desc: "טיח פנים, חוץ, שכבות יסוד וגמר." },
+    { icon: Building2, name: "עובדי גמר", count: 2100, desc: "גבס, צבע, מסגרות פנים, עבודות עדינות." },
   ];
+  const total = cats.reduce((s, c) => s + c.count, 0);
+
   return (
     <section id="categories" className="border-y border-border/60 bg-card/30 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <SectionHeader
-          eyebrow="תחומי התמחות"
-          title="כל בעלי המקצוע. תאגיד אחד."
-          subtitle="פילוח מדויק לפי תחום וניסיון, כדי שתקבל בדיוק את הצוות שאתה צריך."
-        />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {cats.map((c) => (
-            <div
-              key={c.name}
-              className="hover-lift group cursor-pointer rounded-2xl border border-border/60 bg-card p-6"
-            >
-              <div className="flex items-start justify-between">
-                <div className="grid h-14 w-14 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
-                  <c.icon className="h-7 w-7" />
-                </div>
-                <ArrowLeft className="h-5 w-5 -rotate-180 text-muted-foreground transition-transform group-hover:-translate-x-1 group-hover:text-primary" />
-              </div>
-              <h3 className="mt-5 text-xl font-bold">{c.name}</h3>
-              <p className="mt-1 text-xs font-semibold text-primary">{c.count}</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{c.desc}</p>
+        {/* Header row */}
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              תחומי התמחות
             </div>
-          ))}
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl">
+              כל בעלי המקצוע. תאגיד אחד.
+            </h2>
+          </div>
+          {/* Total count pill */}
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 px-6 py-4 text-center">
+            <div className="text-3xl font-black text-primary">{total.toLocaleString()}+</div>
+            <div className="mt-0.5 text-xs text-muted-foreground">עובדים מקצועיים בפלטפורמה</div>
+          </div>
+        </div>
+
+        {/* Category rows — horizontal list with worker-count bars */}
+        <div className="mt-10 divide-y divide-border/40 rounded-2xl border border-border/60 bg-card">
+          {cats.map((c, i) => {
+            const barWidth = Math.round((c.count / cats[0].count) * 100);
+            return (
+              <div
+                key={c.name}
+                className="group flex items-center gap-4 px-6 py-5 transition-colors hover:bg-primary/3 first:rounded-t-2xl last:rounded-b-2xl"
+              >
+                {/* Rank number */}
+                <div className="w-6 shrink-0 text-center text-sm font-bold text-muted-foreground/50">
+                  {i + 1}
+                </div>
+                {/* Icon */}
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
+                  <c.icon className="h-5 w-5" />
+                </div>
+                {/* Name + desc */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <span className="text-lg font-bold">{c.name}</span>
+                    <span className="text-xs text-muted-foreground">{c.desc}</span>
+                  </div>
+                  {/* Proportional bar */}
+                  <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted/60">
+                    <div
+                      className="h-full rounded-full bg-gradient-primary transition-all duration-700"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </div>
+                {/* Worker count */}
+                <div className="shrink-0 text-right">
+                  <div className="text-lg font-extrabold text-primary">{c.count.toLocaleString()}+</div>
+                  <div className="text-[11px] text-muted-foreground">עובדים</div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -550,24 +574,62 @@ function WhyTrust() {
   return (
     <section className="py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <SectionHeader
-          eyebrow="למה BuildForce"
-          title="הפלטפורמה שתוכננה לקבלנים שלא מתפשרים."
-          subtitle="לא לוח דרושים זול. תשתית רצינית לענף הבנייה הישראלי."
-        />
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((it) => (
-            <div
-              key={it.title}
-              className="rounded-2xl border border-border/60 bg-card p-6 hover-lift"
-            >
-              <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/15 text-primary">
-                <it.icon className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 text-lg font-bold">{it.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.desc}</p>
+        {/* Split layout: left stats panel + right feature list */}
+        <div className="grid items-start gap-12 lg:grid-cols-2">
+          {/* Left: headline + proof numbers */}
+          <div className="lg:sticky lg:top-24">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              למה BuildForce
             </div>
-          ))}
+            <h2 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight md:text-4xl xl:text-5xl">
+              הפלטפורמה שתוכננה לקבלנים שלא מתפשרים.
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
+              לא לוח דרושים זול. תשתית רצינית לענף הבנייה הישראלי.
+            </p>
+
+            {/* Proof stats grid */}
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-5">
+                <div className="text-4xl font-black text-primary md:text-5xl">47+</div>
+                <div className="mt-1.5 text-sm font-semibold text-foreground">תאגידים מאומתים</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">רישוי ביטוח ובטיחות</div>
+              </div>
+              <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-5">
+                <div className="text-4xl font-black text-emerald-600 md:text-5xl">&lt;24h</div>
+                <div className="mt-1.5 text-sm font-semibold text-foreground">עד הצעה ראשונה</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">ממוצע בפלטפורמה</div>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-card p-5">
+                <div className="text-4xl font-black text-foreground md:text-5xl">₪0</div>
+                <div className="mt-1.5 text-sm font-semibold text-foreground">עלות לקבלן</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">פרסום ושימוש חינמי</div>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-card p-5">
+                <div className="text-4xl font-black text-foreground md:text-5xl">3+</div>
+                <div className="mt-1.5 text-sm font-semibold text-foreground">הצעות לבקשה</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">תחרות אמיתית</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: feature list with dividers */}
+          <div>
+            {items.map((it, i) => (
+              <div
+                key={it.title}
+                className={`flex items-start gap-4 py-5 ${i < items.length - 1 ? "border-b border-border/40" : ""}`}
+              >
+                <div className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <it.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="font-bold">{it.title}</div>
+                  <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{it.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

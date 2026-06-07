@@ -192,6 +192,11 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
   const [workers, setWorkers] = useState(team.expected_workers);
   const [busy, setBusy] = useState(false);
   const [excOpen, setExcOpen] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState<{
+    dataUrl: string;
+    gpsLat: number;
+    gpsLng: number;
+  } | null>(null);
 
   const lastQ = useQuery({
     queryKey: ["last-workers", team.id],
@@ -218,33 +223,53 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
     try {
       const gps = await getGps();
       const dataUrl = await watermarkImage(file, { project: team.projects?.name ?? "", gps });
+      // Show preview and wait for user confirmation
+      setPendingPhoto({ dataUrl, gpsLat: gps.lat, gpsLng: gps.lng });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "שגיאה בצילום");
+      setMode(null);
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function confirmSubmit() {
+    if (!pendingPhoto) return;
+    setBusy(true);
+    try {
       if (mode === "start") {
         const r = await startFn({
           data: {
             teamId: team.id,
             workersActual: workers,
-            gpsLat: gps.lat,
-            gpsLng: gps.lng,
-            photoBase64: dataUrl,
+            gpsLat: pendingPhoto.gpsLat,
+            gpsLng: pendingPhoto.gpsLng,
+            photoBase64: pendingPhoto.dataUrl,
           },
         });
         toast.success("יום העבודה נפתח");
         if (r?.notify) window.open(r.notify, "_blank");
       } else if (mode === "end" && today?.id) {
         const r = await endFn({
-          data: { recordId: today.id, gpsLat: gps.lat, gpsLng: gps.lng, photoBase64: dataUrl },
+          data: {
+            recordId: today.id,
+            gpsLat: pendingPhoto.gpsLat,
+            gpsLng: pendingPhoto.gpsLng,
+            photoBase64: pendingPhoto.dataUrl,
+          },
         });
         toast.success("יום העבודה נסגר ונשלח לאישור");
         if (r?.notify) window.open(r.notify, "_blank");
       }
       qc.invalidateQueries({ queryKey: ["tl-teams"] });
       onChange();
+      setPendingPhoto(null);
+      setMode(null);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "שגיאה");
     } finally {
       setBusy(false);
-      setMode(null);
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
@@ -458,13 +483,64 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
           </div>
         )}
 
+        {/* Photo preview + confirmation */}
+        {pendingPhoto && (
+          <div className="overflow-hidden rounded-xl border border-primary/30 bg-primary/5">
+            <div className="flex items-center gap-2 border-b border-primary/15 px-4 py-2.5 text-xs font-bold text-primary">
+              <Camera className="h-3.5 w-3.5" /> תמונה מוכנה לשליחה — אשר לפני השליחה
+            </div>
+            <div className="p-4 space-y-3">
+              <img
+                src={pendingPhoto.dataUrl}
+                alt="תמונת נוכחות"
+                className="w-full rounded-lg object-cover"
+                style={{ maxHeight: "200px" }}
+              />
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                GPS: {pendingPhoto.gpsLat.toFixed(4)}, {pendingPhoto.gpsLng.toFixed(4)}
+                <CheckCircle2 className="ms-1 h-3.5 w-3.5 text-emerald-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => {
+                    setPendingPhoto(null);
+                    setMode(null);
+                  }}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> צלם שוב
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={confirmSubmit}
+                  className="gap-2 bg-gradient-primary text-primary-foreground"
+                >
+                  {busy ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  אשר ושלח
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Photo instruction */}
-        <div className="flex items-start gap-2 rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <span>
-            חובה לצלם את כל הפועלים + עצמך באתר. תמונה מהגלריה לא תתקבל — המצלמה תיפתח ישירות.
-          </span>
-        </div>
+        {!pendingPhoto && (
+          <div className="flex items-start gap-2 rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>
+              חובה לצלם את כל הפועלים + עצמך באתר. תמונה מהגלריה לא תתקבל — המצלמה תיפתח ישירות.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Hidden camera input */}
