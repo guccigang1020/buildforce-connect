@@ -21,6 +21,9 @@ import {
   TrendingDown,
   Star,
   Gavel,
+  BarChart2,
+  Zap,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +71,8 @@ function MyRequestPage() {
   const awardFn = useServerFn(awardOffer);
   const closeFn = useServerFn(closeJobRequest);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [confirmingAwardId, setConfirmingAwardId] = useState<string | null>(null);
+  const [confirmingClose, setConfirmingClose] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["job-request", id],
@@ -75,8 +80,8 @@ function MyRequestPage() {
   });
 
   const handleAward = async (offerId: string) => {
-    if (!confirm("לבחור הצעה זו כזוכה? פעולה זו סופית.")) return;
     setActingId(offerId);
+    setConfirmingAwardId(null);
     try {
       await awardFn({ data: { offerId } });
       toast.success("הזוכה נבחר. נשלחו התראות לתאגידים.");
@@ -89,7 +94,7 @@ function MyRequestPage() {
   };
 
   const handleClose = async () => {
-    if (!confirm("לסגור את הבקשה? לא יתקבלו הצעות נוספות.")) return;
+    setConfirmingClose(false);
     try {
       await closeFn({ data: { id } });
       toast.success("הבקשה נסגרה");
@@ -102,7 +107,8 @@ function MyRequestPage() {
   if (isLoading) {
     return (
       <AppShell title="בקשה">
-        <div className="space-y-4 animate-pulse">
+        <div className="space-y-5 animate-pulse">
+          {/* Header skeleton */}
           <div className="enterprise-card overflow-hidden">
             <div className="p-6 md:p-8">
               <div className="h-6 w-28 rounded-full bg-muted" />
@@ -118,12 +124,27 @@ function MyRequestPage() {
               ))}
             </div>
           </div>
-          <div className="enterprise-card p-6">
-            <div className="h-5 w-32 rounded bg-muted" />
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              {[...Array(3)].map((_, i) => <div key={i} className="h-14 rounded-xl bg-muted" />)}
+          {/* Intel panel skeleton */}
+          <div className="enterprise-card p-5">
+            <div className="h-5 w-40 rounded bg-muted mb-4" />
+            <div className="grid grid-cols-3 gap-3">
+              {[...Array(3)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted" />)}
             </div>
           </div>
+          {/* Offer card skeletons */}
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="enterprise-card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-11 w-11 rounded-full bg-muted" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 w-32 rounded bg-muted" />
+                  <div className="h-3 w-24 rounded bg-muted" />
+                </div>
+                <div className="h-8 w-20 rounded bg-muted" />
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted mt-3" />
+            </div>
+          ))}
         </div>
       </AppShell>
     );
@@ -155,19 +176,58 @@ function MyRequestPage() {
     (a, b) => Number(a.price_per_hour) - Number(b.price_per_hour),
   );
   const winningOffer = offers.find((o) => o.status === "awarded");
-  const lowestPrice = sortedOffers[0]?.price_per_hour;
 
-  const closeAction =
-    isOwner && request.status === "open" ? (
+  // Competitive intelligence
+  const prices = sortedOffers.map((o) => Number(o.price_per_hour));
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+  const priceSpread = maxPrice - minPrice;
+
+  // Deadline countdown
+  const deadlineHours = (request as { deadline_at?: string }).deadline_at
+    ? Math.round((new Date((request as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000)
+    : null;
+
+  // Value score per offer
+  const getValueScore = (price: number, workers: number, insurance: boolean) => {
+    if (!minPrice) return 0;
+    const raw = (100 / (price / minPrice)) * (workers / 10 + 1) * (insurance ? 1.1 : 1);
+    return Math.min(100, Math.round(raw));
+  };
+
+  const closeAction = isOwner && request.status === "open" ? (
+    confirmingClose ? (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">לסגור את הבקשה?</span>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={handleClose}
+          className="h-7 px-2.5 text-xs"
+        >
+          אישור
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setConfirmingClose(false)}
+          className="h-7 px-2.5 text-xs"
+        >
+          ביטול
+        </Button>
+      </div>
+    ) : (
       <Button
         variant="outline"
         size="sm"
-        onClick={handleClose}
+        onClick={() => setConfirmingClose(true)}
         className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/5"
       >
         <X className="h-4 w-4" /> סגור בקשה
       </Button>
-    ) : undefined;
+    )
+  ) : undefined;
 
   return (
     <AppShell title={`בקשה #${request.id.slice(0, 8)}`} action={closeAction}>
@@ -186,6 +246,11 @@ function MyRequestPage() {
                 <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:text-3xl">
                   בקשת כוח אדם
                 </h2>
+                {deadlineHours !== null && deadlineHours > 0 && (
+                  <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineHours < 24 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-amber-500/30 bg-amber-500/10 text-amber-700"}`}>
+                    <Clock className="h-3 w-3" /> {deadlineHours < 24 ? `נסגר בעוד ${deadlineHours} שעות!` : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
+                  </div>
+                )}
               </div>
               {offers.length > 0 && (
                 <div className="rounded-2xl border border-primary/20 bg-primary/5 px-5 py-3 text-center">
@@ -245,6 +310,48 @@ function MyRequestPage() {
           </div>
         )}
 
+        {/* Competitive Intelligence Panel */}
+        {sortedOffers.length > 0 && (
+          <div className="enterprise-card p-5 animate-fade-up delay-100">
+            <div className="mb-4 flex items-center gap-2">
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
+                <BarChart2 className="h-4 w-4 text-primary" />
+              </div>
+              <h3 className="font-bold">ניתוח תחרותי</h3>
+              <span className="text-xs text-muted-foreground">
+                {offers.length} הצעות · מחיר ממוצע: {avgPrice} ₪/שעה
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                <div className="text-xs text-muted-foreground mb-1">מינימום</div>
+                <div className="text-lg font-extrabold text-emerald-700">{minPrice} ₪</div>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
+                <div className="text-xs text-muted-foreground mb-1">ממוצע</div>
+                <div className="text-lg font-extrabold text-primary">{avgPrice} ₪</div>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-secondary/30 p-3 text-center">
+                <div className="text-xs text-muted-foreground mb-1">מקסימום</div>
+                <div className="text-lg font-extrabold">{maxPrice} ₪</div>
+              </div>
+            </div>
+            {priceSpread > 0 && (
+              <div className="mt-3">
+                <div className="mb-1.5 flex justify-between text-[11px] text-muted-foreground">
+                  <span>פיזור מחירים ({minPrice} – {maxPrice} ₪)</span>
+                  <span className="inline-flex items-center gap-1 text-primary font-semibold">
+                    <TrendingDown className="h-3 w-3" /> חסכון פוטנציאלי: {maxPrice - minPrice} ₪/שעה
+                  </span>
+                </div>
+                <div className="h-3 w-full rounded-full bg-muted overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-l from-destructive/30 to-emerald-500/30 rounded-full" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Offers section */}
         <div className="animate-fade-up delay-200">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -257,9 +364,9 @@ function MyRequestPage() {
                 {offers.length}
               </span>
             </div>
-            {lowestPrice && (
+            {minPrice > 0 && (
               <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <TrendingDown className="h-3.5 w-3.5" /> מינימום: {lowestPrice} ₪/שעה
+                <TrendingDown className="h-3.5 w-3.5" /> מינימום: {minPrice} ₪/שעה
               </div>
             )}
           </div>
@@ -282,8 +389,15 @@ function MyRequestPage() {
             <div className="space-y-3">
               {sortedOffers.map((o, idx) => {
                 const isWinner = o.status === "awarded";
-                const isRejected =
-                  o.status === "rejected" || o.status === "withdrawn";
+                const isRejected = o.status === "rejected" || o.status === "withdrawn";
+                const priceNum = Number(o.price_per_hour);
+                const workersNum = Number(o.available_workers);
+                const valueScore = getValueScore(priceNum, workersNum, o.insurance ?? false);
+                const pricePosition = priceSpread > 0
+                  ? Math.round(((priceNum - minPrice) / priceSpread) * 100)
+                  : 0;
+                const isConfirming = confirmingAwardId === o.id;
+
                 return (
                   <div
                     key={o.id}
@@ -332,14 +446,10 @@ function MyRequestPage() {
                                 </Badge>
                               )}
                               {o.status === "withdrawn" && (
-                                <Badge variant="outline" className="text-[10px]">
-                                  בוטלה
-                                </Badge>
+                                <Badge variant="outline" className="text-[10px]">בוטלה</Badge>
                               )}
                               {o.status === "rejected" && (
-                                <Badge variant="outline" className="text-[10px]">
-                                  לא נבחרה
-                                </Badge>
+                                <Badge variant="outline" className="text-[10px]">לא נבחרה</Badge>
                               )}
                             </div>
                             <div className="mt-0.5 text-xs text-muted-foreground">
@@ -356,8 +466,8 @@ function MyRequestPage() {
                           </div>
                         </div>
 
-                        {/* Price + Workers */}
-                        <div className="flex items-center gap-6">
+                        {/* Price + Workers + Value Score */}
+                        <div className="flex items-center gap-4">
                           <div>
                             <div className="text-[11px] text-muted-foreground">מחיר לשעה</div>
                             <div
@@ -376,8 +486,32 @@ function MyRequestPage() {
                             <div className="text-[11px] text-muted-foreground">עובדים</div>
                             <div className="text-xl font-bold">{o.available_workers}</div>
                           </div>
+                          {sortedOffers.length > 1 && (
+                            <div className="text-center">
+                              <div className="text-[11px] text-muted-foreground">ניקוד ערך</div>
+                              <div className={`text-lg font-extrabold ${valueScore >= 80 ? "text-emerald-600" : valueScore >= 60 ? "text-amber-600" : "text-muted-foreground"}`}>
+                                {valueScore}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
+
+                      {/* Price spread bar */}
+                      {sortedOffers.length > 1 && priceSpread > 0 && (
+                        <div className="mt-3">
+                          <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> מיקום במחיר</span>
+                            <span>{pricePosition}% מהמקסימום</span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={`h-full rounded-full transition-all ${pricePosition <= 30 ? "bg-emerald-500" : pricePosition <= 60 ? "bg-amber-500" : "bg-destructive/60"}`}
+                              style={{ width: `${Math.max(4, pricePosition)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {/* Details */}
                       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
@@ -418,24 +552,52 @@ function MyRequestPage() {
                         </p>
                       )}
 
-                      {/* Award action */}
+                      {/* Award action — inline confirmation */}
                       {isOwner && request.status === "open" && o.status === "submitted" && (
-                        <div className="mt-4 flex justify-end border-t border-border/40 pt-4">
-                          <Button
-                            onClick={() => handleAward(o.id)}
-                            disabled={actingId === o.id}
-                            className="bg-gradient-primary text-primary-foreground shadow-elegant gap-1.5"
-                          >
-                            {actingId === o.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" /> בוחר זוכה…
-                              </>
-                            ) : (
-                              <>
+                        <div className="mt-4 border-t border-border/40 pt-4">
+                          {isConfirming ? (
+                            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Award className="h-5 w-5 text-primary" />
+                                <span className="font-bold text-sm">אישור סופי — בחירת זוכה</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mb-4">
+                                לאחר הבחירה יישלחו הודעות לכל התאגידים. הפעולה היא סופית.
+                              </p>
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setConfirmingAwardId(null)}
+                                  className="gap-1.5"
+                                >
+                                  <X className="h-4 w-4" /> ביטול
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  disabled={actingId === o.id}
+                                  onClick={() => handleAward(o.id)}
+                                  className="bg-gradient-primary text-primary-foreground shadow-elegant gap-1.5"
+                                >
+                                  {actingId === o.id ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> בוחר…</>
+                                  ) : (
+                                    <><Trophy className="h-4 w-4" /> אישור סופי</>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end">
+                              <Button
+                                onClick={() => setConfirmingAwardId(o.id)}
+                                disabled={actingId !== null}
+                                className="bg-gradient-primary text-primary-foreground shadow-elegant gap-1.5"
+                              >
                                 <Trophy className="h-4 w-4" /> בחר כזוכה
-                              </>
-                            )}
-                          </Button>
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

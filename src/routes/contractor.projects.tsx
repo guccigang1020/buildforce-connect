@@ -24,6 +24,11 @@ import {
   AlertCircle,
   Plus,
   LocateFixed,
+  ChevronDown,
+  ChevronUp,
+  Settings2,
+  FolderOpen,
+  BarChart3,
 } from "lucide-react";
 
 type Project = {
@@ -57,7 +62,11 @@ function Page() {
     queryKey: ["contractor-projects"],
     queryFn: () => list(),
   });
-  const projects = data?.projects ?? [];
+  const projects: Project[] = data?.projects ?? [];
+
+  // Compute summary stats
+  const readyCount = projects.filter((p) => p.site_lat && p.site_manager_phone).length;
+  const notReadyCount = projects.length - readyCount;
 
   const action = (
     <Link to="/contractor/attendance">
@@ -84,6 +93,48 @@ function Page() {
           </div>
         </div>
 
+        {/* Dashboard summary bar */}
+        {projects.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
+            <div className="enterprise-card p-4 flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 shrink-0">
+                <FolderOpen className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-xl font-extrabold">{projects.length}</div>
+                <div className="text-[11px] text-muted-foreground">פרויקטים סה״כ</div>
+              </div>
+            </div>
+            <div className="enterprise-card p-4 flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-500/15 shrink-0">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <div className="text-xl font-extrabold text-emerald-700">{readyCount}</div>
+                <div className="text-[11px] text-muted-foreground">מוכנים</div>
+              </div>
+            </div>
+            <div className="enterprise-card p-4 flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-amber-500/15 shrink-0">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+              </div>
+              <div>
+                <div className="text-xl font-extrabold text-amber-700">{notReadyCount}</div>
+                <div className="text-[11px] text-muted-foreground">דרושה הגדרה</div>
+              </div>
+            </div>
+            <div className="enterprise-card p-4 flex items-center gap-3">
+              <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 shrink-0">
+                <BarChart3 className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-xl font-extrabold">{projects.length > 0 ? Math.round((readyCount / projects.length) * 100) : 0}%</div>
+                <div className="text-[11px] text-muted-foreground">אחוז מוכנות</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Projects list */}
         {isLoading ? (
           <div className="space-y-4 animate-pulse">
@@ -92,6 +143,7 @@ function Page() {
                 <div className="p-5">
                   <div className="h-6 w-48 rounded bg-muted" />
                   <div className="mt-2 h-4 w-32 rounded bg-muted" />
+                  <div className="mt-4 h-10 w-full rounded-xl bg-muted" />
                 </div>
               </div>
             ))}
@@ -110,8 +162,8 @@ function Page() {
           </div>
         ) : (
           <div className="space-y-4">
-            {projects.map((p: Project, i: number) => (
-              <div key={p.id} className={`animate-fade-up`} style={{ animationDelay: `${i * 80}ms` }}>
+            {projects.map((p, i) => (
+              <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
                 <ProjectCard project={p} onChange={refetch} />
               </div>
             ))}
@@ -126,19 +178,32 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
   const qc = useQueryClient();
   const setSite = useServerFn(setProjectSiteLocation);
   const listTeams = useServerFn(listProjectTeams);
-  const upsert = useServerFn(upsertProjectTeam);
 
-  const [lat, setLat] = useState(project.site_lat ?? "");
-  const [lng, setLng] = useState(project.site_lng ?? "");
-  const [radius, setRadius] = useState(project.site_radius_meters ?? 200);
+  const [lat, setLat] = useState<string | number>(project.site_lat ?? "");
+  const [lng, setLng] = useState<string | number>(project.site_lng ?? "");
+  const [radius, setRadius] = useState<number>(project.site_radius_meters ?? 200);
   const [smName, setSmName] = useState(project.site_manager_name ?? "");
   const [smPhone, setSmPhone] = useState(project.site_manager_phone ?? "");
   const [savingSite, setSavingSite] = useState(false);
+
+  // Accordion state
+  const [gpsOpen, setGpsOpen] = useState(!project.site_lat);
+  const [managerOpen, setManagerOpen] = useState(!project.site_manager_phone);
+  const [teamsOpen, setTeamsOpen] = useState(false);
 
   const teamsQ = useQuery({
     queryKey: ["teams", project.id],
     queryFn: () => listTeams({ data: { projectId: project.id } }),
   });
+
+  const teams: ProjectTeam[] = teamsQ.data?.teams ?? [];
+  const isReady = project.site_lat && project.site_manager_phone;
+
+  // Progress
+  const gpsConfigured = Boolean(project.site_lat);
+  const managerConfigured = Boolean(project.site_manager_phone);
+  const teamsConfigured = teams.length > 0;
+  const stepsComplete = [gpsConfigured, managerConfigured, teamsConfigured].filter(Boolean).length;
 
   const useGps = () => {
     if (!navigator.geolocation) return toast.error("דפדפן לא תומך ב-GPS");
@@ -177,9 +242,6 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
     }
   };
 
-  const isReady = project.site_lat && project.site_manager_phone;
-  const teams = teamsQ.data?.teams ?? [];
-
   return (
     <div className="enterprise-card overflow-hidden">
       {/* Project header */}
@@ -190,81 +252,120 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
             : "bg-gradient-to-l from-amber-500/5 to-transparent"
         }`}
       >
-        <div>
-          <h3 className="text-lg font-bold">{project.name}</h3>
-          <p className="text-sm text-muted-foreground">{project.address || "ללא כתובת"}</p>
+        <div className="flex items-start gap-3">
+          <div>
+            <h3 className="text-lg font-bold">{project.name}</h3>
+            <p className="text-sm text-muted-foreground">{project.address || "ללא כתובת"}</p>
+          </div>
         </div>
-        {isReady ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">
-            <CheckCircle2 className="h-3.5 w-3.5" /> מוכן לעבודה
+        <div className="flex items-center gap-3">
+          {/* Progress indicator */}
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Settings2 className="h-3.5 w-3.5" />
+            <span className="font-semibold">{stepsComplete}/3 שלבים</span>
           </div>
-        ) : (
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700">
-            <AlertCircle className="h-3.5 w-3.5" /> דרושה הגדרה
-          </div>
-        )}
+          {isReady ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">
+              <CheckCircle2 className="h-3.5 w-3.5" /> מוכן לעבודה
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700">
+              <AlertCircle className="h-3.5 w-3.5" /> דרושה הגדרה
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-6 p-5">
-        {/* Site location */}
-        <div>
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15">
-              <MapPin className="h-3.5 w-3.5 text-primary" />
-            </div>
-            מיקום האתר וגאו-פנס
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={useGps}
-            className="mb-3 gap-2"
-          >
-            <LocateFixed className="h-4 w-4" /> קח מיקום נוכחי
-          </Button>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="mb-1.5 block text-xs">קו רוחב</Label>
-              <Input
-                value={lat}
-                onChange={(e) => setLat(e.target.value)}
-                placeholder="32.0853"
-                className="h-10"
-              />
-            </div>
-            <div>
-              <Label className="mb-1.5 block text-xs">קו אורך</Label>
-              <Input
-                value={lng}
-                onChange={(e) => setLng(e.target.value)}
-                placeholder="34.7818"
-                className="h-10"
-              />
-            </div>
-          </div>
-          <div className="mt-3">
-            <Label className="mb-1.5 block text-xs">רדיוס מותר (מטר)</Label>
-            <Input
-              type="number"
-              min={50}
-              max={2000}
-              value={radius}
-              onChange={(e) => setRadius(Number(e.target.value))}
-              className="h-10"
-            />
-          </div>
+      {/* Progress bar */}
+      <div className="px-5 pt-3 pb-1">
+        <div className="flex items-center justify-between mb-1.5 text-[11px] text-muted-foreground">
+          <span>התקדמות הגדרה</span>
+          <span className="font-semibold">{stepsComplete}/3</span>
         </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${stepsComplete === 3 ? "bg-emerald-500" : stepsComplete >= 2 ? "bg-amber-500" : "bg-destructive/60"}`}
+            style={{ width: `${(stepsComplete / 3) * 100}%` }}
+          />
+        </div>
+        <div className="flex gap-3 mt-2">
+          {[
+            { label: "GPS", done: gpsConfigured },
+            { label: "מנהל", done: managerConfigured },
+            { label: "צוותים", done: teamsConfigured },
+          ].map(({ label, done }) => (
+            <span key={label} className={`inline-flex items-center gap-1 text-[10px] font-semibold ${done ? "text-emerald-700" : "text-muted-foreground"}`}>
+              {done ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
 
-        {/* Site manager */}
-        <div>
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15">
-              <Phone className="h-3.5 w-3.5 text-primary" />
+      <div className="space-y-1 p-5 pt-3">
+        {/* GPS Section Accordion */}
+        <AccordionSection
+          title="מיקום האתר וגאו-פנס"
+          icon={MapPin}
+          done={gpsConfigured}
+          open={gpsOpen}
+          onToggle={() => setGpsOpen((v) => !v)}
+          summary={gpsConfigured ? `${Number(lat || project.site_lat).toFixed(4)}, ${Number(lng || project.site_lng).toFixed(4)} · רדיוס ${radius}מ'` : "לא הוגדר"}
+        >
+          <div className="space-y-3 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={useGps}
+              className="gap-2"
+            >
+              <LocateFixed className="h-4 w-4" /> קח מיקום נוכחי
+            </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="mb-1.5 block text-xs">קו רוחב</Label>
+                <Input
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  placeholder="32.0853"
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <Label className="mb-1.5 block text-xs">קו אורך</Label>
+                <Input
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
+                  placeholder="34.7818"
+                  className="h-10"
+                />
+              </div>
             </div>
-            מנהל אתר / קבלן באתר
+            <div>
+              <Label className="mb-1.5 block text-xs">רדיוס מותר (מטר)</Label>
+              <Input
+                type="number"
+                min={50}
+                max={2000}
+                value={radius}
+                onChange={(e) => setRadius(Number(e.target.value))}
+                className="h-10"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+        </AccordionSection>
+
+        {/* Site Manager Section Accordion */}
+        <AccordionSection
+          title="מנהל אתר / קבלן באתר"
+          icon={Phone}
+          done={managerConfigured}
+          open={managerOpen}
+          onToggle={() => setManagerOpen((v) => !v)}
+          summary={managerConfigured ? `${smName || project.site_manager_name} · ${smPhone || project.site_manager_phone}` : "לא הוגדר"}
+        >
+          <div className="grid grid-cols-2 gap-3 pt-3">
             <div>
               <Label className="mb-1.5 block text-xs">שם מנהל האתר</Label>
               <Input
@@ -284,57 +385,70 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
               />
             </div>
           </div>
-        </div>
+        </AccordionSection>
 
-        <Button
-          onClick={saveSite}
-          disabled={savingSite}
-          className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+        {/* Save site settings button */}
+        {(gpsOpen || managerOpen) && (
+          <Button
+            onClick={saveSite}
+            disabled={savingSite}
+            className="w-full bg-gradient-primary text-primary-foreground shadow-elegant mt-2"
+          >
+            {savingSite ? (
+              <>
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" /> שומר…
+              </>
+            ) : (
+              "שמור הגדרות אתר"
+            )}
+          </Button>
+        )}
+
+        {/* Teams Section Accordion */}
+        <AccordionSection
+          title="צוותי עבודה"
+          icon={Users}
+          done={teamsConfigured}
+          open={teamsOpen}
+          onToggle={() => setTeamsOpen((v) => !v)}
+          summary={teamsConfigured ? `${teams.length} צוות${teams.length !== 1 ? "ות" : ""}` : "לא הוגדרו צוותים"}
         >
-          {savingSite ? (
-            <>
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" /> שומר…
-            </>
-          ) : (
-            "שמור הגדרות אתר"
-          )}
-        </Button>
-
-        {/* Teams */}
-        <div className="border-t border-border/40 pt-5">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15">
-              <Users className="h-3.5 w-3.5 text-primary" />
-            </div>
-            צוותי עבודה
-          </div>
-          <div className="space-y-2">
-            {teams.map((t: ProjectTeam) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-sm"
-              >
-                <div>
-                  <div className="font-semibold">{t.name}</div>
-                  <div className="mt-0.5 text-xs text-muted-foreground">
-                    ראש צוות: {t.team_leader_name} · {t.team_leader_phone} ·{" "}
-                    {t.expected_workers} עובדים · ₪{t.hourly_rate}/שעה
-                  </div>
+          <div className="pt-3 space-y-3">
+            {/* Teams mini table */}
+            {teams.length > 0 && (
+              <div className="rounded-xl border border-border/60 overflow-hidden">
+                <div className="grid grid-cols-5 bg-secondary/50 px-3 py-2 text-[11px] font-bold text-muted-foreground">
+                  <span>צוות</span>
+                  <span>ראש צוות</span>
+                  <span>עובדים</span>
+                  <span>תעריף</span>
+                  <span>QR</span>
                 </div>
-                <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
+                {teams.map((t) => (
+                  <div key={t.id} className="grid grid-cols-5 items-center border-t border-border/40 px-3 py-2.5 text-sm">
+                    <span className="font-semibold truncate">{t.name}</span>
+                    <div className="text-xs text-muted-foreground truncate">
+                      <div>{t.team_leader_name}</div>
+                      <div>{t.team_leader_phone}</div>
+                    </div>
+                    <span className="font-semibold">{t.expected_workers}</span>
+                    <span className="text-xs">{t.hourly_rate ? `₪${t.hourly_rate}` : "—"}</span>
+                    <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            <div>
+              <AddTeamForm
+                projectId={project.id}
+                onSaved={() => qc.invalidateQueries({ queryKey: ["teams", project.id] })}
+              />
+            </div>
           </div>
-          <div className="mt-3">
-            <AddTeamForm
-              projectId={project.id}
-              onSaved={() => qc.invalidateQueries({ queryKey: ["teams", project.id] })}
-            />
-          </div>
-        </div>
+        </AccordionSection>
 
         {isReady && teams.length > 0 && (
-          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-sm text-emerald-900">
+          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-sm text-emerald-900 mt-2">
             <div className="flex items-center gap-2 font-bold">
               <CheckCircle2 className="h-4 w-4" /> הפרויקט מוכן
             </div>
@@ -348,6 +462,51 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function AccordionSection({
+  title,
+  icon: Icon,
+  done,
+  open,
+  onToggle,
+  summary,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  done: boolean;
+  open: boolean;
+  onToggle: () => void;
+  summary: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold hover:bg-secondary/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <div className={`grid h-7 w-7 place-items-center rounded-lg ${done ? "bg-emerald-500/15" : "bg-primary/15"}`}>
+            <Icon className={`h-3.5 w-3.5 ${done ? "text-emerald-600" : "text-primary"}`} />
+          </div>
+          <span>{title}</span>
+          {done && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+        </div>
+        <div className="flex items-center gap-2">
+          {!open && <span className="text-xs text-muted-foreground font-normal truncate max-w-[140px]">{summary}</span>}
+          {open ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-border/40 bg-secondary/10 px-4 pb-4">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -492,8 +651,8 @@ function TeamQr({
 
   return (
     <div className="relative">
-      <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)} className="gap-1.5">
-        <QrCode className="h-4 w-4" /> QR
+      <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)} className="gap-1.5 h-8 px-2.5 text-xs">
+        <QrCode className="h-3.5 w-3.5" /> QR
       </Button>
       {open && (
         <div className="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-border/60 bg-card p-3 shadow-lg">

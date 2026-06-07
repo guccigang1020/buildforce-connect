@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -16,6 +15,11 @@ import {
   Coins,
   AlertTriangle,
   CheckCircle2,
+  Flame,
+  Lock,
+  Eye,
+  Award,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +41,13 @@ export const Route = createFileRoute("/requests/$id")({
   }),
   component: RequestPage,
 });
+
+function competitionLevel(count: number): { label: string; color: string } {
+  if (count === 0) return { label: "שקטה", color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" };
+  if (count < 3) return { label: "מתחילה", color: "bg-amber-500/10 text-amber-700 border-amber-500/20" };
+  if (count < 6) return { label: "פעילה", color: "bg-orange-500/10 text-orange-700 border-orange-500/20" };
+  return { label: "חמה מאוד 🔥", color: "bg-destructive/10 text-destructive border-destructive/20" };
+}
 
 function RequestPage() {
   const { id } = Route.useParams();
@@ -86,6 +97,7 @@ function RequestPage() {
             <div className="p-6 md:p-8">
               <div className="h-6 w-24 rounded-full bg-muted" />
               <div className="mt-4 h-8 w-48 rounded-lg bg-muted" />
+              <div className="mt-2 h-4 w-32 rounded bg-muted" />
             </div>
             <div className="grid grid-cols-4 border-t border-border/40">
               {[...Array(4)].map((_, i) => (
@@ -98,6 +110,12 @@ function RequestPage() {
           </div>
           <div className="enterprise-card p-6">
             <div className="h-5 w-40 rounded bg-muted" />
+            <div className="mt-4 space-y-2">
+              {[...Array(3)].map((_, i) => <div key={i} className="h-12 rounded-xl bg-muted" />)}
+            </div>
+          </div>
+          <div className="enterprise-card p-6">
+            <div className="h-8 w-full rounded-xl bg-muted" />
           </div>
         </div>
       </AppShell>
@@ -125,6 +143,7 @@ function RequestPage() {
 
   const { request: req, items, offers, isOwner } = data;
   const offersCount = (data as { offers_count?: number }).offers_count ?? offers.length;
+
   if (isOwner) {
     return (
       <AppShell title="מכרז">
@@ -139,6 +158,13 @@ function RequestPage() {
   const totalWorkers = items.reduce((s, it) => s + (it.count ?? 0), 0);
   const myOffer = offers.find((o) => o.corporation_id === user.id);
   const isOpen = req.status === "open";
+  const compLevel = competitionLevel(offersCount);
+
+  // Deadline urgency
+  const deadlineHours = (req as { deadline_at?: string }).deadline_at
+    ? Math.round((new Date((req as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000)
+    : null;
+  const deadlineUrgent = deadlineHours !== null && deadlineHours < 24;
 
   return (
     <AppShell title={`מכרז #${req.id.slice(0, 8)}`}>
@@ -148,26 +174,45 @@ function RequestPage() {
           <div className="border-b border-border/40 bg-gradient-to-l from-primary/5 to-transparent p-6 md:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <Badge
-                  variant={isOpen ? "default" : "secondary"}
-                  className={
-                    isOpen
-                      ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-700"
-                      : ""
-                  }
-                >
-                  {isOpen
-                    ? "פתוח להצעות"
-                    : req.status === "awarded"
-                      ? "נבחר זוכה"
-                      : req.status === "closed"
-                        ? "סגור"
-                        : "בוטל"}
-                </Badge>
-                <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:text-3xl">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Badge
+                    variant={isOpen ? "default" : "secondary"}
+                    className={
+                      isOpen
+                        ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-700"
+                        : ""
+                    }
+                  >
+                    {isOpen
+                      ? "פתוח להצעות"
+                      : req.status === "awarded"
+                        ? "נבחר זוכה"
+                        : req.status === "closed"
+                          ? "סגור"
+                          : "בוטל"}
+                  </Badge>
+                  {/* Competition signal */}
+                  {isOpen && offersCount > 0 && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-bold ${compLevel.color}`}>
+                      <Flame className="h-3 w-3" />
+                      {offersCount} תאגידים כבר הגישו · {compLevel.label}
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
                   {req.location}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">מכרז כוח אדם</p>
+
+                {/* Deadline urgency */}
+                {deadlineHours !== null && deadlineHours > 0 && (
+                  <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineUrgent ? "border-destructive/40 bg-destructive/10 text-destructive animate-pulse" : "border-amber-500/30 bg-amber-500/10 text-amber-700"}`}>
+                    <Clock className="h-3 w-3" />
+                    {deadlineUrgent
+                      ? `נסגר בעוד ${deadlineHours} שעות — מהר!`
+                      : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -187,6 +232,21 @@ function RequestPage() {
             ))}
           </div>
         </div>
+
+        {/* Trust signals */}
+        {isOpen && isCorporation && !myOffer && (
+          <div className="flex flex-wrap gap-2 animate-fade-up delay-100">
+            {[
+              { icon: Lock, label: "אנונימיות מלאה" },
+              { icon: Award, label: "זכייה לפי הצעה הטובה ביותר" },
+              { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
+                <Icon className="h-3.5 w-3.5" /> {label}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Workforce requirements */}
         <div className="enterprise-card p-5 md:p-6 animate-fade-up delay-100">
@@ -217,10 +277,10 @@ function RequestPage() {
               {req.description}
             </p>
           )}
-          {req.deadline_at && (
+          {(req as { deadline_at?: string }).deadline_at && !deadlineUrgent && (
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-700">
               <Clock className="h-3 w-3" /> סגירת המכרז:{" "}
-              {new Date(req.deadline_at).toLocaleString("he-IL")}
+              {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
             </div>
           )}
         </div>
@@ -244,7 +304,7 @@ function RequestPage() {
         </div>
 
         {/* Submit offer */}
-        {isCorporation && isOpen && !myOffer && <SubmitOfferCard requestId={req.id} />}
+        {isCorporation && isOpen && !myOffer && <SubmitOfferCard requestId={req.id} totalWorkers={totalWorkers} />}
 
         {/* My offer panel */}
         {myOffer && (
@@ -285,22 +345,24 @@ function RequestPage() {
   );
 }
 
-function SubmitOfferCard({ requestId }: { requestId: string }) {
+function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; totalWorkers: number }) {
   const qc = useQueryClient();
   const submitFn = useServerFn(submitOffer);
   const [submitting, setSubmitting] = useState(false);
   const [pricePerHour, setPricePerHour] = useState("");
-  const [availableWorkers, setAvailableWorkers] = useState("");
+  const [availableWorkers, setAvailableWorkers] = useState(String(totalWorkers > 0 ? totalWorkers : ""));
   const [startDate, setStartDate] = useState("");
   const [responseTimeHours, setResponseTimeHours] = useState("24");
   const [warrantyDays, setWarrantyDays] = useState("30");
   const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
 
+  const price = Number(pricePerHour);
+  const workers = Number(availableWorkers);
+  const dailyCostEstimate = price > 0 && workers > 0 ? Math.round(price * workers * 8) : 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const price = Number(pricePerHour);
-    const workers = Number(availableWorkers);
     if (!price || price <= 0) return toast.error("יש להזין מחיר תקין");
     if (!workers || workers <= 0) return toast.error("יש להזין מספר עובדים");
     if (!startDate.trim()) return toast.error("יש להזין תאריך התחלה");
@@ -345,7 +407,12 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="price">מחיר לשעה (₪) *</Label>
+          <Label htmlFor="price">
+            מחיר לשעה (₪) *
+            <span className="block text-[11px] text-muted-foreground font-normal mt-0.5">
+              מחיר שוק: ~₪175/שעה
+            </span>
+          </Label>
           <Input
             id="price"
             type="number"
@@ -372,6 +439,19 @@ function SubmitOfferCard({ requestId }: { requestId: string }) {
           />
         </div>
       </div>
+
+      {/* Real-time cost estimate */}
+      {dailyCostEstimate > 0 && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+            <TrendingUp className="h-4 w-4" />
+            עלות יומית משוערת: ₪{dailyCostEstimate.toLocaleString()}
+            <span className="text-muted-foreground font-normal mr-1">
+              ({price} ₪ × {workers} עובדים × 8 שעות)
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>

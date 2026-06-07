@@ -26,6 +26,11 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Play,
+  Square,
+  Minus,
+  Plus,
+  Timer,
 } from "lucide-react";
 
 type TodayRecord = {
@@ -84,18 +89,45 @@ function Page() {
     queryFn: () => list(),
   });
 
-  const allTeams = data?.teams ?? [];
+  const allTeams: Team[] = data?.teams ?? [];
   const focusTeamId =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("team")
       : null;
   const teams = focusTeamId
-    ? allTeams.filter((t: Team) => t.id === focusTeamId)
+    ? allTeams.filter((t) => t.id === focusTeamId)
     : allTeams;
+
+  // Daily summary
+  const totalExpected = allTeams.reduce((s, t) => s + (t.expected_workers ?? 0), 0);
+  const activeToday = allTeams.filter((t) => t.today?.start_time && !t.today?.end_time).length;
+  const completedToday = allTeams.filter((t) => t.today?.end_time).length;
 
   return (
     <AppShell title="נוכחות יומית">
       <div className="mx-auto max-w-xl space-y-4">
+        {/* Daily summary */}
+        {allTeams.length > 0 && !isLoading && (
+          <div className="enterprise-card p-4 animate-fade-up">
+            <div className="grid grid-cols-3 divide-x divide-x-reverse divide-border/40">
+              <div className="px-3 text-center">
+                <div className="text-xl font-extrabold text-primary">{allTeams.length}</div>
+                <div className="text-[11px] text-muted-foreground">צוותים</div>
+              </div>
+              <div className="px-3 text-center">
+                <div className="text-xl font-extrabold">{totalExpected}</div>
+                <div className="text-[11px] text-muted-foreground">עובדים צפויים</div>
+              </div>
+              <div className="px-3 text-center">
+                <div className={`text-xl font-extrabold ${activeToday > 0 ? "text-emerald-600" : "text-muted-foreground"}`}>
+                  {activeToday + completedToday}
+                </div>
+                <div className="text-[11px] text-muted-foreground">פעילים היום</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {focusTeamId && (
           <div className="enterprise-card border-primary/30 bg-primary/5 px-4 py-3 animate-fade-up">
             <div className="flex items-center justify-between text-xs">
@@ -137,7 +169,7 @@ function Page() {
           </div>
         ) : (
           <div className="space-y-4">
-            {teams.map((t: Team, i: number) => (
+            {teams.map((t, i) => (
               <div key={t.id} className="animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
                 <TeamCard team={t} onChange={refetch} />
               </div>
@@ -170,6 +202,14 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
   const status = today?.status;
   const statusMeta = status ? (STATUS_META[status] ?? STATUS_META.pending) : null;
   const StatusIcon = statusMeta?.icon ?? Clock;
+
+  // Shift duration
+  const shiftHours = today?.start_time && !today?.end_time
+    ? ((Date.now() - new Date(today.start_time).getTime()) / 3600000).toFixed(1)
+    : null;
+
+  // Stage determination
+  const stage = !today?.start_time ? 0 : !today?.end_time ? 1 : 2;
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -220,10 +260,20 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
     }
   }
 
+  const startTimeFormatted = today?.start_time
+    ? new Date(today.start_time).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+    : null;
+
   return (
     <div className="enterprise-card overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border/40 bg-gradient-to-l from-primary/5 to-transparent px-5 py-4">
+      <div className={`border-b border-border/40 px-5 py-4 ${
+        stage === 0
+          ? "bg-gradient-to-l from-muted/20 to-transparent"
+          : stage === 1
+            ? "bg-gradient-to-l from-emerald-500/8 to-transparent"
+            : "bg-gradient-to-l from-primary/5 to-transparent"
+      }`}>
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold leading-tight">{team.name}</h3>
@@ -236,31 +286,66 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
               {team.expected_workers} עובדים מתוכננים
             </div>
           </div>
-          {statusMeta && (
-            <span
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${statusMeta.className}`}
-            >
+          {statusMeta ? (
+            <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${statusMeta.className}`}>
               <StatusIcon className="h-3.5 w-3.5" />
               {statusMeta.label}
             </span>
+          ) : null}
+        </div>
+
+        {/* State machine stage header */}
+        <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+          stage === 0
+            ? "bg-muted/60 text-muted-foreground"
+            : stage === 1
+              ? "bg-emerald-500/15 text-emerald-700"
+              : "bg-primary/15 text-primary"
+        }`}>
+          {stage === 0 && (
+            <><Clock className="h-3.5 w-3.5" /> יום עבודה לא התחיל</>
+          )}
+          {stage === 1 && startTimeFormatted && (
+            <><Timer className="h-3.5 w-3.5" /> יום עבודה פעיל · התחיל ב-{startTimeFormatted}{shiftHours ? ` · ${shiftHours} שעות` : ""}</>
+          )}
+          {stage === 2 && (
+            <><CheckCircle2 className="h-3.5 w-3.5" /> יום העבודה הסתיים</>
           )}
         </div>
       </div>
 
       <div className="space-y-4 p-5">
-        {/* Start workday */}
-        {!today?.start_time && (
+        {/* Stage 0: Start workday */}
+        {stage === 0 && (
           <>
             <div>
-              <label className="mb-2 block text-sm font-semibold">כמה עובדים הגיעו היום?</label>
-              <input
-                type="number"
-                min={1}
-                max={500}
-                value={workers}
-                onChange={(e) => setWorkers(Number(e.target.value))}
-                className="h-14 w-full rounded-xl border border-border bg-card px-4 text-2xl font-bold focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
+              <label className="mb-3 block text-sm font-semibold">כמה עובדים הגיעו היום?</label>
+              {/* Worker stepper */}
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled={workers <= 1}
+                  onClick={() => setWorkers((w) => Math.max(1, w - 1))}
+                  className="h-14 w-14 rounded-2xl text-xl font-bold"
+                >
+                  <Minus className="h-6 w-6" />
+                </Button>
+                <div className="grid h-20 w-28 place-items-center rounded-2xl border-2 border-primary/30 bg-primary/5">
+                  <span className="text-4xl font-extrabold text-primary">{workers}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled={workers >= 500}
+                  onClick={() => setWorkers((w) => Math.min(500, w + 1))}
+                  className="h-14 w-14 rounded-2xl text-xl font-bold"
+                >
+                  <Plus className="h-6 w-6" />
+                </Button>
+              </div>
             </div>
 
             {lastQ.data?.workers != null && lastQ.data.workers !== workers && (
@@ -290,19 +375,19 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
               {busy ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Camera className="h-5 w-5" />
+                <Play className="h-5 w-5" />
               )}
               התחל יום עבודה
             </Button>
           </>
         )}
 
-        {/* End workday */}
-        {today?.start_time && !today?.end_time && (
+        {/* Stage 1: Active workday */}
+        {stage === 1 && (
           <>
             <Button
               size="lg"
-              className="h-16 w-full gap-3 text-lg"
+              className="h-16 w-full gap-3 text-lg border-2 border-border/60 bg-card hover:bg-secondary text-foreground"
               disabled={busy}
               onClick={() => {
                 setMode("end");
@@ -312,7 +397,7 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
               {busy ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Camera className="h-5 w-5" />
+                <Square className="h-5 w-5 text-destructive" />
               )}
               סיים יום עבודה
             </Button>
@@ -362,11 +447,14 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
           </>
         )}
 
-        {/* Workday ended */}
-        {today?.end_time && (
-          <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-800">
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-            יום העבודה הסתיים — ממתין לאישור הקבלן.
+        {/* Stage 2: Workday ended */}
+        {stage === 2 && (
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 text-sm text-emerald-800">
+            <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-600" />
+            <div>
+              <div className="font-bold">יום העבודה הסתיים בהצלחה</div>
+              <div className="mt-0.5 text-xs text-emerald-700/70">ממתין לאישור הקבלן</div>
+            </div>
           </div>
         )}
 

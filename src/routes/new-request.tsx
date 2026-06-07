@@ -18,6 +18,8 @@ import {
   Trash2,
   Lock,
   Globe2,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +60,8 @@ const STEPS = [
   { n: 3, label: "תקציב ופרטים" },
   { n: 4, label: "פרטי קשר" },
 ];
+
+const MARKET_RATE = 175;
 
 const newItem = (): RequestItem => ({
   id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -104,12 +108,24 @@ function NewRequestPage() {
   const itemsValid = form.items.every((it) => it.role && it.nationality && it.count > 0);
   const totalWorkers = form.items.reduce((s, it) => s + (Number(it.count) || 0), 0);
 
+  // Cost estimates
+  const estDailyCost = totalWorkers * MARKET_RATE * 8;
+  const estMonthlyCost = estDailyCost * 22;
+
   const canNext = () => {
     if (step === 1) return itemsValid && form.items.length > 0;
     if (step === 2)
-      return form.location && form.startDate && form.duration && form.commitmentMonths;
+      return Boolean(form.location && form.startDate && form.duration && form.commitmentMonths);
     if (step === 3) return true;
-    if (step === 4) return form.contactName && form.contactPhone && form.acceptTerms;
+    if (step === 4) return Boolean(form.contactName && form.contactPhone && form.acceptTerms);
+    return false;
+  };
+
+  const isStepComplete = (n: number) => {
+    if (n === 1) return itemsValid && form.items.length > 0;
+    if (n === 2) return Boolean(form.location && form.startDate && form.duration && form.commitmentMonths);
+    if (n === 3) return true;
+    if (n === 4) return Boolean(form.contactName && form.contactPhone && form.acceptTerms);
     return false;
   };
 
@@ -214,29 +230,36 @@ function NewRequestPage() {
           </p>
         </div>
 
-        {/* Stepper */}
+        {/* Stepper with completion indicators */}
         <div className="enterprise-card p-4 md:p-5 animate-fade-up delay-100">
           <div className="grid grid-cols-4 gap-2">
-            {STEPS.map((s) => (
-              <div key={s.n} className="flex flex-col items-center gap-1.5">
-                <div
-                  className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-all ${
-                    s.n <= step
-                      ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {s.n < step ? <CheckCircle2 className="h-4 w-4" /> : s.n}
+            {STEPS.map((s) => {
+              const isCompleted = s.n < step && isStepComplete(s.n);
+              const isCurrent = s.n === step;
+              const isFuture = s.n > step;
+              return (
+                <div key={s.n} className="flex flex-col items-center gap-1.5">
+                  <div
+                    className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-all ${
+                      isCompleted
+                        ? "bg-emerald-500 text-white shadow-sm"
+                        : isCurrent
+                          ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : s.n}
+                  </div>
+                  <div
+                    className={`text-center text-[11px] font-medium md:text-xs ${
+                      isFuture ? "text-muted-foreground/60" : isCurrent ? "text-foreground font-semibold" : "text-muted-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </div>
                 </div>
-                <div
-                  className={`text-center text-[11px] font-medium md:text-xs ${
-                    s.n <= step ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {s.label}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
@@ -257,16 +280,26 @@ function NewRequestPage() {
                   title="איזה צוות אתה צריך?"
                   subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות."
                 />
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {form.items.map((it, idx) => (
-                    <ItemRow
-                      key={it.id}
-                      idx={idx + 1}
-                      item={it}
-                      onChange={(patch) => updateItem(it.id, patch)}
-                      onRemove={() => removeItem(it.id)}
-                      removable={form.items.length > 1}
-                    />
+                    <div key={it.id}>
+                      {/* Numbered section header */}
+                      <div className="mb-2 flex items-center gap-2">
+                        <div className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[11px] font-extrabold text-primary">
+                          {idx + 1}
+                        </div>
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          פריט בקשה #{idx + 1}
+                        </span>
+                      </div>
+                      <ItemRow
+                        idx={idx + 1}
+                        item={it}
+                        onChange={(patch) => updateItem(it.id, patch)}
+                        onRemove={() => removeItem(it.id)}
+                        removable={form.items.length > 1}
+                      />
+                    </div>
                   ))}
                   <button
                     type="button"
@@ -295,7 +328,8 @@ function NewRequestPage() {
                 />
                 <div>
                   <Label className="mb-2 block">עיר / אזור</Label>
-                  <div className="flex flex-wrap gap-2">
+                  {/* Scrollable pill grid */}
+                  <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto rounded-xl border border-border/40 bg-secondary/20 p-3">
                     {CITIES.map((c) => (
                       <button
                         type="button"
@@ -303,8 +337,8 @@ function NewRequestPage() {
                         onClick={() => update("location", c)}
                         className={`rounded-full border px-4 py-2 text-xs font-semibold transition-all ${
                           form.location === c
-                            ? "border-primary bg-primary/15 text-foreground"
-                            : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
+                            ? "border-primary bg-gradient-primary text-primary-foreground shadow-glow-sm"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                         }`}
                       >
                         {c}
@@ -337,18 +371,18 @@ function NewRequestPage() {
                 <div>
                   <Label className="mb-2 block">משך התחייבות מינימלי (חודשים)</Label>
                   <div className="flex flex-wrap gap-2">
-                    {["1", "3", "6", "12", "24"].map((m) => (
+                    {["1", "3", "6", "12", "24"].map((month) => (
                       <button
                         type="button"
-                        key={m}
-                        onClick={() => update("commitmentMonths", m)}
+                        key={month}
+                        onClick={() => update("commitmentMonths", month)}
                         className={`rounded-full border px-4 py-2 text-xs font-semibold transition-all ${
-                          form.commitmentMonths === m
-                            ? "border-primary bg-primary/15 text-foreground"
+                          form.commitmentMonths === month
+                            ? "border-primary bg-gradient-primary text-primary-foreground shadow-glow-sm"
                             : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
                         }`}
                       >
-                        {m} חודשים
+                        {month} חודשים
                       </button>
                     ))}
                   </div>
@@ -429,6 +463,40 @@ function NewRequestPage() {
                   <ShieldCheck className="mb-2 h-5 w-5 text-primary" />
                   הפרטים שלך מוגנים. נשלח אותם רק לתאגידים שתאשר באופן מפורש.
                 </div>
+
+                {/* Summary preview before non-circumvention */}
+                <div className="rounded-xl border border-border/60 bg-secondary/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-bold">
+                    <Zap className="h-4 w-4 text-primary" />
+                    סיכום הבקשה לפני פרסום
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-lg bg-card border border-border/40 p-2.5">
+                      <div className="text-muted-foreground mb-0.5">מיקום</div>
+                      <div className="font-semibold">{form.location || "—"}</div>
+                    </div>
+                    <div className="rounded-lg bg-card border border-border/40 p-2.5">
+                      <div className="text-muted-foreground mb-0.5">התחלה</div>
+                      <div className="font-semibold">{form.startDate || "—"}</div>
+                    </div>
+                    <div className="rounded-lg bg-card border border-border/40 p-2.5">
+                      <div className="text-muted-foreground mb-0.5">עובדים</div>
+                      <div className="font-semibold">{totalWorkers}</div>
+                    </div>
+                    <div className="rounded-lg bg-card border border-border/40 p-2.5">
+                      <div className="text-muted-foreground mb-0.5">התחייבות</div>
+                      <div className="font-semibold">{form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {form.items.filter((it) => it.role).map((it) => (
+                      <span key={it.id} className="inline-block ml-2 mb-1 rounded-full border border-border/50 bg-secondary/60 px-2 py-0.5">
+                        {it.count}× {it.role}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
                   <input
                     type="checkbox"
@@ -515,6 +583,25 @@ function NewRequestPage() {
                 value={form.budget ? `₪${form.budget}` : "—"}
               />
             </ul>
+
+            {/* Auto cost estimate */}
+            {totalWorkers > 0 && (
+              <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-primary">
+                  <TrendingUp className="h-4 w-4" />
+                  הערכת עלות (מחיר שוק ₪{MARKET_RATE}/שעה)
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">עלות יומית משוערת</span>
+                  <span className="font-extrabold text-foreground">₪{estDailyCost.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">עלות חודשית (×22 ימים)</span>
+                  <span className="font-extrabold text-primary">₪{estMonthlyCost.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
             <div className="mt-5 rounded-xl bg-secondary/40 p-4 text-xs text-muted-foreground">
               <div className="font-semibold text-foreground">מה קורה אחרי הפרסום?</div>
               <ul className="mt-2 space-y-1.5">
@@ -640,3 +727,4 @@ function PreviewRow({
     </li>
   );
 }
+
