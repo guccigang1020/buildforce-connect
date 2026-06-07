@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
@@ -12,9 +12,7 @@ import {
 } from "@/lib/attendance.functions";
 import { getGps, watermarkImage } from "@/lib/attendance-camera";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { AppShell } from "@/components/app-shell";
 import {
   Camera,
   RotateCcw,
@@ -88,62 +86,66 @@ function Page() {
 
   const allTeams = data?.teams ?? [];
   const focusTeamId =
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("team") : null;
-  const teams = focusTeamId ? allTeams.filter((t: Team) => t.id === focusTeamId) : allTeams;
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("team")
+      : null;
+  const teams = focusTeamId
+    ? allTeams.filter((t: Team) => t.id === focusTeamId)
+    : allTeams;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="mx-auto max-w-xl px-4 py-8 pb-24 md:px-6" dir="rtl">
-        <div className="mb-6">
-          <div className="text-xs font-semibold uppercase tracking-wider text-primary">
-            ניהול נוכחות
-          </div>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">הצוותים שלי</h1>
-        </div>
-
+    <AppShell title="נוכחות יומית">
+      <div className="mx-auto max-w-xl space-y-4">
         {focusTeamId && (
-          <div className="mb-4 flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs">
-            <div className="flex items-center gap-1.5 text-primary font-semibold">
-              <MapPin className="h-3.5 w-3.5" /> נכנסת דרך QR אתר — מוצג צוות בודד
+          <div className="enterprise-card border-primary/30 bg-primary/5 px-4 py-3 animate-fade-up">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 font-semibold text-primary">
+                <MapPin className="h-3.5 w-3.5" /> נכנסת דרך QR אתר — מוצג צוות בודד
+              </div>
+              <a
+                href="/team-leader"
+                className="text-muted-foreground underline hover:text-foreground"
+              >
+                הצג הכל
+              </a>
             </div>
-            <a href="/team-leader" className="underline text-muted-foreground hover:text-foreground">
-              הצג הכל
-            </a>
           </div>
         )}
 
         {isLoading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-            <Loader2 className="ml-2 h-4 w-4 animate-spin" /> טוען צוותים…
+          <div className="space-y-3 animate-pulse">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="enterprise-card overflow-hidden">
+                <div className="p-5">
+                  <div className="h-6 w-40 rounded bg-muted" />
+                  <div className="mt-2 h-4 w-28 rounded bg-muted" />
+                  <div className="mt-4 h-16 w-full rounded-xl bg-muted" />
+                  <div className="mt-3 h-14 w-full rounded-xl bg-muted" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : teams.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
-            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              אין צוותים פעילים. צור קשר עם הקבלן.
-            </p>
+          <div className="enterprise-card flex flex-col items-center gap-4 border-dashed p-14 text-center animate-fade-up">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted/50">
+              <Users className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+            <div>
+              <h3 className="font-bold">אין צוותים פעילים</h3>
+              <p className="mt-1 text-sm text-muted-foreground">צור קשר עם הקבלן להקצאת צוות.</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {teams.map((t: Team) => (
-              <TeamCard key={t.id} team={t} onChange={refetch} />
+            {teams.map((t: Team, i: number) => (
+              <div key={t.id} className="animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
+                <TeamCard team={t} onChange={refetch} />
+              </div>
             ))}
           </div>
         )}
-
-        <div className="fixed bottom-4 inset-x-4 md:static md:mt-6 md:bottom-auto">
-          <Link to="/dashboard">
-            <Button variant="outline" className="w-full shadow-md">
-              חזרה לדשבורד
-            </Button>
-          </Link>
-        </div>
-      </main>
-      <div className="hidden md:block">
-        <SiteFooter />
       </div>
-    </div>
+    </AppShell>
   );
 }
 
@@ -219,12 +221,12 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
   }
 
   return (
-    <Card className="overflow-hidden">
+    <div className="enterprise-card overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border/60 bg-secondary/20 px-5 py-4">
+      <div className="border-b border-border/40 bg-gradient-to-l from-primary/5 to-transparent px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-bold text-lg leading-tight">{team.name}</div>
+            <h3 className="text-lg font-bold leading-tight">{team.name}</h3>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
               {team.projects?.name}
@@ -236,7 +238,7 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
           </div>
           {statusMeta && (
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${statusMeta.className}`}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${statusMeta.className}`}
             >
               <StatusIcon className="h-3.5 w-3.5" />
               {statusMeta.label}
@@ -250,16 +252,14 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
         {!today?.start_time && (
           <>
             <div>
-              <label className="mb-2 block text-sm font-semibold">
-                כמה עובדים הגיעו היום?
-              </label>
+              <label className="mb-2 block text-sm font-semibold">כמה עובדים הגיעו היום?</label>
               <input
                 type="number"
                 min={1}
                 max={500}
                 value={workers}
                 onChange={(e) => setWorkers(Number(e.target.value))}
-                className="h-14 w-full rounded-xl border border-border bg-card px-4 text-2xl font-bold focus:border-primary focus:outline-none"
+                className="h-14 w-full rounded-xl border border-border bg-card px-4 text-2xl font-bold focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
@@ -280,7 +280,7 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
 
             <Button
               size="lg"
-              className="h-16 w-full gap-3 text-lg bg-gradient-primary text-primary-foreground shadow-elegant"
+              className="h-16 w-full gap-3 bg-gradient-primary text-lg text-primary-foreground shadow-elegant"
               disabled={busy}
               onClick={() => {
                 setMode("start");
@@ -364,8 +364,8 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
 
         {/* Workday ended */}
         {today?.end_time && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-800">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-800">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
             יום העבודה הסתיים — ממתין לאישור הקבלן.
           </div>
         )}
@@ -388,6 +388,6 @@ function TeamCard({ team, onChange }: { team: Team; onChange: () => void }) {
         className="hidden"
         onChange={handleFile}
       />
-    </Card>
+    </div>
   );
 }

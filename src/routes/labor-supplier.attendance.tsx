@@ -2,10 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listCorporationAttendance, getMonthlySummary } from "@/lib/attendance.functions";
-import { Card } from "@/components/ui/card";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
-import { Clock, Users, TrendingUp, Coins, Loader2, CalendarDays } from "lucide-react";
+import { AppShell } from "@/components/app-shell";
+import { Clock, Users, TrendingUp, Coins, Loader2, CalendarDays, AlertTriangle } from "lucide-react";
 
 type CorpAttendanceRecord = {
   id: string;
@@ -64,15 +62,11 @@ function Page() {
   const sum = m?.summary;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="mx-auto max-w-5xl px-4 py-10 md:px-6 md:py-14" dir="rtl">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-primary">
-            תאגיד כוח אדם
-          </div>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">נוכחות צוותים</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+    <AppShell title="נוכחות צוותים">
+      <div className="space-y-6">
+        {/* Date header */}
+        <div className="animate-fade-up">
+          <p className="text-sm text-muted-foreground">
             {today.toLocaleDateString("he-IL", {
               weekday: "long",
               year: "numeric",
@@ -82,26 +76,27 @@ function Page() {
           </p>
         </div>
 
+        {/* KPIs */}
         {sum && (
-          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <KPI
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
+            <KpiCard
               icon={CalendarDays}
               label="ימים מאושרים החודש"
               value={String(sum.approved)}
-              accent
+              highlight
             />
-            <KPI
+            <KpiCard
               icon={TrendingUp}
               label="חריגות"
               value={String(sum.exceptions)}
-              warnColor
+              warn
             />
-            <KPI
+            <KpiCard
               icon={Clock}
               label="שעות בסה״כ"
               value={sum.totalHours.toFixed(1)}
             />
-            <KPI
+            <KpiCard
               icon={Coins}
               label="עלות מאושרת"
               value={`₪${sum.totalCost.toLocaleString()}`}
@@ -109,86 +104,141 @@ function Page() {
           </div>
         )}
 
-        <div className="mt-8">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <Clock className="h-4 w-4 text-primary" /> היום
+        {/* Today's records */}
+        <div className="animate-fade-up delay-200">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
+              <Clock className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="font-bold">היום</h3>
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" /> טוען נוכחות…
+            <div className="space-y-3 animate-pulse">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="enterprise-card p-5">
+                  <div className="h-5 w-48 rounded bg-muted" />
+                  <div className="mt-2 h-4 w-32 rounded bg-muted" />
+                </div>
+              ))}
             </div>
           ) : records.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
-              <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">אין רשומות נוכחות להיום.</p>
+            <div className="enterprise-card flex flex-col items-center gap-4 border-dashed p-12 text-center">
+              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted/50">
+                <Users className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <div>
+                <h4 className="font-bold">אין רשומות נוכחות</h4>
+                <p className="mt-1 text-sm text-muted-foreground">לא נמצאו רשומות נוכחות להיום.</p>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
               {records.map((r: CorpAttendanceRecord) => {
                 const s = STATUS_META[r.status] ?? STATUS_META.pending;
+                const fillRate =
+                  r.workers_actual != null && r.workers_expected > 0
+                    ? Math.round((r.workers_actual / r.workers_expected) * 100)
+                    : null;
                 return (
-                  <Card key={r.id} className="p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2 font-bold">
-                          {r.projects?.name}
-                          {r.project_teams?.name ? ` · ${r.project_teams.name}` : ""}
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.className}`}
-                          >
-                            {s.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span className="inline-flex items-center gap-1">
-                            <Users className="h-3.5 w-3.5" />
-                            {r.workers_actual ?? "—"}/{r.workers_expected} עובדים
-                          </span>
-                          {r.total_cost && (
-                            <span className="font-semibold text-foreground">
-                              ₪{Number(r.total_cost).toLocaleString()}
+                  <div key={r.id} className="enterprise-card overflow-hidden hover-lift">
+                    <div className="p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2 font-bold">
+                            {r.projects?.name}
+                            {r.project_teams?.name ? ` · ${r.project_teams.name}` : ""}
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                              <Users className="h-3.5 w-3.5" />
+                              {r.workers_actual ?? "—"}/{r.workers_expected} עובדים
                             </span>
-                          )}
+                            {r.total_cost != null && (
+                              <span className="font-semibold text-foreground">
+                                ₪{Number(r.total_cost).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.className}`}
+                        >
+                          {s.label}
+                        </span>
                       </div>
+
+                      {fillRate !== null && (
+                        <div className="mt-3">
+                          <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>נוכחות</span>
+                            <span className="font-semibold">{fillRate}%</span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                fillRate >= 90
+                                  ? "bg-emerald-500"
+                                  : fillRate >= 60
+                                    ? "bg-amber-500"
+                                    : "bg-destructive"
+                              }`}
+                              style={{ width: `${Math.min(fillRate, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {r.status === "exception" && (
+                        <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-orange-700">
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                          חריגה דווחה — ממתין לאישור קבלן
+                        </div>
+                      )}
                     </div>
-                  </Card>
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
-function KPI({
+function KpiCard({
   icon: Icon,
   label,
   value,
-  accent,
-  warnColor,
+  highlight,
+  warn,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
-  accent?: boolean;
-  warnColor?: boolean;
+  highlight?: boolean;
+  warn?: boolean;
 }) {
   return (
     <div
-      className={`rounded-2xl border p-5 ${accent ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
+      className={`enterprise-card p-5 ${
+        highlight ? "border-primary/30 bg-primary/5" : ""
+      }`}
     >
       <div
-        className={`grid h-10 w-10 place-items-center rounded-lg ${accent ? "bg-gradient-primary text-primary-foreground" : "bg-primary/15 text-primary"}`}
+        className={`grid h-10 w-10 place-items-center rounded-xl ${
+          highlight
+            ? "bg-gradient-primary text-primary-foreground shadow-elegant"
+            : "bg-primary/15 text-primary"
+        }`}
       >
         <Icon className="h-5 w-5" />
       </div>
       <div
-        className={`mt-4 text-2xl font-extrabold tracking-tight md:text-3xl ${warnColor ? "text-orange-600" : ""}`}
+        className={`mt-4 text-2xl font-extrabold tracking-tight md:text-3xl ${
+          warn ? "text-orange-600" : ""
+        }`}
       >
         {value}
       </div>

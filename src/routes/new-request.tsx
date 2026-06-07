@@ -23,8 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { AppShell } from "@/components/app-shell";
 import { ROLES, CITIES, NATIONALITIES, type RequestItem } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/new-request")({
@@ -150,22 +149,18 @@ function NewRequestPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background text-foreground">
-        <SiteNav />
-        <main className="mx-auto flex max-w-3xl flex-col items-center px-4 py-20 text-center md:px-6 md:py-28">
-          <div className="grid h-20 w-20 place-items-center rounded-full bg-primary/15">
-            <CheckCircle2 className="h-10 w-10 text-primary" />
+      <AppShell title="בקשה חדשה">
+        <div className="flex flex-col items-center py-16 text-center animate-fade-up">
+          <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-primary shadow-glow">
+            <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
           </div>
-          <h1 className="mt-6 text-3xl font-extrabold md:text-4xl">הבקשה פורסמה בהצלחה</h1>
+          <h2 className="mt-6 text-3xl font-extrabold tracking-tight">הבקשה פורסמה בהצלחה</h2>
           <p className="mt-3 max-w-md text-muted-foreground">
-            תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך במייל ובלוח הבקרה.
+            תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך במייל ובלוח
+            הבקרה.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="bg-gradient-primary text-primary-foreground shadow-elegant"
-            >
+            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant">
               <Link to="/dashboard">לצפייה בלוח הבקרה</Link>
             </Button>
             <Button
@@ -191,64 +186,76 @@ function NewRequestPage() {
               פרסום בקשה נוספת
             </Button>
           </div>
-        </main>
-        <SiteFooter />
-      </div>
+        </div>
+      </AppShell>
     );
   }
 
+  const cancelAction = (
+    <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+      <Link to="/dashboard">ביטול</Link>
+    </Button>
+  );
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
-          <Sparkles className="h-3.5 w-3.5" /> 60 שניות לפרסום בקשה
+    <AppShell title="בקשה חדשה" action={cancelAction}>
+      <div className="space-y-6">
+        {/* Page hero */}
+        <div className="animate-fade-up">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
+            <Sparkles className="h-3.5 w-3.5" /> 60 שניות לפרסום בקשה
+          </div>
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+            ספר לנו מה אתה צריך,{" "}
+            <span className="text-gradient-primary">והתאגידים יבואו אליך.</span>
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            ארבעה שלבים מהירים. הבקשה תישלח רק לתאגידים מאומתים שמתאימים.
+          </p>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight md:text-5xl">
-          ספר לנו מה אתה צריך,
-          <br />
-          <span className="text-gradient-primary">והתאגידים יבואו אליך.</span>
-        </h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
-          ארבעה שלבים מהירים. הבקשה תישלח רק לתאגידים מאומתים שמתאימים לתחום ולמיקום.
-        </p>
 
         {/* Stepper */}
-        <div className="mt-10 grid grid-cols-4 gap-2">
-          {STEPS.map((s) => (
-            <div key={s.n} className="flex flex-col items-center gap-2">
-              <div
-                className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-colors ${
-                  s.n <= step
-                    ? "bg-gradient-primary text-primary-foreground shadow-elegant"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {s.n < step ? <CheckCircle2 className="h-4 w-4" /> : s.n}
+        <div className="enterprise-card p-4 md:p-5 animate-fade-up delay-100">
+          <div className="grid grid-cols-4 gap-2">
+            {STEPS.map((s) => (
+              <div key={s.n} className="flex flex-col items-center gap-1.5">
+                <div
+                  className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-all ${
+                    s.n <= step
+                      ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {s.n < step ? <CheckCircle2 className="h-4 w-4" /> : s.n}
+                </div>
+                <div
+                  className={`text-center text-[11px] font-medium md:text-xs ${
+                    s.n <= step ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {s.label}
+                </div>
               </div>
-              <div
-                className={`text-center text-[11px] font-medium md:text-xs ${s.n <= step ? "text-foreground" : "text-muted-foreground"}`}
-              >
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full bg-gradient-primary transition-all duration-500"
-            style={{ width: `${(step / STEPS.length) * 100}%` }}
-          />
+            ))}
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-gradient-primary transition-all duration-500"
+              style={{ width: `${(step / STEPS.length) * 100}%` }}
+            />
+          </div>
         </div>
 
-        <form onSubmit={onSubmit} className="mt-10 grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card lg:col-span-2 md:p-8">
+        {/* Form + Preview */}
+        <form onSubmit={onSubmit} className="grid gap-5 lg:grid-cols-3">
+          {/* Form card */}
+          <div className="enterprise-card p-5 md:p-7 lg:col-span-2 animate-fade-up delay-200">
             {step === 1 && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <StepHeader
                   icon={Briefcase}
                   title="איזה צוות אתה צריך?"
-                  subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות. ניתן לערבב כמה שורות."
+                  subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות."
                 />
                 <div className="space-y-3">
                   {form.items.map((it, idx) => (
@@ -264,23 +271,28 @@ function NewRequestPage() {
                   <button
                     type="button"
                     onClick={addItem}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-semibold text-primary hover:bg-primary/10"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
                   >
                     <Plus className="h-4 w-4" /> הוסף שורת בקשה נוספת
                   </button>
                 </div>
                 {totalWorkers > 0 && (
                   <div className="rounded-xl bg-secondary/40 p-3 text-xs text-muted-foreground">
-                    סה״כ <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על
-                    פני {form.items.length} שורות. התאגידים יגישו מחיר לשעה{" "}
-                    <span className="font-semibold text-foreground">לכל שורה בנפרד</span>.
+                    סה״כ{" "}
+                    <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על
+                    פני {form.items.length} שורות.
                   </div>
                 )}
               </div>
             )}
+
             {step === 2 && (
-              <div className="space-y-6">
-                <StepHeader icon={MapPin} title="איפה ומתי?" subtitle="מיקום האתר ומועד התחלה." />
+              <div className="space-y-5">
+                <StepHeader
+                  icon={MapPin}
+                  title="איפה ומתי?"
+                  subtitle="מיקום האתר ומועד התחלה."
+                />
                 <div>
                   <Label className="mb-2 block">עיר / אזור</Label>
                   <div className="flex flex-wrap gap-2">
@@ -302,9 +314,7 @@ function NewRequestPage() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="start" className="mb-2 block">
-                      תאריך התחלה
-                    </Label>
+                    <Label htmlFor="start" className="mb-2 block">תאריך התחלה</Label>
                     <Input
                       id="start"
                       type="date"
@@ -314,9 +324,7 @@ function NewRequestPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="duration" className="mb-2 block">
-                      משך עבודה
-                    </Label>
+                    <Label htmlFor="duration" className="mb-2 block">משך עבודה</Label>
                     <Input
                       id="duration"
                       placeholder="לדוגמה: 3 חודשים"
@@ -327,7 +335,7 @@ function NewRequestPage() {
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-2 block">משך התחייבות מינימלי לתאגיד (חודשים)</Label>
+                  <Label className="mb-2 block">משך התחייבות מינימלי (חודשים)</Label>
                   <div className="flex flex-wrap gap-2">
                     {["1", "3", "6", "12", "24"].map((m) => (
                       <button
@@ -345,23 +353,21 @@ function NewRequestPage() {
                     ))}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
-                    זו התקופה שאתה מתחייב להעסקה דרך הפלטפורמה. מגדיר ביטחון לתאגידים — ומחיר טוב
-                    יותר עבורך.
+                    מגדיר ביטחון לתאגידים — ומחיר טוב יותר עבורך.
                   </p>
                 </div>
               </div>
             )}
+
             {step === 3 && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <StepHeader
                   icon={FileText}
                   title="פרטים נוספים"
-                  subtitle="תקציב מוערך ופרטי הפרויקט (אופציונלי, אבל עוזר לקבל הצעות מדויקות)."
+                  subtitle="תקציב מוערך ופרטי הפרויקט (אופציונלי)."
                 />
                 <div>
-                  <Label htmlFor="budget" className="mb-2 block">
-                    תקציב לשעת עובד (₪)
-                  </Label>
+                  <Label htmlFor="budget" className="mb-2 block">תקציב לשעת עובד (₪)</Label>
                   <Input
                     id="budget"
                     placeholder="לדוגמה: 180-210"
@@ -371,9 +377,7 @@ function NewRequestPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="desc" className="mb-2 block">
-                    תיאור הפרויקט
-                  </Label>
+                  <Label htmlFor="desc" className="mb-2 block">תיאור הפרויקט</Label>
                   <Textarea
                     id="desc"
                     rows={5}
@@ -388,8 +392,9 @@ function NewRequestPage() {
                 </div>
               </div>
             )}
+
             {step === 4 && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <StepHeader
                   icon={Users}
                   title="איך נחזור אליך?"
@@ -397,9 +402,7 @@ function NewRequestPage() {
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="name" className="mb-2 block">
-                      שם מלא
-                    </Label>
+                    <Label htmlFor="name" className="mb-2 block">שם מלא</Label>
                     <Input
                       id="name"
                       placeholder="ישראל ישראלי"
@@ -410,9 +413,7 @@ function NewRequestPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone" className="mb-2 block">
-                      טלפון נייד
-                    </Label>
+                    <Label htmlFor="phone" className="mb-2 block">טלפון נייד</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -440,14 +441,14 @@ function NewRequestPage() {
                       אני מתחייב לסעיף אי-עקיפה (Non-Circumvention):
                     </span>{" "}
                     כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך הפלטפורמה
-                    למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק. עקיפה ישירה של הפלטפורמה
-                    מהווה הפרת תנאי שימוש.
+                    למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק.
                   </span>
                 </label>
               </div>
             )}
 
-            <div className="mt-8 flex items-center justify-between gap-3 border-t border-border/60 pt-6">
+            {/* Navigation */}
+            <div className="mt-7 flex items-center justify-between gap-3 border-t border-border/40 pt-5">
               <Button
                 type="button"
                 variant="ghost"
@@ -479,9 +480,9 @@ function NewRequestPage() {
             </div>
           </div>
 
-          {/* Live preview */}
-          <aside className="rounded-2xl border border-border/60 bg-card p-6 shadow-card md:p-7 lg:sticky lg:top-20 lg:h-fit">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {/* Live preview sidebar */}
+          <aside className="enterprise-card p-5 md:p-6 lg:sticky lg:top-4 lg:h-fit animate-fade-up delay-300">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               תצוגה מקדימה
             </div>
             <h3 className="mt-2 text-lg font-bold">בקשה · {totalWorkers} עובדים</h3>
@@ -494,35 +495,37 @@ function NewRequestPage() {
                   <span className="font-bold text-foreground">{it.count || "?"} ×</span>{" "}
                   {it.role || "—"} · <span className="text-primary">{it.nationality || "—"}</span>
                   {!it.role && !it.nationality && (
-                    <span className="text-muted-foreground">פריט {i + 1} ריק</span>
+                    <span className="text-muted-foreground"> פריט {i + 1} ריק</span>
                   )}
                 </div>
               ))}
             </div>
-            <ul className="mt-4 space-y-3 text-sm">
-              <Row icon={MapPin} label="מיקום" value={form.location || "—"} />
-              <Row icon={Calendar} label="התחלה" value={form.startDate || "—"} />
-              <Row icon={Calendar} label="משך" value={form.duration || "—"} />
-              <Row
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <PreviewRow icon={MapPin} label="מיקום" value={form.location || "—"} />
+              <PreviewRow icon={Calendar} label="התחלה" value={form.startDate || "—"} />
+              <PreviewRow icon={Calendar} label="משך" value={form.duration || "—"} />
+              <PreviewRow
                 icon={Lock}
                 label="התחייבות"
                 value={form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}
               />
-              <Row icon={Briefcase} label="תקציב" value={form.budget ? `₪${form.budget}` : "—"} />
+              <PreviewRow
+                icon={Briefcase}
+                label="תקציב"
+                value={form.budget ? `₪${form.budget}` : "—"}
+              />
             </ul>
-            <div className="mt-6 rounded-xl bg-secondary/40 p-4 text-xs text-muted-foreground">
+            <div className="mt-5 rounded-xl bg-secondary/40 p-4 text-xs text-muted-foreground">
               <div className="font-semibold text-foreground">מה קורה אחרי הפרסום?</div>
               <ul className="mt-2 space-y-1.5">
                 <li>• הבקשה נשלחת לתאגידים מאומתים בלבד</li>
-                <li>• כל תאגיד מגיש מחיר נפרד לכל שורה</li>
                 <li>• פרטי קשר נחשפים רק אחרי בחירת ספק</li>
               </ul>
             </div>
           </aside>
         </form>
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
@@ -547,7 +550,7 @@ function ItemRow({
           <button
             type="button"
             onClick={onRemove}
-            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive"
+            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
           >
             <Trash2 className="h-3 w-3" /> הסר
           </button>
@@ -559,13 +562,11 @@ function ItemRow({
           <select
             value={item.role}
             onChange={(e) => onChange({ role: e.target.value })}
-            className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
+            className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">בחר תחום…</option>
             {ROLES.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
+              <option key={r} value={r}>{r}</option>
             ))}
           </select>
         </div>
@@ -577,13 +578,11 @@ function ItemRow({
           <select
             value={item.nationality}
             onChange={(e) => onChange({ nationality: e.target.value })}
-            className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
+            className="h-11 w-full rounded-md border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">בחר לאום…</option>
             {NATIONALITIES.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
+              <option key={n} value={n}>{n}</option>
             ))}
           </select>
         </div>
@@ -614,16 +613,16 @@ function StepHeader({
 }) {
   return (
     <div>
-      <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/15 text-primary">
+      <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-primary shadow-elegant text-primary-foreground">
         <Icon className="h-5 w-5" />
       </div>
-      <h2 className="mt-4 text-2xl font-extrabold">{title}</h2>
+      <h3 className="mt-4 text-xl font-extrabold">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
     </div>
   );
 }
 
-function Row({
+function PreviewRow({
   icon: Icon,
   label,
   value,

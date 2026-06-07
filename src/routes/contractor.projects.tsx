@@ -9,12 +9,10 @@ import {
   upsertProjectTeam,
   listProjectTeams,
 } from "@/lib/attendance.functions";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
+import { AppShell } from "@/components/app-shell";
 import {
   MapPin,
   Users,
@@ -24,7 +22,6 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  ChevronLeft,
   Plus,
   LocateFixed,
 } from "lucide-react";
@@ -62,51 +59,66 @@ function Page() {
   });
   const projects = data?.projects ?? [];
 
+  const action = (
+    <Link to="/contractor/attendance">
+      <Button variant="outline" size="sm">נוכחות</Button>
+    </Link>
+  );
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-14" dir="rtl">
-        <Link
-          to="/contractor/attendance"
-          className="mb-6 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" /> חזרה לנוכחות
-        </Link>
-
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-primary">
-            ניהול פרויקטים
-          </div>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">הגדרת פרויקטים פעילים</h1>
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            לאחר זכייה במכרז: סמן את מיקום האתר, הוסף את פרטי מנהל האתר וראש הצוות. ללא הגדרה
-            מלאה לא ניתן לרשום נוכחות.
-          </p>
-        </div>
-
-        <div className="mt-8">
-          {isLoading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" /> טוען פרויקטים…
+    <AppShell title="פרויקטים" action={action}>
+      <div className="space-y-6">
+        {/* Page intro */}
+        <div className="enterprise-card bg-gradient-to-l from-primary/5 to-transparent p-5 animate-fade-up">
+          <div className="flex items-start gap-4">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-primary shadow-elegant text-primary-foreground">
+              <MapPin className="h-5 w-5" />
             </div>
-          ) : projects.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
-              <MapPin className="mx-auto h-8 w-8 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">
-                אין פרויקטים פעילים עדיין. פרויקטים יופיעו לאחר זכייה במכרז.
+            <div>
+              <h2 className="font-bold">הגדרת פרויקטים פעילים</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                לאחר זכייה במכרז: סמן מיקום האתר, הוסף פרטי מנהל אתר וצוותים. ללא הגדרה מלאה לא
+                ניתן לרשום נוכחות.
               </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {projects.map((p: Project) => (
-                <ProjectCard key={p.id} project={p} onChange={refetch} />
-              ))}
-            </div>
-          )}
+          </div>
         </div>
-      </main>
-      <SiteFooter />
-    </div>
+
+        {/* Projects list */}
+        {isLoading ? (
+          <div className="space-y-4 animate-pulse">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="enterprise-card overflow-hidden">
+                <div className="p-5">
+                  <div className="h-6 w-48 rounded bg-muted" />
+                  <div className="mt-2 h-4 w-32 rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="enterprise-card flex flex-col items-center gap-4 border-dashed p-14 text-center animate-fade-up delay-100">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted/50">
+              <MapPin className="h-8 w-8 text-muted-foreground/50" />
+            </div>
+            <div>
+              <h3 className="font-bold">אין פרויקטים פעילים</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                פרויקטים יופיעו כאן לאחר זכייה במכרז.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {projects.map((p: Project, i: number) => (
+              <div key={p.id} className={`animate-fade-up`} style={{ animationDelay: `${i * 80}ms` }}>
+                <ProjectCard project={p} onChange={refetch} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AppShell>
   );
 }
 
@@ -169,20 +181,25 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
   const teams = teamsQ.data?.teams ?? [];
 
   return (
-    <Card className="overflow-hidden">
+    <div className="enterprise-card overflow-hidden">
+      {/* Project header */}
       <div
-        className={`flex items-center justify-between border-b border-border/60 px-5 py-4 ${isReady ? "bg-emerald-500/5" : "bg-amber-500/5"}`}
+        className={`flex items-center justify-between border-b border-border/40 px-5 py-4 ${
+          isReady
+            ? "bg-gradient-to-l from-emerald-500/5 to-transparent"
+            : "bg-gradient-to-l from-amber-500/5 to-transparent"
+        }`}
       >
         <div>
-          <div className="font-bold text-lg">{project.name}</div>
-          <div className="text-sm text-muted-foreground">{project.address || "ללא כתובת"}</div>
+          <h3 className="text-lg font-bold">{project.name}</h3>
+          <p className="text-sm text-muted-foreground">{project.address || "ללא כתובת"}</p>
         </div>
         {isReady ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">
             <CheckCircle2 className="h-3.5 w-3.5" /> מוכן לעבודה
           </div>
         ) : (
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700">
             <AlertCircle className="h-3.5 w-3.5" /> דרושה הגדרה
           </div>
         )}
@@ -191,10 +208,19 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
       <div className="space-y-6 p-5">
         {/* Site location */}
         <div>
-          <div className="mb-3 flex items-center gap-2 font-semibold text-sm">
-            <MapPin className="h-4 w-4 text-primary" /> מיקום האתר וגאו-פנס
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+            </div>
+            מיקום האתר וגאו-פנס
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={useGps} className="mb-3 gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={useGps}
+            className="mb-3 gap-2"
+          >
             <LocateFixed className="h-4 w-4" /> קח מיקום נוכחי
           </Button>
           <div className="grid grid-cols-2 gap-3">
@@ -232,8 +258,11 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
 
         {/* Site manager */}
         <div>
-          <div className="mb-3 flex items-center gap-2 font-semibold text-sm">
-            <Phone className="h-4 w-4 text-primary" /> מנהל אתר / קבלן באתר
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15">
+              <Phone className="h-3.5 w-3.5 text-primary" />
+            </div>
+            מנהל אתר / קבלן באתר
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -272,15 +301,18 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
         </Button>
 
         {/* Teams */}
-        <div className="border-t border-border/60 pt-5">
-          <div className="mb-3 flex items-center gap-2 font-semibold text-sm">
-            <Users className="h-4 w-4 text-primary" /> צוותי עבודה
+        <div className="border-t border-border/40 pt-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15">
+              <Users className="h-3.5 w-3.5 text-primary" />
+            </div>
+            צוותי עבודה
           </div>
           <div className="space-y-2">
             {teams.map((t: ProjectTeam) => (
               <div
                 key={t.id}
-                className="relative flex items-center justify-between rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-sm"
+                className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-sm"
               >
                 <div>
                   <div className="font-semibold">{t.name}</div>
@@ -303,7 +335,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
 
         {isReady && teams.length > 0 && (
           <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-sm text-emerald-900">
-            <div className="flex items-center gap-2 font-semibold">
+            <div className="flex items-center gap-2 font-bold">
               <CheckCircle2 className="h-4 w-4" /> הפרויקט מוכן
             </div>
             <p className="mt-1 text-xs">
@@ -316,7 +348,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -369,7 +401,7 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
 
   return (
     <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4">
-      <div className="text-sm font-semibold">הוספת צוות חדש</div>
+      <div className="text-sm font-bold">הוספת צוות חדש</div>
       <Input
         placeholder="שם הצוות (למשל: צוות שלד)"
         value={name}
@@ -391,7 +423,7 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
         />
       </div>
       <Input
-        placeholder="מזהה משתמש (UUID) של ראש הצוות במערכת"
+        placeholder="מזהה משתמש (UUID) של ראש הצוות"
         value={tlUserId}
         onChange={(e) => setTlUserId(e.target.value)}
         className="h-10"
@@ -419,7 +451,7 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
         </div>
       </div>
       <div className="flex gap-2">
-        <Button onClick={save} disabled={busy} size="sm" className="gap-2">
+        <Button onClick={save} disabled={busy} size="sm" className="gap-2 bg-gradient-primary text-primary-foreground">
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
           שמור
         </Button>
@@ -467,7 +499,7 @@ function TeamQr({
         <div className="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-border/60 bg-card p-3 shadow-lg">
           <img src={qrSrc} alt={`QR ${teamName}`} width={180} height={180} className="rounded-lg" />
           <div className="mt-1.5 truncate text-[10px] text-muted-foreground">{url}</div>
-          <Button size="sm" className="mt-2 w-full gap-1.5" onClick={printQr}>
+          <Button size="sm" className="mt-2 w-full gap-1.5 bg-gradient-primary text-primary-foreground" onClick={printQr}>
             <Printer className="h-3.5 w-3.5" /> הדפס מדבקה
           </Button>
           <Button
