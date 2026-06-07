@@ -34,9 +34,10 @@ export const Route = createFileRoute("/api/public/hooks/auto-approve-attendance"
         if (error) return Response.json({ ok: false, error: error.message }, { status: 500 });
         const ids = (rows ?? []).map((r) => r.id);
         if (ids.length === 0) return Response.json({ ok: true, approved: 0 });
+        const nowIso = new Date().toISOString();
         await supabaseAdmin
           .from("attendance_records")
-          .update({ status: "auto_approved", approved_at: new Date().toISOString() })
+          .update({ status: "auto_approved", approved_at: nowIso, auto_approved_at: nowIso })
           .in("id", ids);
         await supabaseAdmin.from("attendance_events").insert(
           ids.map((id) => ({

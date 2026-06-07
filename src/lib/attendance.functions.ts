@@ -411,7 +411,7 @@ export const rejectAttendance = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: rec } = await supabase
       .from("attendance_records")
-      .select("contractor_id, frozen_at")
+      .select("contractor_id, frozen_at, project_id, team_id")
       .eq("id", data.recordId)
       .single();
     if (!rec || rec.contractor_id !== userId) throw new Error("Unauthorized");
@@ -426,7 +426,23 @@ export const rejectAttendance = createServerFn({ method: "POST" })
       actor_id: userId,
       payload: { reason: data.reason },
     });
-    return { ok: true };
+    // Notify team leader of rejection via WhatsApp
+    let waUrl: string | null = null;
+    const [{ data: pj }, { data: tm }] = await Promise.all([
+      supabaseAdmin.from("projects").select("name").eq("id", rec.project_id).single(),
+      supabaseAdmin
+        .from("project_teams")
+        .select("team_leader_phone, name")
+        .eq("id", rec.team_id)
+        .maybeSingle(),
+    ]);
+    const phone = cleanPhone(tm?.team_leader_phone);
+    if (phone) {
+      const text = `❌ רשומת נוכחות נדחתה — ${pj?.name ?? ""}\nצוות: ${tm?.name ?? ""}\nסיבה: ${data.reason}\nשעה: ${new Date().toLocaleString("he-IL")}\n\nפנה למנהל האתר לפרטים נוספים.`;
+      waUrl = waLink(phone, text);
+      await logNotification(data.recordId, "rejection", phone, "team_leader", { reason: data.reason });
+    }
+    return { ok: true, notify: waUrl };
   });
 
 export const requestCorrection = createServerFn({ method: "POST" })
