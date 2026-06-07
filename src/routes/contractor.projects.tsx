@@ -49,6 +49,7 @@ type ProjectTeam = {
   team_leader_phone: string | null;
   expected_workers: number;
   hourly_rate: number | null;
+  worker_type: string | null;
 };
 
 export const Route = createFileRoute("/contractor/projects")({
@@ -563,6 +564,7 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
   const [tlUserId, setTlUserId] = useState("");
   const [workers, setWorkers] = useState(5);
   const [rate, setRate] = useState(60);
+  const [workerType, setWorkerType] = useState("");
   const [busy, setBusy] = useState(false);
 
   if (!open)
@@ -585,6 +587,16 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
           teamLeaderUserId: tlUserId,
           expectedWorkers: workers,
           hourlyRate: rate,
+          ...(workerType
+            ? {
+                workerType: workerType as
+                  | "thai"
+                  | "chinese"
+                  | "team_leader"
+                  | "professional"
+                  | "custom",
+              }
+            : {}),
         },
       });
       toast.success("הצוות נוסף בהצלחה");
@@ -593,6 +605,7 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
       setTlName("");
       setTlPhone("");
       setTlUserId("");
+      setWorkerType("");
       onSaved();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "שגיאה");
@@ -651,6 +664,24 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
             className="h-10"
           />
         </div>
+      </div>
+      <div>
+        <Label className="mb-1.5 block text-xs">סוג עובד (לתמחור)</Label>
+        <select
+          value={workerType}
+          onChange={(e) => setWorkerType(e.target.value)}
+          className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm focus:border-primary focus:outline-none"
+        >
+          <option value="">— בחר סוג עובד —</option>
+          <option value="thai">עובד תאילנדי</option>
+          <option value="chinese">עובד סיני</option>
+          <option value="team_leader">ראש צוות</option>
+          <option value="professional">עובד מקצועי</option>
+          <option value="custom">תעריף מותאם</option>
+        </select>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          ישמש לחישוב רווחיות בחשבון היומי של התאגיד
+        </p>
       </div>
       <div className="flex gap-2">
         <Button onClick={save} disabled={busy} size="sm" className="gap-2 bg-gradient-primary text-primary-foreground">
