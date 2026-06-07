@@ -200,7 +200,7 @@ export const endWorkday = createServerFn({ method: "POST" })
     const { data: rec } = await supabase
       .from("attendance_records")
       .select(
-        "id, team_leader_id, end_time, frozen_at, project_id, projects:project_id(site_lat, site_lng, site_radius_meters)",
+        "id, team_leader_id, end_time, frozen_at, project_id, start_time, workers_actual, hourly_rate, projects:project_id(site_lat, site_lng, site_radius_meters)",
       )
       .eq("id", data.recordId)
       .single();
@@ -220,6 +220,21 @@ export const endWorkday = createServerFn({ method: "POST" })
 
     const photoPath = await uploadPhoto(data.recordId, "end", data.photoBase64);
     const now = new Date().toISOString();
+
+    // Compute financial fields at close-of-day using data already on the record.
+    // total_hours: fractional hours between start and end, rounded to 4dp.
+    // total_cost:  total_hours × hourly_rate × workers_actual, rounded to 2dp (₪).
+    const startMs = rec.start_time ? new Date(rec.start_time).getTime() : null;
+    const endMs = new Date(now).getTime();
+    const totalHours =
+      startMs !== null
+        ? Math.round(((endMs - startMs) / 3_600_000) * 10_000) / 10_000
+        : null;
+    const totalCost =
+      totalHours !== null && rec.hourly_rate != null && rec.workers_actual != null
+        ? Math.round(totalHours * Number(rec.hourly_rate) * rec.workers_actual * 100) / 100
+        : null;
+
     await supabase
       .from("attendance_records")
       .update({
@@ -227,6 +242,8 @@ export const endWorkday = createServerFn({ method: "POST" })
         end_photo_url: photoPath,
         end_gps_lat: data.gpsLat,
         end_gps_lng: data.gpsLng,
+        total_hours: totalHours,
+        total_cost: totalCost,
       })
       .eq("id", data.recordId);
     await supabase.from("attendance_events").insert({
