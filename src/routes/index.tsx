@@ -76,6 +76,7 @@ function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
       <Hero />
+      <LiveStatsBar />
       <TrustBar />
       <CompetitionAdvantage />
       <HowItWorks />
@@ -292,6 +293,36 @@ function Hero() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* ---------- LIVE STATS BAR ---------- */
+function LiveStatsBar() {
+  const stats = [
+    { value: "12,500+", label: "עובדים בפלטפורמה", icon: Users },
+    { value: "47", label: "תאגידים מאומתים", icon: BadgeCheck },
+    { value: "< 24h", label: "עד הצעה ראשונה", icon: Clock },
+    { value: "₪0", label: "עלות לקבלן", icon: TrendingUp },
+  ];
+  return (
+    <div className="border-y border-primary/20 bg-primary/5">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-0 px-4 md:grid-cols-4 md:px-6">
+        {stats.map((s, i) => (
+          <div
+            key={s.label}
+            className={`flex items-center gap-3 px-6 py-5 ${i < stats.length - 1 ? "border-l border-primary/15" : ""}`}
+          >
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-primary text-primary-foreground shadow-elegant">
+              <s.icon className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-lg font-extrabold leading-none text-foreground md:text-xl">{s.value}</div>
+              <div className="mt-0.5 text-xs text-muted-foreground">{s.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

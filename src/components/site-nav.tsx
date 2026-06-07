@@ -24,6 +24,9 @@ export function SiteNav() {
   const isCorporation = hasRole("corporation");
   const isContractor = hasRole("contractor");
 
+  const displayName = profile?.full_name || profile?.company_name || "";
+  const initial = displayName ? displayName[0].toUpperCase() : "U";
+
   const links = [
     { label: "איך זה עובד", to: "/" as const, hash: "how" },
     { label: "פלטפורמה", to: "/" as const, hash: "platform" },
@@ -38,13 +41,13 @@ export function SiteNav() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/90 backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
-            <HardHat className="h-5 w-5 text-primary-foreground" />
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
+            <HardHat className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-extrabold tracking-tight">
+          <span className="text-base font-extrabold tracking-tight">
             Build<span className="text-primary">Force</span>
           </span>
         </Link>
@@ -67,7 +70,7 @@ export function SiteNav() {
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {session ? (
             <>
               {isAdmin && (
@@ -76,21 +79,21 @@ export function SiteNav() {
                 </Badge>
               )}
               {isAdmin && (
-                <Button variant="ghost" size="sm" asChild className="gap-2">
+                <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/admin">
                     <ShieldCheck className="h-4 w-4" /> אדמין
                   </Link>
                 </Button>
               )}
               {isCorporation ? (
-                <Button variant="ghost" size="sm" asChild className="gap-2">
+                <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/corporation-dashboard">
                     <Building2 className="h-4 w-4" />
                     {profile?.company_name?.split(" ")[0] ?? "לוח תאגיד"}
                   </Link>
                 </Button>
               ) : (
-                <Button variant="ghost" size="sm" asChild className="gap-2">
+                <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/dashboard">
                     <LayoutDashboard className="h-4 w-4" />
                     {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
@@ -98,15 +101,23 @@ export function SiteNav() {
                 </Button>
               )}
               {isContractor && (
-                <Button variant="ghost" size="sm" asChild className="gap-2">
+                <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/contractor/attendance">
                     <ClipboardList className="h-4 w-4" /> נוכחות
                   </Link>
                 </Button>
               )}
-              <Button size="sm" variant="outline" onClick={handleSignOut} className="gap-2">
-                <LogOut className="h-4 w-4" /> התנתק
-              </Button>
+              {/* Profile chip */}
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 rounded-full border border-border/60 bg-card/60 py-1 pl-3 pr-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                aria-label="התנתק"
+              >
+                <div className="grid h-6 w-6 place-items-center rounded-full bg-gradient-primary text-[11px] font-bold text-primary-foreground">
+                  {initial}
+                </div>
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
             </>
           ) : (
             <>
@@ -118,7 +129,7 @@ export function SiteNav() {
                 asChild
                 className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95"
               >
-                <Link to="/signup">הרשמה</Link>
+                <Link to="/signup">הרשמה חינם</Link>
               </Button>
             </>
           )}

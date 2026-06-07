@@ -130,6 +130,33 @@
   }
 }
 
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @layer utilities {
   .text-gradient-primary {
     background: var(--gradient-primary);
@@ -146,19 +173,42 @@
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
   .glass-card {
     background: oklch(0.22 0.014 250 / 0.65);
     backdrop-filter: blur(14px);
     border: 1px solid oklch(0.35 0.015 250 / 0.4);
   }
+  .glass-panel {
+    background: oklch(0.17 0.022 260 / 0.82);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid oklch(0.38 0.018 255 / 0.25);
+  }
   .hover-lift {
     transition:
-      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      border-color 0.3s;
+      transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.25s;
   }
   .hover-lift:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: var(--shadow-elegant);
   }
+  .animate-fade-up {
+    animation: fade-up 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease both;
+  }
+  .animate-scale-in {
+    animation: scale-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  /* Staggered animation delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
 }
