@@ -72,7 +72,7 @@ function CorporationPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14">
+      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-14" dir="rtl">
         <Link
           to="/"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"

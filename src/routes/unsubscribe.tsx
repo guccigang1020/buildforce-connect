@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Loader2, MailX, CheckCircle2, AlertTriangle, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/unsubscribe")({
   component: UnsubscribePage,
@@ -54,50 +55,91 @@ function UnsubscribePage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full p-8 text-center">
-        {state === "loading" && (
-          <>
-            <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-            <p className="mt-4 text-sm text-muted-foreground">בודק את הבקשה…</p>
-          </>
-        )}
-        {state === "ready" && (
-          <>
-            <h1 className="text-xl font-bold mb-2">ביטול קבלת מיילים</h1>
-            <p className="text-sm text-muted-foreground mb-6">
-              לחץ לאישור כדי להפסיק לקבל מיילים מ-BuildForce.
-            </p>
-            <Button onClick={confirm} disabled={busy} className="w-full">
-              {busy ? "מבטל…" : "אישור ביטול"}
-            </Button>
-          </>
-        )}
-        {state === "success" && (
-          <>
-            <h1 className="text-xl font-bold mb-2">בוטל בהצלחה</h1>
-            <p className="text-sm text-muted-foreground">לא תקבל יותר מיילים שיווקיים מאיתנו.</p>
-          </>
-        )}
-        {state === "already" && (
-          <>
-            <h1 className="text-xl font-bold mb-2">כבר בוטלת</h1>
-            <p className="text-sm text-muted-foreground">הכתובת הזו כבר הוסרה מהרשימה.</p>
-          </>
-        )}
-        {state === "invalid" && (
-          <>
-            <h1 className="text-xl font-bold mb-2">קישור לא תקין</h1>
-            <p className="text-sm text-muted-foreground">הקישור פג תוקף או שאינו קיים.</p>
-          </>
-        )}
-        {state === "error" && (
-          <>
-            <h1 className="text-xl font-bold mb-2">שגיאה</h1>
-            <p className="text-sm text-muted-foreground">נסה שוב מאוחר יותר.</p>
-          </>
-        )}
-      </Card>
+    <div className="min-h-screen bg-background text-foreground" dir="rtl">
+      <SiteNav />
+      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12">
+        <div className="w-full">
+          <div className="rounded-3xl border border-border/60 bg-card/60 p-8 text-center shadow-elegant backdrop-blur-sm">
+            {state === "loading" && (
+              <>
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                <p className="mt-4 text-sm text-muted-foreground">בודק את הבקשה…</p>
+              </>
+            )}
+            {state === "ready" && (
+              <>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary">
+                  <MailX className="h-7 w-7" />
+                </div>
+                <h1 className="mt-4 text-2xl font-extrabold">ביטול קבלת מיילים</h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  לחץ לאישור כדי להפסיק לקבל מיילים שיווקיים מ-BuildForce.
+                </p>
+                <Button
+                  onClick={confirm}
+                  disabled={busy}
+                  size="lg"
+                  className="mt-6 w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+                >
+                  {busy ? (
+                    <>
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" /> מבטל…
+                    </>
+                  ) : (
+                    "אישור ביטול"
+                  )}
+                </Button>
+              </>
+            )}
+            {state === "success" && (
+              <>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-500">
+                  <CheckCircle2 className="h-7 w-7" />
+                </div>
+                <h1 className="mt-4 text-2xl font-extrabold">בוטל בהצלחה</h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  לא תקבל יותר מיילים שיווקיים מאיתנו.
+                </p>
+                <Button asChild variant="outline" className="mt-6">
+                  <Link to="/">חזרה לדף הבית</Link>
+                </Button>
+              </>
+            )}
+            {state === "already" && (
+              <>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
+                  <Ban className="h-7 w-7" />
+                </div>
+                <h1 className="mt-4 text-2xl font-extrabold">כבר בוטלת</h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  הכתובת הזו כבר הוסרה מהרשימה.
+                </p>
+              </>
+            )}
+            {state === "invalid" && (
+              <>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-destructive/15 text-destructive">
+                  <AlertTriangle className="h-7 w-7" />
+                </div>
+                <h1 className="mt-4 text-2xl font-extrabold">קישור לא תקין</h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  הקישור פג תוקף או שאינו קיים. אם יש בעיה, צור קשר עם התמיכה.
+                </p>
+              </>
+            )}
+            {state === "error" && (
+              <>
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-destructive/15 text-destructive">
+                  <AlertTriangle className="h-7 w-7" />
+                </div>
+                <h1 className="mt-4 text-2xl font-extrabold">שגיאה</h1>
+                <p className="mt-2 text-sm text-muted-foreground">נסה שוב מאוחר יותר.</p>
+              </>
+            )}
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }

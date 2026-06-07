@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -58,7 +59,7 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12">
+      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12" dir="rtl">
         <div className="w-full">
           <div className="text-center">
             <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
@@ -84,14 +85,25 @@ function ResetPasswordPage() {
                   value={confirm}
                   onChange={setConfirm}
                 />
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "עדכן סיסמה"}
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="ml-2 h-4 w-4 animate-spin" /> מעדכן…
+                    </>
+                  ) : (
+                    "עדכן סיסמה"
+                  )}
                 </Button>
               </form>
             )}
           </div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/forgot-password")({
   component: ForgotPasswordPage,
@@ -41,7 +42,7 @@ function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12">
+      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12" dir="rtl">
         <div className="w-full">
           <div className="text-center">
             <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
@@ -90,6 +91,7 @@ function ForgotPasswordPage() {
           </p>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }
