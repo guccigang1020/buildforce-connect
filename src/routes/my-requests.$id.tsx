@@ -17,6 +17,8 @@ import {
   X,
   Lock,
   AlertTriangle,
+  Loader2,
+  Medal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,7 +87,10 @@ function MyRequestPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteNav />
-        <main className="mx-auto max-w-5xl px-4 py-16 text-center">טוען בקשה…</main>
+        <main className="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">טוען בקשה…</p>
+        </main>
       </div>
     );
   }
@@ -230,12 +235,30 @@ function MyRequestPage() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-sm font-bold">
-                          #{idx + 1}
+                        <div
+                          className={`grid h-10 w-10 place-items-center rounded-full text-sm font-bold ${
+                            idx === 0 && !isRejected
+                              ? "bg-primary/15 text-primary"
+                              : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {idx === 0 && !isRejected ? (
+                            <Medal className="h-4 w-4" />
+                          ) : (
+                            `#${idx + 1}`
+                          )}
                         </div>
                         <div>
                           <div className="flex items-center gap-2 font-bold">
                             תאגיד אנונימי
+                            {idx === 0 && !isRejected && request.status === "open" && (
+                              <Badge
+                                variant="outline"
+                                className="border-primary/40 bg-primary/5 text-primary text-[10px]"
+                              >
+                                הצעה זולה ביותר
+                              </Badge>
+                            )}
                             {isWinner && (
                               <Badge className="bg-primary text-primary-foreground">זוכה</Badge>
                             )}

@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { HardHat, Menu, X, LogOut, LayoutDashboard, User, ShieldCheck } from "lucide-react";
+import {
+  HardHat,
+  Menu,
+  X,
+  LogOut,
+  LayoutDashboard,
+  User,
+  ShieldCheck,
+  Building2,
+  ClipboardList,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +21,8 @@ export function SiteNav() {
   const { session, profile, signOut, hasRole } = useAuth();
   const navigate = useNavigate();
   const isAdmin = hasRole("admin");
+  const isCorporation = hasRole("corporation");
+  const isContractor = hasRole("contractor");
 
   const links = [
     { label: "איך זה עובד", to: "/" as const, hash: "how" },
@@ -70,12 +82,28 @@ export function SiteNav() {
                   </Link>
                 </Button>
               )}
-              <Button variant="ghost" size="sm" asChild className="gap-2">
-                <Link to="/dashboard">
-                  <LayoutDashboard className="h-4 w-4" />
-                  {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
-                </Link>
-              </Button>
+              {isCorporation ? (
+                <Button variant="ghost" size="sm" asChild className="gap-2">
+                  <Link to="/corporation-dashboard">
+                    <Building2 className="h-4 w-4" />
+                    {profile?.company_name?.split(" ")[0] ?? "לוח תאגיד"}
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" asChild className="gap-2">
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="h-4 w-4" />
+                    {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
+                  </Link>
+                </Button>
+              )}
+              {isContractor && (
+                <Button variant="ghost" size="sm" asChild className="gap-2">
+                  <Link to="/contractor/attendance">
+                    <ClipboardList className="h-4 w-4" /> נוכחות
+                  </Link>
+                </Button>
+              )}
               <Button size="sm" variant="outline" onClick={handleSignOut} className="gap-2">
                 <LogOut className="h-4 w-4" /> התנתק
               </Button>
@@ -142,11 +170,26 @@ export function SiteNav() {
                       </Link>
                     </Button>
                   )}
-                  <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                    <Link to="/dashboard">
-                      <User className="me-1 h-4 w-4" /> דשבורד
-                    </Link>
-                  </Button>
+                  {isCorporation ? (
+                    <Button variant="outline" asChild onClick={() => setOpen(false)}>
+                      <Link to="/corporation-dashboard">
+                        <Building2 className="me-1 h-4 w-4" /> לוח תאגיד
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" asChild onClick={() => setOpen(false)}>
+                      <Link to="/dashboard">
+                        <User className="me-1 h-4 w-4" /> דשבורד
+                      </Link>
+                    </Button>
+                  )}
+                  {isContractor && (
+                    <Button variant="outline" asChild onClick={() => setOpen(false)}>
+                      <Link to="/contractor/attendance">
+                        <ClipboardList className="me-1 h-4 w-4" /> נוכחות
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleSignOut}>
                     <LogOut className="me-1 h-4 w-4" /> התנתק
                   </Button>

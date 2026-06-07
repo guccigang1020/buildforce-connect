@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -13,7 +13,21 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Users, Phone, Smartphone, QrCode, Printer } from "lucide-react";
+import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import {
+  MapPin,
+  Users,
+  Phone,
+  QrCode,
+  Printer,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ChevronLeft,
+  Plus,
+  LocateFixed,
+} from "lucide-react";
 
 type Project = {
   id: string;
@@ -42,21 +56,56 @@ export const Route = createFileRoute("/contractor/projects")({
 
 function Page() {
   const list = useServerFn(listContractorProjects);
-  const { data, refetch } = useQuery({ queryKey: ["contractor-projects"], queryFn: () => list() });
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["contractor-projects"],
+    queryFn: () => list(),
+  });
   const projects = data?.projects ?? [];
+
   return (
-    <div dir="rtl" className="min-h-screen bg-background p-4 md:p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">הגדרת פרויקטים פעילים</h1>
-      <p className="text-muted-foreground mb-6">
-        לאחר זכייה במכרז: סמן את מיקום האתר, הוסף את הטלפון של מנהל האתר ושל ראש הצוות. ללא זה לא
-        ניתן לרשום נוכחות.
-      </p>
-      {projects.length === 0 && <p className="text-muted-foreground">אין פרויקטים פעילים עדיין.</p>}
-      <div className="space-y-4">
-        {projects.map((p: Project) => (
-          <ProjectCard key={p.id} project={p} onChange={refetch} />
-        ))}
-      </div>
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteNav />
+      <main className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-14" dir="rtl">
+        <Link
+          to="/contractor/attendance"
+          className="mb-6 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" /> חזרה לנוכחות
+        </Link>
+
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-primary">
+            ניהול פרויקטים
+          </div>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">הגדרת פרויקטים פעילים</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            לאחר זכייה במכרז: סמן את מיקום האתר, הוסף את פרטי מנהל האתר וראש הצוות. ללא הגדרה
+            מלאה לא ניתן לרשום נוכחות.
+          </p>
+        </div>
+
+        <div className="mt-8">
+          {isLoading ? (
+            <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" /> טוען פרויקטים…
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
+              <MapPin className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                אין פרויקטים פעילים עדיין. פרויקטים יופיעו לאחר זכייה במכרז.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {projects.map((p: Project) => (
+                <ProjectCard key={p.id} project={p} onChange={refetch} />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }
@@ -85,7 +134,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLng(pos.coords.longitude.toFixed(6));
-        toast.success("מיקום נלכד");
+        toast.success("המיקום הנוכחי נלכד");
       },
       () => toast.error("לא ניתן לקבל מיקום"),
       { enableHighAccuracy: true },
@@ -107,7 +156,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           siteManagerPhone: smPhone,
         },
       });
-      toast.success("הוגדר בהצלחה");
+      toast.success("הגדרות האתר נשמרו");
       onChange();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "שגיאה");
@@ -117,105 +166,156 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
   };
 
   const isReady = project.site_lat && project.site_manager_phone;
+  const teams = teamsQ.data?.teams ?? [];
 
   return (
-    <Card className="p-5 space-y-4">
-      <div className="flex items-center justify-between">
+    <Card className="overflow-hidden">
+      <div
+        className={`flex items-center justify-between border-b border-border/60 px-5 py-4 ${isReady ? "bg-emerald-500/5" : "bg-amber-500/5"}`}
+      >
         <div>
           <div className="font-bold text-lg">{project.name}</div>
           <div className="text-sm text-muted-foreground">{project.address || "ללא כתובת"}</div>
         </div>
-        <span
-          className={`text-xs font-medium px-2 py-1 rounded ${isReady ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}
-        >
-          {isReady ? "✓ מוכן לעבודה" : "דרושה הגדרה"}
-        </span>
+        {isReady ? (
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" /> מוכן לעבודה
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700">
+            <AlertCircle className="h-3.5 w-3.5" /> דרושה הגדרה
+          </div>
+        )}
       </div>
 
-      <div className="border-t pt-4 space-y-3">
-        <div className="font-semibold flex items-center gap-2">
-          <MapPin className="w-4 h-4" /> מיקום האתר וגאו-פנס
-        </div>
-        <Button type="button" variant="outline" size="sm" onClick={useGps}>
-          📍 קח מיקום נוכחי
-        </Button>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>קו רוחב</Label>
-            <Input value={lat} onChange={(e) => setLat(e.target.value)} placeholder="32.0853" />
-          </div>
-          <div>
-            <Label>קו אורך</Label>
-            <Input value={lng} onChange={(e) => setLng(e.target.value)} placeholder="34.7818" />
-          </div>
-        </div>
+      <div className="space-y-6 p-5">
+        {/* Site location */}
         <div>
-          <Label>רדיוס מותר (מטר)</Label>
-          <Input
-            type="number"
-            min={50}
-            max={2000}
-            value={radius}
-            onChange={(e) => setRadius(Number(e.target.value))}
-          />
-        </div>
-
-        <div className="font-semibold flex items-center gap-2 mt-4">
-          <Phone className="w-4 h-4" /> מנהל אתר / קבלן באתר
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>שם מנהל האתר</Label>
-            <Input value={smName} onChange={(e) => setSmName(e.target.value)} />
+          <div className="mb-3 flex items-center gap-2 font-semibold text-sm">
+            <MapPin className="h-4 w-4 text-primary" /> מיקום האתר וגאו-פנס
           </div>
-          <div>
-            <Label>טלפון נייד</Label>
+          <Button type="button" variant="outline" size="sm" onClick={useGps} className="mb-3 gap-2">
+            <LocateFixed className="h-4 w-4" /> קח מיקום נוכחי
+          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="mb-1.5 block text-xs">קו רוחב</Label>
+              <Input
+                value={lat}
+                onChange={(e) => setLat(e.target.value)}
+                placeholder="32.0853"
+                className="h-10"
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs">קו אורך</Label>
+              <Input
+                value={lng}
+                onChange={(e) => setLng(e.target.value)}
+                placeholder="34.7818"
+                className="h-10"
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <Label className="mb-1.5 block text-xs">רדיוס מותר (מטר)</Label>
             <Input
-              value={smPhone}
-              onChange={(e) => setSmPhone(e.target.value)}
-              placeholder="050-1234567"
+              type="number"
+              min={50}
+              max={2000}
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              className="h-10"
             />
           </div>
         </div>
-        <Button onClick={saveSite} disabled={savingSite} className="w-full">
-          {savingSite ? "שומר…" : "שמור הגדרות אתר"}
-        </Button>
-      </div>
 
-      <div className="border-t pt-4 space-y-3">
-        <div className="font-semibold flex items-center gap-2">
-          <Users className="w-4 h-4" /> צוותי עבודה
-        </div>
-        {(teamsQ.data?.teams ?? []).map((t: ProjectTeam) => (
-          <div
-            key={t.id}
-            className="flex items-center justify-between text-sm bg-muted/40 rounded p-2"
-          >
-            <div>
-              <div className="font-medium">{t.name}</div>
-              <div className="text-xs text-muted-foreground">
-                ראש צוות: {t.team_leader_name} · {t.team_leader_phone} · {t.expected_workers} עובדים
-                · ₪{t.hourly_rate}/שעה
-              </div>
-            </div>
-            <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
+        {/* Site manager */}
+        <div>
+          <div className="mb-3 flex items-center gap-2 font-semibold text-sm">
+            <Phone className="h-4 w-4 text-primary" /> מנהל אתר / קבלן באתר
           </div>
-        ))}
-        <AddTeamForm
-          projectId={project.id}
-          onSaved={() => qc.invalidateQueries({ queryKey: ["teams", project.id] })}
-        />
-      </div>
-
-      {isReady && (teamsQ.data?.teams ?? []).length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded p-3 text-sm text-green-900">
-          ✅ הפרויקט מוכן. ראש הצוות יכול להיכנס ל-
-          <Link to="/team-leader" className="underline font-bold">
-            דף ראש צוות
-          </Link>{" "}
-          ולפתוח יום עבודה.
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="mb-1.5 block text-xs">שם מנהל האתר</Label>
+              <Input
+                value={smName}
+                onChange={(e) => setSmName(e.target.value)}
+                placeholder="ישראל ישראלי"
+                className="h-10"
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs">טלפון נייד</Label>
+              <Input
+                value={smPhone}
+                onChange={(e) => setSmPhone(e.target.value)}
+                placeholder="050-1234567"
+                className="h-10"
+              />
+            </div>
+          </div>
         </div>
-      )}
+
+        <Button
+          onClick={saveSite}
+          disabled={savingSite}
+          className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+        >
+          {savingSite ? (
+            <>
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" /> שומר…
+            </>
+          ) : (
+            "שמור הגדרות אתר"
+          )}
+        </Button>
+
+        {/* Teams */}
+        <div className="border-t border-border/60 pt-5">
+          <div className="mb-3 flex items-center gap-2 font-semibold text-sm">
+            <Users className="h-4 w-4 text-primary" /> צוותי עבודה
+          </div>
+          <div className="space-y-2">
+            {teams.map((t: ProjectTeam) => (
+              <div
+                key={t.id}
+                className="relative flex items-center justify-between rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-sm"
+              >
+                <div>
+                  <div className="font-semibold">{t.name}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    ראש צוות: {t.team_leader_name} · {t.team_leader_phone} ·{" "}
+                    {t.expected_workers} עובדים · ₪{t.hourly_rate}/שעה
+                  </div>
+                </div>
+                <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3">
+            <AddTeamForm
+              projectId={project.id}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["teams", project.id] })}
+            />
+          </div>
+        </div>
+
+        {isReady && teams.length > 0 && (
+          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-sm text-emerald-900">
+            <div className="flex items-center gap-2 font-semibold">
+              <CheckCircle2 className="h-4 w-4" /> הפרויקט מוכן
+            </div>
+            <p className="mt-1 text-xs">
+              ראש הצוות יכול להיכנס ל-{" "}
+              <Link to="/team-leader" className="font-bold underline">
+                דף ראש צוות
+              </Link>{" "}
+              ולפתוח יום עבודה.
+            </p>
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
@@ -233,8 +333,8 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
 
   if (!open)
     return (
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        + הוסף צוות
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-2">
+        <Plus className="h-4 w-4" /> הוסף צוות
       </Button>
     );
 
@@ -253,7 +353,7 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
           hourlyRate: rate,
         },
       });
-      toast.success("הצוות נוסף");
+      toast.success("הצוות נוסף בהצלחה");
       setOpen(false);
       setName("");
       setTlName("");
@@ -268,47 +368,63 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
   };
 
   return (
-    <div className="border rounded p-3 space-y-2 bg-card">
+    <div className="space-y-3 rounded-xl border border-border/60 bg-card p-4">
+      <div className="text-sm font-semibold">הוספת צוות חדש</div>
       <Input
         placeholder="שם הצוות (למשל: צוות שלד)"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        className="h-10"
       />
-      <Input
-        placeholder="שם ראש הצוות"
-        value={tlName}
-        onChange={(e) => setTlName(e.target.value)}
-      />
-      <Input
-        placeholder="טלפון ראש צוות 050-..."
-        value={tlPhone}
-        onChange={(e) => setTlPhone(e.target.value)}
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          placeholder="שם ראש הצוות"
+          value={tlName}
+          onChange={(e) => setTlName(e.target.value)}
+          className="h-10"
+        />
+        <Input
+          placeholder="טלפון 050-..."
+          value={tlPhone}
+          onChange={(e) => setTlPhone(e.target.value)}
+          className="h-10"
+        />
+      </div>
       <Input
         placeholder="מזהה משתמש (UUID) של ראש הצוות במערכת"
         value={tlUserId}
         onChange={(e) => setTlUserId(e.target.value)}
+        className="h-10"
       />
-      <div className="grid grid-cols-2 gap-2">
-        <Input
-          type="number"
-          placeholder="עובדים"
-          value={workers}
-          onChange={(e) => setWorkers(Number(e.target.value))}
-        />
-        <Input
-          type="number"
-          placeholder="₪/שעה"
-          value={rate}
-          onChange={(e) => setRate(Number(e.target.value))}
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="mb-1.5 block text-xs">עובדים צפויים</Label>
+          <Input
+            type="number"
+            min={1}
+            value={workers}
+            onChange={(e) => setWorkers(Number(e.target.value))}
+            className="h-10"
+          />
+        </div>
+        <div>
+          <Label className="mb-1.5 block text-xs">תעריף ₪/שעה</Label>
+          <Input
+            type="number"
+            min={1}
+            value={rate}
+            onChange={(e) => setRate(Number(e.target.value))}
+            className="h-10"
+          />
+        </div>
       </div>
       <div className="flex gap-2">
-        <Button onClick={save} disabled={busy} size="sm">
+        <Button onClick={save} disabled={busy} size="sm" className="gap-2">
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
           שמור
         </Button>
         <Button variant="ghost" onClick={() => setOpen(false)} size="sm">
-          בטל
+          ביטול
         </Button>
       </div>
     </div>
@@ -328,31 +444,42 @@ function TeamQr({
   const url =
     typeof window !== "undefined" ? `${window.location.origin}/team-leader?team=${teamId}` : "";
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=8&data=${encodeURIComponent(url)}`;
+
   const printQr = () => {
     const w = window.open("", "_blank", "width=420,height=600");
     if (!w) return;
-    w.document
-      .write(`<!doctype html><html dir="rtl"><head><title>QR — ${projectName} · ${teamName}</title>
+    w.document.write(
+      `<!doctype html><html dir="rtl"><head><title>QR — ${projectName} · ${teamName}</title>
       <style>body{font-family:sans-serif;text-align:center;padding:24px}h2{margin:6px 0}p{color:#555;margin:4px 0}img{margin-top:12px;border:1px solid #ddd;border-radius:8px}</style>
       </head><body><h2>${projectName}</h2><p>${teamName}</p><img src="${qrSrc}" alt="QR" />
       <p style="margin-top:14px;font-size:13px">סרוק כדי לפתוח את מסך הנוכחות לצוות זה</p>
-      <script>window.onload=()=>setTimeout(()=>window.print(),500)</script></body></html>`);
+      <script>window.onload=()=>setTimeout(()=>window.print(),500)</script></body></html>`,
+    );
     w.document.close();
   };
+
   return (
-    <>
-      <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
-        <QrCode className="w-4 h-4" /> QR לאתר
+    <div className="relative">
+      <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)} className="gap-1.5">
+        <QrCode className="h-4 w-4" /> QR
       </Button>
       {open && (
-        <div className="absolute mt-2 bg-card border rounded-lg p-3 shadow-lg z-10">
-          <img src={qrSrc} alt={`QR ${teamName}`} width={180} height={180} />
-          <div className="text-xs text-muted-foreground mt-1 max-w-[180px] truncate">{url}</div>
-          <Button size="sm" className="w-full mt-2" onClick={printQr}>
-            <Printer className="w-4 h-4" /> הדפס מדבקה
+        <div className="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-border/60 bg-card p-3 shadow-lg">
+          <img src={qrSrc} alt={`QR ${teamName}`} width={180} height={180} className="rounded-lg" />
+          <div className="mt-1.5 truncate text-[10px] text-muted-foreground">{url}</div>
+          <Button size="sm" className="mt-2 w-full gap-1.5" onClick={printQr}>
+            <Printer className="h-3.5 w-3.5" /> הדפס מדבקה
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-1 w-full text-xs"
+            onClick={() => setOpen(false)}
+          >
+            סגור
           </Button>
         </div>
       )}
-    </>
+    </div>
   );
 }
