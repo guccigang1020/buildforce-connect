@@ -142,9 +142,16 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          auto_approved_at: string | null
           contractor_id: string
           corporation_id: string
           created_at: string
+          dispute_reason: string | null
+          dispute_resolution_note: string | null
+          dispute_resolved_at: string | null
+          dispute_resolved_by: string | null
+          disputed_at: string | null
+          disputed_by: string | null
           end_gps_lat: number | null
           end_gps_lng: number | null
           end_photo_url: string | null
@@ -181,9 +188,16 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          auto_approved_at?: string | null
           contractor_id: string
           corporation_id: string
           created_at?: string
+          dispute_reason?: string | null
+          dispute_resolution_note?: string | null
+          dispute_resolved_at?: string | null
+          dispute_resolved_by?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
           end_gps_lat?: number | null
           end_gps_lng?: number | null
           end_photo_url?: string | null
@@ -220,9 +234,16 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          auto_approved_at?: string | null
           contractor_id?: string
           corporation_id?: string
           created_at?: string
+          dispute_reason?: string | null
+          dispute_resolution_note?: string | null
+          dispute_resolved_at?: string | null
+          dispute_resolved_by?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
           end_gps_lat?: number | null
           end_gps_lng?: number | null
           end_photo_url?: string | null
