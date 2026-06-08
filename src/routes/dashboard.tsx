@@ -13,8 +13,6 @@ import {
   Trophy,
   CheckCircle2,
   XCircle,
-  Loader2,
-  ArrowLeft,
   ShieldCheck,
   TrendingUp,
   Inbox,
@@ -26,10 +24,10 @@ import {
   AlertTriangle,
   HardHat,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { listMyJobRequests } from "@/lib/job-requests.functions";
 import { getContractorDashboardStats } from "@/lib/analytics.functions";
@@ -53,25 +51,34 @@ type ContractorStats = Awaited<ReturnType<typeof getContractorDashboardStats>>;
 
 type StatusFilter = "all" | "open" | "awarded" | "closed" | "cancelled";
 
-const STATUS_META: Record<string, { label: string; className: string; icon: typeof Clock }> = {
+const STATUS_META: Record<
+  string,
+  { label: string; chipClass: string; barClass: string; icon: typeof Clock }
+> = {
   open: {
     label: "פתוחה למכרז",
-    className: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+    chipClass: "status-chip-live",
+    barClass: "status-bar-live",
     icon: Clock,
   },
   awarded: {
     label: "נבחר זוכה",
-    className: "bg-primary/15 text-primary border-primary/30",
+    chipClass:
+      "inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary",
+    barClass: "status-bar-primary",
     icon: Trophy,
   },
   closed: {
     label: "סגורה",
-    className: "bg-muted text-muted-foreground border-border",
+    chipClass:
+      "inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-[11px] font-bold text-muted-foreground",
+    barClass: "status-bar-none",
     icon: CheckCircle2,
   },
   cancelled: {
     label: "בוטלה",
-    className: "bg-destructive/15 text-destructive border-destructive/30",
+    chipClass: "status-chip-rejected",
+    barClass: "status-bar-rejected",
     icon: XCircle,
   },
 };
@@ -189,39 +196,43 @@ function DashboardPage() {
         </Button>
       }
     >
-      {/* Greeting header */}
-      <div className="mb-6 animate-fade-up">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-1">
-          <span>{formattedDate}</span>
-          {isAdmin && (
-            <Badge
-              variant="outline"
-              className="border-primary/50 text-primary normal-case tracking-normal gap-1"
-            >
-              <ShieldCheck className="h-3 w-3" /> מנהל מערכת
-            </Badge>
-          )}
+      {/* ── Greeting header ── */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/40 bg-card/50 px-5 py-5 animate-fade-up">
+        <div className="pointer-events-none absolute -top-10 -end-10 h-48 w-48 rounded-full bg-primary/8 blur-3xl" />
+        <div className="relative">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="info-chip">
+              <Calendar className="h-3 w-3" />
+              {formattedDate}
+            </span>
+            {isAdmin && (
+              <span className="role-badge">
+                <ShieldCheck className="h-3 w-3" /> מנהל מערכת
+              </span>
+            )}
+          </div>
+          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+            {greeting}
+            {firstName ? `, ${firstName}` : ""}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isLoading
+              ? "טוען נתונים…"
+              : stats.total === 0
+                ? "עדיין לא פרסמת בקשות — התחל עכשיו וקבל הצעות תוך שעות."
+                : `${stats.open} בקשות פתוחות · ${stats.totalOffers} הצעות שהתקבלו`}
+          </p>
         </div>
-        <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-          {greeting}
-          {firstName ? `, ${firstName}` : ""}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {isLoading
-            ? "טוען נתונים…"
-            : stats.total === 0
-              ? "עדיין לא פרסמת בקשות — התחל עכשיו וקבל הצעות תוך שעות."
-              : `${stats.open} בקשות פתוחות · ${stats.totalOffers} הצעות שהתקבלו`}
-        </p>
       </div>
 
-      {/* Marketplace KPI strip */}
+      {/* ── KPI strip ── */}
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
         <KPICard
           icon={Briefcase}
           label="סה״כ בקשות"
           value={isLoading ? "…" : String(stats.total)}
           sub="כל הזמנים"
+          variant="default"
         />
         <KPICard
           icon={Zap}
@@ -247,6 +258,7 @@ function DashboardPage() {
                 ? `מינ׳ ₪${stats.bestPrice}/שעה`
                 : "עדיין לא התקבלו"
           }
+          variant="default"
         />
         <KPICard
           icon={Trophy}
@@ -257,31 +269,29 @@ function DashboardPage() {
         />
       </div>
 
-      {/* Workforce Intelligence Panel */}
+      {/* ── Workforce Intelligence Panel ── */}
       {wsLoading && (
-        <div className="mb-4 h-36 animate-pulse rounded-2xl border border-border/40 bg-muted/30" />
+        <div className="mb-4 skeleton-kpi animate-pulse bg-muted/40" />
       )}
-      {showWsPanel && wsStats && (
-        <WorkforceIntelligencePanel stats={wsStats} />
-      )}
+      {showWsPanel && wsStats && <WorkforceIntelligencePanel stats={wsStats} />}
 
-      {/* Insights chips */}
+      {/* ── Insights chips ── */}
       {!isLoading && requests.length > 0 && (
         <div className="mb-5 flex flex-wrap gap-2 animate-fade-up delay-200">
           {stats.openWithOffers > 0 && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+            <span className="status-chip-live">
               <Sparkles className="h-3.5 w-3.5" />
               {stats.openWithOffers} בקשות ממתינות להחלטה שלך
             </span>
           )}
           {stats.bestPrice != null && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600">
+            <span className="status-chip-approved">
               <TrendingUp className="h-3.5 w-3.5" />
               ההצעה הטובה ביותר: ₪{stats.bestPrice}/שעה
             </span>
           )}
           {stats.open > 0 && stats.openWithOffers === 0 && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+            <span className="info-chip">
               <Clock className="h-3.5 w-3.5" />
               הבקשות הפתוחות ממתינות להצעות
             </span>
@@ -289,9 +299,9 @@ function DashboardPage() {
         </div>
       )}
 
-      {/* Filter + search bar */}
+      {/* ── Filter + search ── */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex flex-wrap rounded-xl border border-border/60 bg-card/60 p-1">
+        <div className="pill-tabs">
           {(
             [
               { id: "all", label: "הכל" },
@@ -303,22 +313,13 @@ function DashboardPage() {
           ).map((f) => (
             <button
               key={f.id}
+              type="button"
               onClick={() => setFilter(f.id)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors md:px-4 md:text-sm ${
-                filter === f.id
-                  ? "bg-gradient-primary text-primary-foreground shadow-sm-app"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`pill-tab${filter === f.id ? " pill-tab-active" : ""}`}
             >
               {f.label}
               {filterCounts[f.id] > 0 && (
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                    filter === f.id ? "bg-white/20" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {filterCounts[f.id]}
-                </span>
+                <span className="pill-tab-count">{filterCounts[f.id]}</span>
               )}
             </button>
           ))}
@@ -334,11 +335,13 @@ function DashboardPage() {
         </div>
       </div>
 
-      {/* Request list */}
+      {/* ── Request list ── */}
       <div className="space-y-2.5">
         {isLoading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-            <Loader2 className="ms-2 h-4 w-4 animate-spin" /> טוען בקשות…
+          <div className="space-y-2.5">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+            ))}
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
@@ -367,16 +370,14 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
 
   return (
     <div className="mb-5 overflow-hidden rounded-2xl border border-border/60 bg-card animate-fade-up delay-150">
-      {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
+          <div className="section-header-icon">
             <Activity className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
           <span className="text-sm font-bold">מודיעין כוח עבודה</span>
-          <span className="rounded-full border border-border/60 bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-            {monthName}
-          </span>
+          <span className="info-chip">{monthName}</span>
         </div>
         <div className="flex items-center gap-2">
           {stats.projectsNeedingSite > 0 && (
@@ -401,7 +402,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
       <div className="grid md:grid-cols-2 md:divide-x md:divide-x-reverse md:divide-border/40">
         {/* Project health */}
         <div className="p-5">
-          <div className="mb-3.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mb-3.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground/80">
             <HardHat className="h-3.5 w-3.5" /> פרויקטים פעילים
           </div>
           <div className="grid grid-cols-3 gap-4">
@@ -426,7 +427,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
         {/* Attendance quality */}
         <div className="border-t border-border/40 p-5 md:border-t-0">
           <div className="mb-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground/80">
               <CheckCircle2 className="h-3.5 w-3.5" /> נוכחות — {monthName}
             </div>
             {approvalRate != null && (
@@ -485,13 +486,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
                 ₪{Math.round(monthly.totalCost).toLocaleString()}
               </span>
               {costTrend && (
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    costTrend.positive
-                      ? "bg-emerald-500/15 text-emerald-600"
-                      : "bg-destructive/15 text-destructive"
-                  }`}
-                >
+                <span className={costTrend.positive ? "trend-up" : "trend-down"}>
                   {costTrend.label}
                 </span>
               )}
@@ -565,13 +560,7 @@ function AttendanceStat({
       </div>
       <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
       {trend && (
-        <div
-          className={`mt-0.5 text-[10px] font-semibold ${
-            trend.positive ? "text-emerald-600" : "text-destructive"
-          }`}
-        >
-          {trend.label}
-        </div>
+        <span className={trend.positive ? "trend-up" : "trend-down"}>{trend.label}</span>
       )}
     </div>
   );
@@ -590,30 +579,29 @@ function KPICard({
   sub: string;
   variant?: "default" | "accent" | "live";
 }) {
-  const containerCls =
+  const cardCls =
     variant === "accent"
-      ? "border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5"
+      ? "kpi-card kpi-card-primary"
       : variant === "live"
-        ? "border-emerald-500/30 bg-emerald-500/5"
-        : "border-border/60 bg-card";
+        ? "kpi-card kpi-card-success"
+        : "kpi-card";
+
   const iconCls =
     variant === "accent"
-      ? "bg-gradient-primary text-primary-foreground shadow-elegant"
+      ? "kpi-icon kpi-icon-filled"
       : variant === "live"
-        ? "bg-emerald-500/15 text-emerald-600"
-        : "bg-primary/10 text-primary";
+        ? "kpi-icon kpi-icon-success"
+        : "kpi-icon kpi-icon-primary";
 
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border p-5 transition-all hover:shadow-card ${containerCls}`}
-    >
+    <div className={`relative p-5 ${cardCls}`}>
       <div className="flex items-start justify-between">
-        <div className={`grid h-10 w-10 place-items-center rounded-xl ${iconCls}`}>
+        <div className={iconCls}>
           <Icon className="h-5 w-5" />
         </div>
         {variant === "live" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+            <span className="live-dot" />
             חי
           </span>
         )}
@@ -634,15 +622,18 @@ function RequestCard({ request: r }: { request: MyRequest }) {
     <Link
       to="/my-requests/$id"
       params={{ id: r.id }}
-      className="group block rounded-2xl border border-border/60 bg-card p-5 transition-all hover:border-primary/40 hover:shadow-card"
+      className={`group block rounded-2xl border border-border/60 bg-card p-5 transition-all hover:border-primary/40 hover:shadow-card ${meta.barClass}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
+          {/* Status + ID row */}
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className={`gap-1 text-xs ${meta.className}`}>
+            <span className={meta.chipClass}>
               <Icon className="h-3 w-3" /> {meta.label}
-            </Badge>
-            <span className="font-mono text-[11px] text-muted-foreground">#{r.id.slice(0, 8)}</span>
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground">
+              #{r.id.slice(0, 8)}
+            </span>
             {r.deadline_at && r.status === "open" && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600">
                 <Clock className="h-3 w-3" /> סגירה{" "}
@@ -651,18 +642,20 @@ function RequestCard({ request: r }: { request: MyRequest }) {
             )}
           </div>
 
-          <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-            <span className="inline-flex items-center gap-1.5 text-sm font-bold">
-              <MapPin className="h-4 w-4 text-primary" /> {r.location}
+          {/* Location + date + workers as info-chips */}
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <span className="info-chip">
+              <MapPin className="h-3 w-3 text-primary" /> {r.location}
             </span>
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5" /> {r.start_date} · {r.duration}
+            <span className="info-chip">
+              <Calendar className="h-3 w-3" /> {r.start_date} · {r.duration}
             </span>
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Users className="h-3.5 w-3.5" /> {r.workers_count} עובדים
+            <span className="info-chip">
+              <Users className="h-3 w-3" /> {r.workers_count} עובדים
             </span>
           </div>
 
+          {/* Role pills */}
           {r.roles.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {r.roles.map((role) => (
@@ -676,15 +669,16 @@ function RequestCard({ request: r }: { request: MyRequest }) {
             </div>
           )}
 
+          {/* Competition bar */}
           {r.status === "open" && r.offers_count > 0 && (
             <div className="mt-3 max-w-xs">
-              <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+              <div className="mb-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
                 <span>עוצמת תחרות</span>
                 <span className="font-bold text-primary">{r.offers_count} הצעות</span>
               </div>
-              <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/80">
+              <div className="progress-track">
                 <div
-                  className="h-full rounded-full bg-gradient-primary transition-all duration-500"
+                  className="progress-fill animate-expand-w"
                   style={{ width: `${offerBarWidth}%` }}
                 />
               </div>
@@ -692,9 +686,12 @@ function RequestCard({ request: r }: { request: MyRequest }) {
           )}
         </div>
 
+        {/* Right column: offer count + best price + arrow */}
         <div className="flex flex-col items-end gap-2">
           <div className="text-center">
-            <div className="text-2xl font-extrabold text-primary leading-none">{r.offers_count}</div>
+            <div className="text-2xl font-extrabold leading-none text-primary">
+              {r.offers_count}
+            </div>
             <div className="mt-0.5 text-[10px] text-muted-foreground">
               {r.offers_count === 1 ? "הצעה" : "הצעות"}
             </div>
@@ -716,13 +713,13 @@ function RequestCard({ request: r }: { request: MyRequest }) {
 
 function EmptyState({ hasAny }: { hasAny: boolean }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center">
+    <div className="empty-state relative overflow-hidden">
       <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/8 blur-3xl" />
       <div className="relative">
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20">
+        <div className="empty-state-icon mx-auto">
           <Inbox className="h-8 w-8 text-primary" />
         </div>
-        <h3 className="mt-5 text-xl font-bold">
+        <h3 className="text-xl font-bold">
           {hasAny ? "אין בקשות מתאימות לסינון" : "ברוך הבא ל-BuildForce"}
         </h3>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
