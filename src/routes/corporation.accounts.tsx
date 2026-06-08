@@ -13,8 +13,6 @@ import {
   Lock,
   FileCheck,
   Zap,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/corporation/accounts")({
@@ -39,10 +37,6 @@ type DailyAccount = {
   total_worker_hours: number | null;
   hourly_rate: number | null;
   total_cost: number | null;
-  total_sale: number | null;
-  labor_cost: number | null;
-  total_profit: number | null;
-  worker_type: string | null;
   approval_method: string;
   has_exception: boolean;
   exception_reason: string | null;
@@ -91,14 +85,6 @@ function Page() {
   const autoCount = accounts.filter((a) => a.approval_method === "auto").length;
   const exceptionCount = accounts.filter((a) => a.has_exception).length;
 
-  // Financial summary (from pricing engine — only accounts with pricing data)
-  const pricedAccounts = accounts.filter((a) => a.total_sale != null);
-  const totalSale = pricedAccounts.reduce((s, a) => s + Number(a.total_sale ?? 0), 0);
-  const totalLaborCost = pricedAccounts.reduce((s, a) => s + Number(a.labor_cost ?? 0), 0);
-  const totalProfit = pricedAccounts.reduce((s, a) => s + Number(a.total_profit ?? 0), 0);
-  const profitPct = totalSale > 0 ? (totalProfit / totalSale) * 100 : null;
-  const hasPricingData = pricedAccounts.length > 0;
-
   return (
     <AppShell title="חשבונות יומיים מאושרים">
       {/* KPI strip */}
@@ -146,83 +132,6 @@ function Page() {
           <div className="mt-0.5 text-xs text-muted-foreground">חריגות</div>
         </div>
       </div>
-
-      {/* Financial Summary */}
-      {hasPricingData && (
-        <div className="mb-6 animate-fade-up delay-100">
-          <div className="mb-3 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-bold">סיכום פיננסי</h3>
-            <span className="text-[11px] text-muted-foreground">
-              ({pricedAccounts.length}/{totalAccounts} חשבונות עם תמחור)
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
-                <DollarSign className="h-4 w-4" />
-              </div>
-              <div className="mt-3 text-xl font-extrabold">
-                {totalSale > 0 ? `₪${Math.round(totalSale).toLocaleString()}` : "—"}
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">הכנסות</div>
-            </div>
-            <div className="rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-orange-500/15 text-orange-600">
-                <TrendingDown className="h-4 w-4" />
-              </div>
-              <div className="mt-3 text-xl font-extrabold text-orange-700">
-                {totalLaborCost > 0 ? `₪${Math.round(totalLaborCost).toLocaleString()}` : "—"}
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">עלות עבודה</div>
-            </div>
-            <div
-              className={`rounded-2xl border p-4 ${
-                totalProfit >= 0
-                  ? "border-emerald-500/30 bg-emerald-500/5"
-                  : "border-destructive/30 bg-destructive/5"
-              }`}
-            >
-              <div
-                className={`grid h-9 w-9 place-items-center rounded-xl ${
-                  totalProfit >= 0
-                    ? "bg-emerald-500/15 text-emerald-600"
-                    : "bg-destructive/15 text-destructive"
-                }`}
-              >
-                <TrendingUp className="h-4 w-4" />
-              </div>
-              <div
-                className={`mt-3 text-xl font-extrabold ${
-                  totalProfit >= 0 ? "text-emerald-700" : "text-destructive"
-                }`}
-              >
-                {`${totalProfit >= 0 ? "+" : ""}₪${Math.round(totalProfit).toLocaleString()}`}
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">רווח גולמי</div>
-            </div>
-            <div
-              className={`rounded-2xl border p-4 ${
-                profitPct !== null && profitPct >= 0
-                  ? "border-emerald-500/30 bg-emerald-500/5"
-                  : "border-border/60 bg-card"
-              }`}
-            >
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
-                <CheckCircle2 className="h-4 w-4" />
-              </div>
-              <div
-                className={`mt-3 text-xl font-extrabold ${
-                  profitPct !== null && profitPct >= 0 ? "text-emerald-700" : "text-destructive"
-                }`}
-              >
-                {profitPct !== null ? `${profitPct.toFixed(1)}%` : "—"}
-              </div>
-              <div className="mt-0.5 text-xs text-muted-foreground">% רווח</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Auto-approval info banner */}
       {autoCount > 0 && (

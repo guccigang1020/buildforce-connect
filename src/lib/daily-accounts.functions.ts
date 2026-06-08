@@ -17,7 +17,7 @@ export const generateDailyAccounts = createServerFn({ method: "POST" })
 
     const { data: records, error } = await supabaseAdmin
       .from("attendance_records")
-      .select("id, work_date, project_id, contractor_id, corporation_id, team_id, team_leader_id, status, approved_at, workers_actual, workers_expected, start_time, end_time, total_hours, total_cost, hourly_rate, exception_reason, start_photo_url, end_photo_url, start_gps_lat, start_gps_lng, end_gps_lat, end_gps_lng, projects:project_id(name, site_manager_name), project_teams:team_id(name, team_leader_name, worker_type)")
+      .select("id, work_date, project_id, contractor_id, corporation_id, team_id, team_leader_id, status, approved_at, workers_actual, workers_expected, start_time, end_time, total_hours, total_cost, hourly_rate, exception_reason, start_photo_url, end_photo_url, start_gps_lat, start_gps_lng, end_gps_lat, end_gps_lng, projects:project_id(name, site_manager_name), project_teams:team_id(name, team_leader_name)")
       .eq("contractor_id", userId)
       .eq("work_date", data.date)
       .in("status", ["approved", "auto_approved"])
@@ -45,15 +45,6 @@ export const generateDailyAccounts = createServerFn({ method: "POST" })
       (corpProfiles ?? []).map((p) => [p.id, p.company_name ?? p.full_name ?? null]),
     );
 
-    // Pricing rules batch-lookup — one query for all relevant corporations
-    const { data: pricingRules } = await supabaseAdmin
-      .from("worker_pricing_rules")
-      .select("corporation_id, worker_type, cost_price_per_hour, sale_price_per_hour")
-      .in("corporation_id", uniqueCorpIds);
-    const pricingMap = new Map(
-      (pricingRules ?? []).map((p) => [`${p.corporation_id}:${p.worker_type}`, p]),
-    );
-
     const now = new Date().toISOString();
 
     const accountRows = records.map((rec) => {
@@ -61,25 +52,10 @@ export const generateDailyAccounts = createServerFn({ method: "POST" })
       const team = rec.project_teams as {
         name: string | null;
         team_leader_name: string | null;
-        worker_type: string | null;
       } | null;
       const totalWorkerHours =
         rec.total_hours != null && rec.workers_actual != null
           ? Math.round(Number(rec.total_hours) * rec.workers_actual * 10000) / 10000
-          : null;
-
-      const workerType = team?.worker_type ?? null;
-      const pricingRule = workerType
-        ? pricingMap.get(`${rec.corporation_id}:${workerType}`)
-        : undefined;
-      const totalSale = rec.total_cost != null ? Number(rec.total_cost) : null;
-      const laborCost =
-        pricingRule != null && totalWorkerHours != null
-          ? Math.round(Number(pricingRule.cost_price_per_hour) * totalWorkerHours * 100) / 100
-          : null;
-      const totalProfit =
-        totalSale != null && laborCost != null
-          ? Math.round((totalSale - laborCost) * 100) / 100
           : null;
 
       return {
@@ -96,8 +72,6 @@ export const generateDailyAccounts = createServerFn({ method: "POST" })
         site_manager_name: proj?.site_manager_name ?? null,
         team_name: team?.name ?? null,
         team_leader_name: team?.team_leader_name ?? null,
-        worker_type: workerType,
-        pricing_cost_per_hour: pricingRule ? Number(pricingRule.cost_price_per_hour) : null,
         workers_actual: rec.workers_actual,
         workers_expected: rec.workers_expected,
         start_time: rec.start_time,
@@ -106,9 +80,6 @@ export const generateDailyAccounts = createServerFn({ method: "POST" })
         total_worker_hours: totalWorkerHours,
         hourly_rate: rec.hourly_rate,
         total_cost: rec.total_cost,
-        total_sale: totalSale,
-        labor_cost: laborCost,
-        total_profit: totalProfit,
         approval_method: rec.status === "auto_approved" ? "auto" : "manual",
         approved_at: rec.approved_at,
         has_exception: rec.exception_reason != null,

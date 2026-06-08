@@ -380,8 +380,6 @@ export type Database = {
           has_exception: boolean
           hourly_rate: number | null
           id: string
-          labor_cost: number | null
-          pricing_cost_per_hour: number | null
           project_id: string
           project_name: string
           site_manager_name: string | null
@@ -395,11 +393,8 @@ export type Database = {
           team_name: string | null
           total_cost: number | null
           total_hours: number | null
-          total_profit: number | null
-          total_sale: number | null
           total_worker_hours: number | null
           work_date: string
-          worker_type: string | null
           workers_actual: number | null
           workers_expected: number | null
         }
@@ -422,8 +417,6 @@ export type Database = {
           has_exception?: boolean
           hourly_rate?: number | null
           id?: string
-          labor_cost?: number | null
-          pricing_cost_per_hour?: number | null
           project_id: string
           project_name: string
           site_manager_name?: string | null
@@ -437,11 +430,8 @@ export type Database = {
           team_name?: string | null
           total_cost?: number | null
           total_hours?: number | null
-          total_profit?: number | null
-          total_sale?: number | null
           total_worker_hours?: number | null
           work_date: string
-          worker_type?: string | null
           workers_actual?: number | null
           workers_expected?: number | null
         }
@@ -464,8 +454,6 @@ export type Database = {
           has_exception?: boolean
           hourly_rate?: number | null
           id?: string
-          labor_cost?: number | null
-          pricing_cost_per_hour?: number | null
           project_id?: string
           project_name?: string
           site_manager_name?: string | null
@@ -479,11 +467,8 @@ export type Database = {
           team_name?: string | null
           total_cost?: number | null
           total_hours?: number | null
-          total_profit?: number | null
-          total_sale?: number | null
           total_worker_hours?: number | null
           work_date?: string
-          worker_type?: string | null
           workers_actual?: number | null
           workers_expected?: number | null
         }
@@ -1024,7 +1009,6 @@ export type Database = {
           team_leader_id: string
           team_leader_name: string | null
           team_leader_phone: string | null
-          worker_type: string | null
         }
         Insert: {
           created_at?: string
@@ -1036,7 +1020,6 @@ export type Database = {
           team_leader_id: string
           team_leader_name?: string | null
           team_leader_phone?: string | null
-          worker_type?: string | null
         }
         Update: {
           created_at?: string
@@ -1048,7 +1031,6 @@ export type Database = {
           team_leader_id?: string
           team_leader_name?: string | null
           team_leader_phone?: string | null
-          worker_type?: string | null
         }
         Relationships: [
           {
@@ -1255,39 +1237,6 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      worker_pricing_rules: {
-        Row: {
-          corporation_id: string
-          cost_price_per_hour: number
-          created_at: string
-          custom_label: string | null
-          id: string
-          sale_price_per_hour: number
-          updated_at: string
-          worker_type: string
-        }
-        Insert: {
-          corporation_id: string
-          cost_price_per_hour?: number
-          created_at?: string
-          custom_label?: string | null
-          id?: string
-          sale_price_per_hour?: number
-          updated_at?: string
-          worker_type: string
-        }
-        Update: {
-          corporation_id?: string
-          cost_price_per_hour?: number
-          created_at?: string
-          custom_label?: string | null
-          id?: string
-          sale_price_per_hour?: number
-          updated_at?: string
-          worker_type?: string
         }
         Relationships: []
       }

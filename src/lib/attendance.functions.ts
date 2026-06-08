@@ -725,10 +725,6 @@ export const upsertProjectTeam = createServerFn({ method: "POST" })
         teamLeaderUserId: z.string().uuid(),
         expectedWorkers: z.number().int().min(1).max(500),
         hourlyRate: z.number().min(0).max(10000),
-        workerType: z
-          .enum(["thai", "chinese", "team_leader", "professional", "custom"])
-          .optional()
-          .nullable(),
       })
       .parse(d),
   )
@@ -748,7 +744,6 @@ export const upsertProjectTeam = createServerFn({ method: "POST" })
       team_leader_phone: data.teamLeaderPhone,
       expected_workers: data.expectedWorkers,
       hourly_rate: data.hourlyRate,
-      worker_type: data.workerType ?? null,
     };
     if (data.teamId) {
       const { error } = await supabase.from("project_teams").update(payload).eq("id", data.teamId);
@@ -783,7 +778,7 @@ export const listProjectTeams = createServerFn({ method: "POST" })
     const { data: teams, error } = await supabase
       .from("project_teams")
       .select(
-        "id, name, expected_workers, hourly_rate, team_leader_id, team_leader_name, team_leader_phone, worker_type",
+        "id, name, expected_workers, hourly_rate, team_leader_id, team_leader_name, team_leader_phone",
       )
       .eq("project_id", data.projectId)
       .order("created_at", { ascending: false });

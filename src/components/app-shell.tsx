@@ -15,8 +15,6 @@ import {
   ClipboardList,
   HardHat,
   Receipt,
-  Settings2,
-  BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -139,16 +137,6 @@ function Sidebar({
       to: "/corporation/accounts",
       label: "חשבונות",
       icon: Receipt,
-    });
-    mainNav.push({
-      to: "/corporation/financial",
-      label: "דשבורד פיננסי",
-      icon: BarChart3,
-    });
-    mainNav.push({
-      to: "/corporation/pricing",
-      label: "תמחור",
-      icon: Settings2,
     });
   }
 
