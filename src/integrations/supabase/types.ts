@@ -142,16 +142,9 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
-          auto_approved_at: string | null
           contractor_id: string
           corporation_id: string
           created_at: string
-          dispute_reason: string | null
-          dispute_resolution_note: string | null
-          dispute_resolved_at: string | null
-          dispute_resolved_by: string | null
-          disputed_at: string | null
-          disputed_by: string | null
           end_gps_lat: number | null
           end_gps_lng: number | null
           end_photo_url: string | null
@@ -188,16 +181,9 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
-          auto_approved_at?: string | null
           contractor_id: string
           corporation_id: string
           created_at?: string
-          dispute_reason?: string | null
-          dispute_resolution_note?: string | null
-          dispute_resolved_at?: string | null
-          dispute_resolved_by?: string | null
-          disputed_at?: string | null
-          disputed_by?: string | null
           end_gps_lat?: number | null
           end_gps_lng?: number | null
           end_photo_url?: string | null
@@ -234,16 +220,9 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
-          auto_approved_at?: string | null
           contractor_id?: string
           corporation_id?: string
           created_at?: string
-          dispute_reason?: string | null
-          dispute_resolution_note?: string | null
-          dispute_resolved_at?: string | null
-          dispute_resolved_by?: string | null
-          disputed_at?: string | null
-          disputed_by?: string | null
           end_gps_lat?: number | null
           end_gps_lng?: number | null
           end_photo_url?: string | null
@@ -359,135 +338,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      daily_approved_accounts: {
-        Row: {
-          approval_method: string
-          approved_at: string | null
-          attendance_record_id: string
-          contractor_id: string
-          contractor_name: string | null
-          corporation_id: string
-          corporation_name: string | null
-          created_at: string
-          end_gps_lat: number | null
-          end_gps_lng: number | null
-          end_photo_url: string | null
-          end_time: string | null
-          exception_reason: string | null
-          generated_at: string
-          generated_by: string | null
-          has_exception: boolean
-          hourly_rate: number | null
-          id: string
-          project_id: string
-          project_name: string
-          site_manager_name: string | null
-          start_gps_lat: number | null
-          start_gps_lng: number | null
-          start_photo_url: string | null
-          start_time: string | null
-          team_id: string
-          team_leader_id: string
-          team_leader_name: string | null
-          team_name: string | null
-          total_cost: number | null
-          total_hours: number | null
-          total_worker_hours: number | null
-          work_date: string
-          workers_actual: number | null
-          workers_expected: number | null
-        }
-        Insert: {
-          approval_method?: string
-          approved_at?: string | null
-          attendance_record_id: string
-          contractor_id: string
-          contractor_name?: string | null
-          corporation_id: string
-          corporation_name?: string | null
-          created_at?: string
-          end_gps_lat?: number | null
-          end_gps_lng?: number | null
-          end_photo_url?: string | null
-          end_time?: string | null
-          exception_reason?: string | null
-          generated_at?: string
-          generated_by?: string | null
-          has_exception?: boolean
-          hourly_rate?: number | null
-          id?: string
-          project_id: string
-          project_name: string
-          site_manager_name?: string | null
-          start_gps_lat?: number | null
-          start_gps_lng?: number | null
-          start_photo_url?: string | null
-          start_time?: string | null
-          team_id: string
-          team_leader_id: string
-          team_leader_name?: string | null
-          team_name?: string | null
-          total_cost?: number | null
-          total_hours?: number | null
-          total_worker_hours?: number | null
-          work_date: string
-          workers_actual?: number | null
-          workers_expected?: number | null
-        }
-        Update: {
-          approval_method?: string
-          approved_at?: string | null
-          attendance_record_id?: string
-          contractor_id?: string
-          contractor_name?: string | null
-          corporation_id?: string
-          corporation_name?: string | null
-          created_at?: string
-          end_gps_lat?: number | null
-          end_gps_lng?: number | null
-          end_photo_url?: string | null
-          end_time?: string | null
-          exception_reason?: string | null
-          generated_at?: string
-          generated_by?: string | null
-          has_exception?: boolean
-          hourly_rate?: number | null
-          id?: string
-          project_id?: string
-          project_name?: string
-          site_manager_name?: string | null
-          start_gps_lat?: number | null
-          start_gps_lng?: number | null
-          start_photo_url?: string | null
-          start_time?: string | null
-          team_id?: string
-          team_leader_id?: string
-          team_leader_name?: string | null
-          team_name?: string | null
-          total_cost?: number | null
-          total_hours?: number | null
-          total_worker_hours?: number | null
-          work_date?: string
-          workers_actual?: number | null
-          workers_expected?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "daily_approved_accounts_attendance_record_id_fkey"
-            columns: ["attendance_record_id"]
-            isOneToOne: true
-            referencedRelation: "attendance_records"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "daily_approved_accounts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       email_send_log: {
         Row: {
