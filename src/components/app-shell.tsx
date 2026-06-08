@@ -17,7 +17,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -33,6 +33,20 @@ type NavItem = {
   exact?: boolean;
 };
 
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+function getRoleLabel(hasRole: (role: AppRole) => boolean): string {
+  if (hasRole("admin")) return "מנהל מערכת";
+  if (hasRole("corporation")) return "תאגיד";
+  if (hasRole("contractor")) return "קבלן";
+  if (hasRole("team_leader")) return "ראש צוות";
+  if (hasRole("labor_supplier")) return "ספק כוח אדם";
+  return "";
+}
+
 export function AppShell({ children, title, action, noPad }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -46,31 +60,39 @@ export function AppShell({ children, title, action, noPad }: AppShellProps) {
         />
       )}
 
-      {/* Sidebar — RIGHT in RTL (first flex child) */}
+      {/* Sidebar — RIGHT side in RTL */}
       <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       {/* Main area */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Top header */}
-        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-sm lg:px-6">
+        {/* Premium header */}
+        <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border/50 bg-background/95 px-4 backdrop-blur-md lg:px-8">
+          {/* Mobile hamburger — 44×44 touch target */}
           <button
             type="button"
             aria-label="תפריט"
-            className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary lg:hidden"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground lg:hidden"
             onClick={() => setMobileOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </button>
 
+          {/* Page title */}
           {title && (
-            <h1 className="truncate text-base font-bold tracking-tight text-foreground lg:text-lg">
+            <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight text-foreground lg:text-xl">
               {title}
             </h1>
           )}
 
           <div className="flex-1" />
 
-          {action && <div className="shrink-0">{action}</div>}
+          {/* Action area */}
+          {action && (
+            <div className="flex shrink-0 items-center gap-3">
+              <div className="hidden h-6 w-px bg-border/50 sm:block" />
+              {action}
+            </div>
+          )}
         </header>
 
         {/* Page content */}
@@ -99,157 +121,184 @@ function Sidebar({
   const isActive = (path: string, exact?: boolean) =>
     exact ? pathname === path : pathname === path || pathname.startsWith(path + "/");
 
-  // Build nav based on roles
-  const mainNav: NavItem[] = [];
+  // Build sectioned nav by role
+  const sections: NavSection[] = [];
 
   if (hasRole("contractor") || hasRole("admin")) {
-    mainNav.push({
-      to: "/dashboard",
-      label: "לוח בקרה",
-      icon: LayoutDashboard,
-      exact: true,
+    sections.push({
+      label: "מרכז מכרזים",
+      items: [
+        { to: "/dashboard", label: "לוח בקרה", icon: LayoutDashboard, exact: true },
+      ],
     });
-    mainNav.push({
-      to: "/contractor/attendance",
-      label: "נוכחות",
-      icon: CheckCircle2,
+    sections.push({
+      label: "נוכחות ואימות",
+      items: [
+        { to: "/contractor/attendance", label: "נוכחות", icon: CheckCircle2 },
+        { to: "/contractor/projects", label: "פרויקטים", icon: FolderOpen },
+      ],
     });
-    mainNav.push({
-      to: "/contractor/projects",
-      label: "פרויקטים",
-      icon: FolderOpen,
-    });
-    mainNav.push({
-      to: "/contractor/accounts",
+    sections.push({
       label: "חשבון יומי",
-      icon: ClipboardList,
+      items: [
+        { to: "/contractor/accounts", label: "חשבון יומי", icon: ClipboardList },
+      ],
     });
   }
 
   if (hasRole("corporation") || hasRole("admin")) {
-    mainNav.push({
-      to: "/corporation-dashboard",
-      label: "לוח תאגיד",
-      icon: Building2,
-      exact: true,
-    });
-    mainNav.push({
-      to: "/corporation/accounts",
-      label: "חשבונות",
-      icon: Receipt,
+    sections.push({
+      label: "תאגיד",
+      items: [
+        { to: "/corporation-dashboard", label: "לוח תאגיד", icon: Building2, exact: true },
+        { to: "/corporation/accounts", label: "חשבונות", icon: Receipt },
+      ],
     });
   }
 
   if (hasRole("team_leader") || hasRole("admin")) {
-    mainNav.push({
-      to: "/team-leader",
-      label: "ראש צוות",
-      icon: Users,
+    sections.push({
+      label: "ניהול צוות",
+      items: [
+        { to: "/team-leader", label: "ראש צוות", icon: Users },
+      ],
     });
   }
 
   if (hasRole("labor_supplier") || hasRole("admin")) {
-    mainNav.push({
-      to: "/labor-supplier/attendance",
-      label: "ספק כוח אדם",
-      icon: HardHat,
+    sections.push({
+      label: "כוח אדם",
+      items: [
+        { to: "/labor-supplier/attendance", label: "ספק כוח אדם", icon: HardHat },
+      ],
     });
   }
 
-  const adminNav: NavItem[] = hasRole("admin")
-    ? [
-        { to: "/admin", label: "מנהל מערכת", icon: ShieldCheck, exact: true },
-      ]
-    : [];
+  const adminSection: NavSection | null = hasRole("admin")
+    ? {
+        label: "מנהל מערכת",
+        items: [{ to: "/admin", label: "מנהל מערכת", icon: ShieldCheck, exact: true }],
+      }
+    : null;
+
+  const roleLabel = getRoleLabel(hasRole);
+  const displayName = profile?.full_name ?? profile?.company_name ?? "משתמש";
+  const initial = displayName[0]?.toUpperCase() ?? "?";
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
 
-  const displayName = profile?.full_name ?? profile?.company_name ?? "משתמש";
-  const initial = displayName[0]?.toUpperCase() ?? "?";
-
   const SidebarContent = () => (
     <div className="flex h-full flex-col bg-sidebar">
-      {/* Logo area */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-sidebar-border px-4">
+      {/* ── Logo area ── */}
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border/70 px-4">
         <Link
           to="/"
-          className="flex items-center gap-2 text-sidebar-foreground hover:opacity-90"
+          className="flex items-center gap-2.5 text-sidebar-foreground transition-opacity hover:opacity-90"
           onClick={onClose}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary shadow-glow-sm">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-primary shadow-glow-sm">
             <Gavel className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-extrabold tracking-tight">BuildForce</span>
+          <div className="leading-none">
+            <div className="text-sm font-extrabold tracking-tight">BuildForce</div>
+            <div className="mt-[3px] text-[9px] font-bold uppercase tracking-[0.15em] text-sidebar-foreground/35">
+              Prime
+            </div>
+          </div>
         </Link>
+
+        {/* Mobile close */}
         <button
           type="button"
-          className="grid h-7 w-7 place-items-center rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden"
+          className="grid h-8 w-8 place-items-center rounded-lg text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground lg:hidden"
           onClick={onClose}
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
-        {mainNav.map((item) => (
+      {/* ── Navigation ── */}
+      <nav className="flex-1 overflow-y-auto px-2 py-4">
+        <div className="space-y-4">
+          {sections.map((section, si) => (
+            <div key={si}>
+              <div className="nav-section-label mb-1.5">{section.label}</div>
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    item={item}
+                    active={isActive(item.to, item.exact)}
+                    onClick={onClose}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Admin section */}
+          {adminSection && (
+            <>
+              <div className="mx-1 h-px bg-sidebar-border/50" />
+              <div>
+                <div className="nav-section-label mb-1.5">{adminSection.label}</div>
+                <div className="space-y-0.5">
+                  {adminSection.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      item={item}
+                      active={isActive(item.to, item.exact)}
+                      onClick={onClose}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Site link */}
+          <div className="mx-1 h-px bg-sidebar-border/50" />
           <NavLink
-            key={item.to}
-            item={item}
-            active={isActive(item.to, item.exact)}
+            item={{ to: "/", label: "אתר ראשי", icon: FileText }}
+            active={false}
             onClick={onClose}
           />
-        ))}
-
-        {adminNav.length > 0 && (
-          <>
-            <div className="mx-2 my-3 h-px bg-sidebar-border" />
-            <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40">
-              ניהול
-            </div>
-            {adminNav.map((item) => (
-              <NavLink
-                key={item.to}
-                item={item}
-                active={isActive(item.to, item.exact)}
-                onClick={onClose}
-              />
-            ))}
-          </>
-        )}
-
-        <div className="mx-2 my-3 h-px bg-sidebar-border" />
-        <NavLink
-          item={{ to: "/", label: "אתר ראשי", icon: FileText }}
-          active={false}
-          onClick={onClose}
-        />
+        </div>
       </nav>
 
-      {/* User footer */}
-      <div className="shrink-0 border-t border-sidebar-border p-2">
-        <div className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-sidebar-accent">
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-primary text-[11px] font-extrabold text-primary-foreground shadow-glow-sm">
+      {/* ── User footer ── */}
+      <div className="shrink-0 border-t border-sidebar-border/70 p-3">
+        <div className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-sidebar-accent/70">
+          {/* Avatar */}
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-primary text-[13px] font-extrabold text-primary-foreground shadow-glow-sm">
             {initial}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-semibold text-sidebar-foreground">
+
+          {/* Name + role */}
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="truncate text-xs font-semibold leading-tight text-sidebar-foreground">
               {displayName}
             </div>
-            <div className="truncate text-[10px] text-sidebar-foreground/50">
-              {profile?.city ?? ""}
-            </div>
+            {roleLabel && (
+              <div className="mt-1">
+                <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/12 px-1.5 py-px text-[10px] font-semibold leading-none text-primary/80">
+                  {roleLabel}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Sign-out — revealed on hover */}
           <button
             type="button"
             onClick={handleSignOut}
             title="התנתק"
-            className="grid h-7 w-7 place-items-center rounded-lg text-sidebar-foreground/40 transition-colors hover:bg-destructive/15 hover:text-destructive"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-sidebar-foreground/30 opacity-0 transition-all duration-150 hover:bg-destructive/15 hover:text-destructive group-hover:opacity-100"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -259,13 +308,13 @@ function Sidebar({
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden w-[220px] shrink-0 border-l border-sidebar-border lg:flex lg:flex-col">
+      <aside className="hidden w-[var(--sidebar-width)] shrink-0 border-l border-sidebar-border lg:flex lg:flex-col">
         <SidebarContent />
       </aside>
 
-      {/* Mobile sidebar (fixed overlay) */}
+      {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 w-[260px] flex-col transition-transform duration-300 ease-in-out lg:hidden ${
+        className={`fixed inset-y-0 right-0 z-50 w-[var(--sidebar-width)] flex-col bg-sidebar shadow-2xl-app transition-transform duration-300 ease-in-out lg:hidden ${
           mobileOpen ? "flex translate-x-0" : "translate-x-full"
         }`}
       >
@@ -289,21 +338,18 @@ function NavLink({
     <Link
       to={item.to}
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+      className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all duration-150 ${
         active
-          ? "bg-sidebar-primary/15 font-semibold text-sidebar-primary"
-          : "font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          ? "border-r-2 border-sidebar-primary bg-sidebar-primary/15 font-bold text-sidebar-primary"
+          : "font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-foreground"
       }`}
     >
       <Icon
-        className={`h-4 w-4 shrink-0 ${
-          active ? "text-sidebar-primary" : "text-sidebar-foreground/50"
+        className={`h-4 w-4 shrink-0 transition-colors ${
+          active ? "text-sidebar-primary" : "text-sidebar-foreground/45"
         }`}
       />
-      <span>{item.label}</span>
-      {active && (
-        <div className="me-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />
-      )}
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
     </Link>
   );
 }
