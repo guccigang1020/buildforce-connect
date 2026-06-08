@@ -5,7 +5,6 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Send, Trophy, XCircle, Ban, MapPin, Calendar, Loader2, Eye, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { listMyOffers, withdrawOffer } from "@/lib/job-offers.functions";
 
 type MyOffer = {
@@ -20,26 +19,34 @@ type MyOffer = {
   request: { location: string; start_date: string; duration: string } | null;
 };
 
-const STATUS_META: Record<string, { label: string; icon: typeof Send; className: string }> = {
+const STATUS_META: Record<
+  string,
+  { label: string; icon: typeof Send; chipClass: string; barClass: string }
+> = {
   submitted: {
     label: "נשלחה",
     icon: Send,
-    className: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+    chipClass: "status-chip-pending",
+    barClass: "status-bar-pending",
   },
   withdrawn: {
     label: "נסוגה",
     icon: Ban,
-    className: "bg-muted text-muted-foreground border-border",
+    chipClass:
+      "inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-[11px] font-bold text-muted-foreground",
+    barClass: "status-bar-none",
   },
   awarded: {
     label: "נבחרה",
     icon: Trophy,
-    className: "bg-primary/15 text-primary border-primary/30",
+    chipClass: "status-chip-approved",
+    barClass: "status-bar-primary",
   },
   rejected: {
     label: "נדחתה",
     icon: XCircle,
-    className: "bg-destructive/15 text-destructive border-destructive/30",
+    chipClass: "status-chip-rejected",
+    barClass: "status-bar-rejected",
   },
 };
 
@@ -85,18 +92,36 @@ export function MyOffersSection() {
 
   return (
     <div className="mt-10 scroll-mt-24" id="my-offers">
-      <h2 className="mb-3 text-base font-bold md:text-lg">ההצעות שלי ({offers.length})</h2>
+      {/* Section header */}
+      <div className="mb-4 flex items-center gap-3">
+        <div className="section-header-icon">
+          <Send className="h-3.5 w-3.5 text-primary-foreground" />
+        </div>
+        <h2 className="text-base font-bold md:text-lg">
+          ההצעות שלי
+          {offers.length > 0 && (
+            <span className="ms-2 rounded-full border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+              {offers.length}
+            </span>
+          )}
+        </h2>
+      </div>
+
       {isLoading ? (
-        <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-8 text-sm text-muted-foreground">
-          <Loader2 className="ml-2 h-4 w-4 animate-spin" /> טוען הצעות…
+        <div className="space-y-2.5">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+          ))}
         </div>
       ) : error ? (
         <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-5 text-sm text-destructive">
           שגיאה בטעינת הצעות: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
         </div>
       ) : offers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          טרם הגשת הצעות
+        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 py-12 text-center">
+          <Send className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
+          <p className="text-sm font-semibold text-muted-foreground">טרם הגשת הצעות</p>
+          <p className="mt-1 text-xs text-muted-foreground">הצעות שתגיש יופיעו כאן.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -107,50 +132,59 @@ export function MyOffersSection() {
             return (
               <div
                 key={o.id}
-                className={`rounded-2xl border p-4 md:p-5 transition-all ${
-                  isAwarded
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-border/60 bg-card"
-                }`}
+                className={`rounded-2xl border p-4 transition-all md:p-5 ${
+                  isAwarded ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card"
+                } ${meta.barClass}`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
+                    {/* Status chip + request ID */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className={`gap-1 ${meta.className}`}>
+                      <span className={meta.chipClass}>
                         <Icon className="h-3 w-3" /> {meta.label}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground">
                         מכרז #{o.request_id.slice(0, 8)}
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+
+                    {/* Location + date as info chips */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       {o.request?.location && (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
+                        <span className="info-chip">
+                          <MapPin className="h-3 w-3" />
                           {o.request.location}
                         </span>
                       )}
                       {o.request?.start_date && (
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
+                        <span className="info-chip">
+                          <Calendar className="h-3 w-3" />
                           {o.request.start_date}
                         </span>
                       )}
-                      {o.request?.duration && <span>{o.request.duration}</span>}
+                      {o.request?.duration && (
+                        <span className="info-chip">{o.request.duration}</span>
+                      )}
                     </div>
-                    <div className="mt-1 text-[11px] text-muted-foreground">
+                    <div className="mt-1.5 text-[11px] text-muted-foreground">
                       עודכן: {formatDateTime(o.updated_at)}
                     </div>
                   </div>
+
+                  {/* Price + workers */}
                   <div className="text-left">
-                    <div className={`text-xl font-extrabold ${isAwarded ? "text-primary" : ""}`}>
+                    <div
+                      className={`text-xl font-extrabold ${isAwarded ? "text-primary" : "text-foreground"}`}
+                    >
                       ₪{Number(o.price_per_hour)}/שעה
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="mt-0.5 text-xs text-muted-foreground">
                       {o.available_workers} עובדים
                     </div>
                   </div>
                 </div>
+
+                {/* Footer actions */}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
                   {isAwarded && (
                     <div className="text-xs font-semibold text-primary">

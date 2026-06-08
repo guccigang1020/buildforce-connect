@@ -119,7 +119,6 @@ function CorporationDashboard() {
     };
   }, [offers]);
 
-  // Price band analysis — computed from offer history
   const priceIntelligence = useMemo(() => {
     const decidedOffers = offers.filter(
       (o) => o.status === "awarded" || o.status === "rejected",
@@ -168,7 +167,7 @@ function CorporationDashboard() {
 
   return (
     <AppShell title="לוח תאגיד">
-      {/* Company header card */}
+      {/* ── Company header card ── */}
       <div className="mb-6 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-card animate-fade-up">
         <div className="relative h-28 bg-gradient-to-br from-primary/35 via-primary/12 to-card md:h-32">
           <div
@@ -193,18 +192,21 @@ function CorporationDashboard() {
                     {companyName}
                   </h1>
                   {isApproved && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-                      <BadgeCheck className="h-3.5 w-3.5" /> מאומת
+                    <span className="role-badge">
+                      <BadgeCheck className="h-3 w-3" /> מאומת
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Building2 className="h-3 w-3" />
-                    תאגיד כוח אדם
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="info-chip">
+                    <Building2 className="h-3 w-3" /> תאגיד כוח אדם
                   </span>
-                  {profile?.city && <span>{profile.city}</span>}
-                  <span>{isLoading ? "…" : `${stats.totalActiveWorkers} עובדים פעילים`}</span>
+                  {profile?.city && (
+                    <span className="info-chip">{profile.city}</span>
+                  )}
+                  <span className="info-chip">
+                    {isLoading ? "…" : `${stats.totalActiveWorkers} עובדים פעילים`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -212,21 +214,21 @@ function CorporationDashboard() {
         </div>
       </div>
 
-      {/* Status alerts */}
+      {/* ── Status alerts ── */}
       {!isCorporation && (
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100 status-bar-pending">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין להפעלת התפקיד.</span>
         </div>
       )}
       {isCorporation && !isApproved && (
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100">
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100 status-bar-pending">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.</span>
         </div>
       )}
 
-      {/* KPI strip */}
+      {/* ── KPI strip ── */}
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-200">
         <CorpKPI
           icon={Briefcase}
@@ -243,7 +245,7 @@ function CorporationDashboard() {
         />
 
         {/* Win rate ring */}
-        <div className="col-span-2 flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-5 md:col-span-1">
+        <div className="kpi-card col-span-2 flex items-center gap-4 p-5 md:col-span-1">
           <WinRateRing rate={isLoading ? 0 : stats.winRate} />
           <div>
             <div className="text-xs font-medium text-muted-foreground">שיעור הצלחה</div>
@@ -269,43 +271,40 @@ function CorporationDashboard() {
         />
       </div>
 
-      {/* Revenue breakdown bar */}
+      {/* ── Revenue breakdown bar ── */}
       {stats.totalActiveWorkers > 0 && (
-        <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <span className="text-xs font-bold text-foreground">חישוב עמלה:</span>
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
+          <div className="section-header-icon shrink-0">
+            <BarChart3 className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>₪{PLATFORM_FEE_PER_HOUR} לשעת עובד</span>
-            <span className="text-border">·</span>
-            <span>{HOURS_PER_MONTH} שעות/חודש</span>
-            <span className="text-border">·</span>
-            <span>{stats.totalActiveWorkers} עובדים</span>
-            <span className="text-border">=</span>
-            <span className="font-extrabold text-foreground">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <span className="text-xs font-bold text-foreground">חישוב עמלה:</span>
+            <span className="info-chip">₪{PLATFORM_FEE_PER_HOUR}/שעה</span>
+            <span className="text-xs text-muted-foreground">×</span>
+            <span className="info-chip">{HOURS_PER_MONTH} שעות/חודש</span>
+            <span className="text-xs text-muted-foreground">×</span>
+            <span className="info-chip">{stats.totalActiveWorkers} עובדים</span>
+            <span className="text-xs text-muted-foreground">=</span>
+            <span className="text-sm font-extrabold text-primary">
               ₪{stats.monthlyFee.toLocaleString()}/חודש
             </span>
           </div>
         </div>
       )}
 
-      {/* Intelligence panels: attendance quality + price analysis */}
+      {/* ── Intelligence panels ── */}
       {(attStats || priceIntelligence) && (
         <div className="mb-5 grid gap-4 md:grid-cols-2 animate-fade-up delay-200">
-          {/* Attendance Quality */}
           {!attendanceLoading && attStats && attStats.monthly.total > 0 && (
             <AttendanceQualityPanel stats={attStats} />
           )}
-
-          {/* Price Intelligence */}
           {!isLoading && priceIntelligence && priceIntelligence.bands.length > 0 && (
             <PriceIntelligencePanel intelligence={priceIntelligence} />
           )}
         </div>
       )}
 
-      {/* Sections */}
+      {/* ── Sub-sections ── */}
       <OpenTendersSection />
       <MyOffersSection />
       {isCorporation && <WorkforceInventorySection />}
@@ -326,14 +325,12 @@ function AttendanceQualityPanel({ stats }: { stats: CorpAttendanceStats }) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
-      <div className="flex items-center gap-2.5 border-b border-border/60 bg-muted/20 px-4 py-3">
-        <div className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-500/15">
-          <Activity className="h-3.5 w-3.5 text-emerald-600" />
+      <div className="flex items-center gap-2.5 border-b border-border/60 bg-muted/20 px-4 py-3.5">
+        <div className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-lg bg-emerald-500/18 text-emerald-600">
+          <Activity className="h-3.5 w-3.5" />
         </div>
         <span className="text-sm font-bold">איכות נוכחות</span>
-        <span className="rounded-full border border-border/60 bg-card px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-          {monthName}
-        </span>
+        <span className="info-chip">{monthName}</span>
         <div className="ms-auto">
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
@@ -411,28 +408,28 @@ function PriceIntelligencePanel({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
-      <div className="flex items-center gap-2.5 border-b border-border/60 bg-muted/20 px-4 py-3">
-        <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10">
-          <Target className="h-3.5 w-3.5 text-primary" />
+      <div className="flex items-center gap-2.5 border-b border-border/60 bg-muted/20 px-4 py-3.5">
+        <div className="section-header-icon">
+          <Target className="h-3.5 w-3.5 text-primary-foreground" />
         </div>
         <span className="text-sm font-bold">ניתוח תמחור</span>
         {bestBand?.rate != null && (
-          <div className="ms-auto flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600">
+          <span className="ms-auto status-chip-approved">
             <TrendingUp className="h-3 w-3" /> {bestBand.label} — {bestBand.rate}% זכיות
-          </div>
+          </span>
         )}
       </div>
 
-      <div className="divide-y divide-border/40 px-4">
+      <div className="divide-y divide-border/40 px-4 py-1">
         {bands.map((band) => (
-          <div key={band.label} className="flex items-center gap-3 py-2.5">
+          <div key={band.label} className="flex items-center gap-3 py-3">
             <div className="w-20 shrink-0 text-xs font-semibold text-foreground/80">
               {band.label}
             </div>
             <div className="flex flex-1 items-center gap-2">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted/60">
+              <div className="progress-track flex-1">
                 <div
-                  className="h-full rounded-full bg-gradient-primary transition-all duration-700"
+                  className="progress-fill"
                   style={{ width: `${maxRate > 0 ? ((band.rate ?? 0) / maxRate) * 100 : 0}%` }}
                 />
               </div>
@@ -460,7 +457,7 @@ function PriceIntelligencePanel({
           {avgWinPrice != null && (
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-              <span className="text-[11px] text-muted-foreground">מחיר ממוצע בזכיות:</span>
+              <span className="text-[11px] text-muted-foreground">ממוצע בזכיות:</span>
               <span className="text-xs font-extrabold text-emerald-600">₪{avgWinPrice}/שעה</span>
             </div>
           )}
@@ -506,13 +503,7 @@ function QualityStat({
       {sub && <div className="mt-0.5 text-[10px] font-semibold text-muted-foreground">{sub}</div>}
       <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
       {trend && (
-        <div
-          className={`mt-0.5 text-[10px] font-semibold ${
-            trend.positive ? "text-emerald-600" : "text-destructive"
-          }`}
-        >
-          {trend.label}
-        </div>
+        <span className={trend.positive ? "trend-up" : "trend-down"}>{trend.label}</span>
       )}
     </div>
   );
@@ -566,22 +557,23 @@ function CorpKPI({
   sub: string;
   variant?: "default" | "accent" | "revenue";
 }) {
-  const containerCls =
+  const cardCls =
     variant === "accent"
-      ? "border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5"
+      ? "kpi-card kpi-card-primary"
       : variant === "revenue"
-        ? "border-emerald-500/30 bg-emerald-500/5"
-        : "border-border/60 bg-card";
+        ? "kpi-card kpi-card-success"
+        : "kpi-card";
+
   const iconCls =
     variant === "accent"
-      ? "bg-gradient-primary text-primary-foreground shadow-elegant"
+      ? "kpi-icon kpi-icon-filled"
       : variant === "revenue"
-        ? "bg-emerald-500/15 text-emerald-600"
-        : "bg-primary/10 text-primary";
+        ? "kpi-icon kpi-icon-success"
+        : "kpi-icon kpi-icon-primary";
 
   return (
-    <div className={`rounded-2xl border p-5 transition-all hover:shadow-card ${containerCls}`}>
-      <div className={`grid h-10 w-10 place-items-center rounded-xl ${iconCls}`}>
+    <div className={`relative p-5 ${cardCls}`}>
+      <div className={iconCls}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>

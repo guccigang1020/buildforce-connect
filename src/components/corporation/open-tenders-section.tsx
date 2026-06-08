@@ -42,22 +42,33 @@ export function OpenTendersSection() {
 
   return (
     <div className="mt-10">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-bold md:text-lg">מכרזים פתוחים להגשת הצעה</h2>
+      {/* Section header */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="section-header-icon">
+            <ListChecks className="h-3.5 w-3.5 text-primary-foreground" />
+          </div>
+          <h2 className="text-base font-bold md:text-lg">מכרזים פתוחים להגשת הצעה</h2>
+        </div>
         <a
           href="#my-offers"
-          className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/10"
+          className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
         >
           <ListChecks className="h-3.5 w-3.5" /> לניהול ההצעות שלי
         </a>
       </div>
+
       {isLoading ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          טוען מכרזים...
+        <div className="space-y-2.5">
+          {[0, 1].map((i) => (
+            <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+          ))}
         </div>
       ) : requests.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          אין כרגע מכרזים פתוחים.
+        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 py-12 text-center">
+          <ListChecks className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
+          <p className="text-sm font-semibold text-muted-foreground">אין כרגע מכרזים פתוחים</p>
+          <p className="mt-1 text-xs text-muted-foreground">מכרזים חדשים יופיעו כאן ברגע שיפורסמו.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -72,17 +83,19 @@ export function OpenTendersSection() {
 
 function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/30 md:p-5">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:shadow-card status-bar-live md:p-5">
       <div className="flex min-w-0 items-start gap-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-sm font-bold text-muted-foreground">
+        {/* Rank badge */}
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/50 text-sm font-extrabold text-muted-foreground">
           {rank}
         </div>
         <div className="min-w-0">
-          <div className="mt-0.5 flex flex-wrap items-center gap-3 text-sm font-bold md:text-base">
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-4 w-4 text-primary" /> {req.location}
+          {/* Location + date chips */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="info-chip font-semibold">
+              <MapPin className="h-3 w-3 text-primary" /> {req.location}
             </span>
-            <span className="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+            <span className="info-chip">
               <Calendar className="h-3 w-3" /> {req.start_date} · {req.duration}
             </span>
             {req.deadline_at && (
@@ -92,11 +105,12 @@ function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
               </span>
             )}
           </div>
-          <div className="mt-1 text-[11px] text-muted-foreground">
-            התחייבות {req.commitment_months} חודשים
-            {req.budget ? (
-              <span className="ms-1 font-semibold text-foreground">· תקציב {req.budget}</span>
-            ) : null}
+          {/* Commitment + budget */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+            <span>התחייבות {req.commitment_months} חודשים</span>
+            {req.budget && (
+              <span className="font-semibold text-foreground">תקציב {req.budget}</span>
+            )}
           </div>
         </div>
       </div>
@@ -104,7 +118,7 @@ function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
         <Link
           to="/requests/$id"
           params={{ id: req.id }}
-          className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+          className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
         >
           פרטים
         </Link>
@@ -266,7 +280,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
               כלול ביטוח מלא
             </Label>
           </div>
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
             <div className="text-xs font-bold text-amber-600">
               דרישות לערבות העסקה (במידה והקבלן יבחר בהצעתך)
             </div>
