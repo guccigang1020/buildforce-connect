@@ -30,6 +30,7 @@ import { Route as LaborSupplierAttendanceRouteImport } from './routes/labor-supp
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
 import { Route as CorporationPricingRouteImport } from './routes/corporation.pricing'
+import { Route as CorporationFinancialRouteImport } from './routes/corporation.financial'
 import { Route as CorporationAccountsRouteImport } from './routes/corporation.accounts'
 import { Route as ContractorProjectsRouteImport } from './routes/contractor.projects'
 import { Route as ContractorAttendanceRouteImport } from './routes/contractor.attendance'
@@ -149,6 +150,11 @@ const CorporationPricingRoute = CorporationPricingRouteImport.update({
   path: '/corporation/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CorporationFinancialRoute = CorporationFinancialRouteImport.update({
+  id: '/corporation/financial',
+  path: '/corporation/financial',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CorporationAccountsRoute = CorporationAccountsRouteImport.update({
   id: '/corporation/accounts',
   path: '/corporation/accounts',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/contractor/attendance': typeof ContractorAttendanceRoute
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
+  '/corporation/financial': typeof CorporationFinancialRoute
   '/corporation/pricing': typeof CorporationPricingRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/contractor/attendance': typeof ContractorAttendanceRoute
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
+  '/corporation/financial': typeof CorporationFinancialRoute
   '/corporation/pricing': typeof CorporationPricingRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/contractor/attendance': typeof ContractorAttendanceRoute
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
+  '/corporation/financial': typeof CorporationFinancialRoute
   '/corporation/pricing': typeof CorporationPricingRoute
   '/corporations/$id': typeof CorporationsIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -352,6 +361,7 @@ export interface FileRouteTypes {
     | '/contractor/attendance'
     | '/contractor/projects'
     | '/corporation/accounts'
+    | '/corporation/financial'
     | '/corporation/pricing'
     | '/corporations/$id'
     | '/email/unsubscribe'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
     | '/contractor/attendance'
     | '/contractor/projects'
     | '/corporation/accounts'
+    | '/corporation/financial'
     | '/corporation/pricing'
     | '/corporations/$id'
     | '/email/unsubscribe'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/contractor/attendance'
     | '/contractor/projects'
     | '/corporation/accounts'
+    | '/corporation/financial'
     | '/corporation/pricing'
     | '/corporations/$id'
     | '/email/unsubscribe'
@@ -461,6 +473,7 @@ export interface RootRouteChildren {
   ContractorAttendanceRoute: typeof ContractorAttendanceRoute
   ContractorProjectsRoute: typeof ContractorProjectsRoute
   CorporationAccountsRoute: typeof CorporationAccountsRoute
+  CorporationFinancialRoute: typeof CorporationFinancialRoute
   CorporationPricingRoute: typeof CorporationPricingRoute
   CorporationsIdRoute: typeof CorporationsIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
@@ -627,6 +640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CorporationPricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/corporation/financial': {
+      id: '/corporation/financial'
+      path: '/corporation/financial'
+      fullPath: '/corporation/financial'
+      preLoaderRoute: typeof CorporationFinancialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/corporation/accounts': {
       id: '/corporation/accounts'
       path: '/corporation/accounts'
@@ -741,6 +761,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContractorAttendanceRoute: ContractorAttendanceRoute,
   ContractorProjectsRoute: ContractorProjectsRoute,
   CorporationAccountsRoute: CorporationAccountsRoute,
+  CorporationFinancialRoute: CorporationFinancialRoute,
   CorporationPricingRoute: CorporationPricingRoute,
   CorporationsIdRoute: CorporationsIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
