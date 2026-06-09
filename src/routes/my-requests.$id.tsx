@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers, closeJobRequest } from "@/lib/job-requests.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { maskedRequestId } from "@/lib/anonymize";
 import { awardOffer } from "@/lib/job-offers.functions";
 
 export const Route = createFileRoute("/my-requests/$id")({
@@ -254,7 +255,7 @@ function MyRequestPage() {
   ) : undefined;
 
   return (
-    <AppShell title={`בקשה #${request.id.slice(0, 8)}`} action={closeAction}>
+    <AppShell title={`בקשה ${maskedRequestId(request.id)}`} action={closeAction}>
       <div className="space-y-6">
         {/* Request header */}
         <div className="enterprise-card overflow-hidden animate-fade-up">

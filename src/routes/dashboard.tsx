@@ -32,6 +32,7 @@ import { AppShell } from "@/components/app-shell";
 import { listMyJobRequests } from "@/lib/job-requests.functions";
 import { getContractorDashboardStats } from "@/lib/analytics.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { maskedRequestId } from "@/lib/anonymize";
 
 type MyRequest = {
   id: string;
@@ -119,13 +120,18 @@ function DashboardPage() {
   const fetchMine = useServerFn(listMyJobRequests);
   const fetchStats = useServerFn(getContractorDashboardStats);
 
-  // Redirect unauthenticated visitors to login instead of firing data
-  // requests that 401 and crash the page (matches corporation-dashboard).
+  // Route by role: unauthenticated -> login; a corporation (manpower supplier)
+  // belongs on its own dashboard, not the contractor view.
   useEffect(() => {
-    if (!loading && !session) {
+    if (loading) return;
+    if (!session) {
       void navigate({ to: "/login", replace: true });
+      return;
     }
-  }, [loading, session, navigate]);
+    if (hasRole("corporation") && !hasRole("contractor")) {
+      void navigate({ to: "/corporation-dashboard", replace: true });
+    }
+  }, [loading, session, hasRole, navigate]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-requests"],
@@ -643,7 +649,7 @@ function RequestCard({ request: r }: { request: MyRequest }) {
               <Icon className="h-3 w-3" /> {meta.label}
             </span>
             <span className="font-mono text-[11px] text-muted-foreground">
-              #{r.id.slice(0, 8)}
+              {maskedRequestId(r.id)}
             </span>
             {r.deadline_at && r.status === "open" && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600">

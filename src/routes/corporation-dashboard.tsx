@@ -77,8 +77,16 @@ function CorporationDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/login", replace: true });
-  }, [loading, user, navigate]);
+    if (loading) return;
+    if (!user) {
+      navigate({ to: "/login", replace: true });
+      return;
+    }
+    // A pure contractor belongs on the contractor dashboard.
+    if (hasRole("contractor") && !hasRole("corporation")) {
+      navigate({ to: "/dashboard", replace: true });
+    }
+  }, [loading, user, hasRole, navigate]);
 
   const fetchMine = useServerFn(listMyOffers);
   const fetchAttendance = useServerFn(getCorporationAttendanceStats);

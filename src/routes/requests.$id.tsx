@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { maskedRequestId } from "@/lib/anonymize";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -35,7 +36,7 @@ import { useAuth } from "@/hooks/use-auth";
 export const Route = createFileRoute("/requests/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `מכרז #${params.id.slice(0, 8)} — BuildForce` },
+      { title: `מכרז ${maskedRequestId(params.id)} — BuildForce` },
       { name: "description", content: "פרטי מכרז כוח אדם והגשת הצעה" },
     ],
   }),
@@ -167,7 +168,7 @@ function RequestPage() {
   const deadlineUrgent = deadlineHours !== null && deadlineHours < 24;
 
   return (
-    <AppShell title={`מכרז #${req.id.slice(0, 8)}`}>
+    <AppShell title={`מכרז ${maskedRequestId(req.id)}`}>
       <div className="space-y-6">
         {/* Header */}
         <div className="enterprise-card overflow-hidden animate-fade-up">

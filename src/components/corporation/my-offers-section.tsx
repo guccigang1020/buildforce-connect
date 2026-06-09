@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Send, Trophy, XCircle, Ban, MapPin, Calendar, Loader2, Eye, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { listMyOffers, withdrawOffer } from "@/lib/job-offers.functions";
+import { maskedRequestId } from "@/lib/anonymize";
 
 type MyOffer = {
   id: string;
@@ -144,7 +145,7 @@ export function MyOffersSection() {
                         <Icon className="h-3 w-3" /> {meta.label}
                       </span>
                       <span className="font-mono text-[11px] text-muted-foreground">
-                        מכרז #{o.request_id.slice(0, 8)}
+                        מכרז {maskedRequestId(o.request_id)}
                       </span>
                     </div>
 
