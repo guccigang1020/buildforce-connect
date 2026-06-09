@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getRequest } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTransactionalEmailServer } from "@/lib/email/send.server";
 
 const itemSchema = z.object({
   role: z.string().min(1),
@@ -28,6 +25,10 @@ export const createJobRequest = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => inputSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const [{ supabaseAdmin }, { sendTransactionalEmailServer }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/email/send.server"),
+    ]);
 
     const { data: req, error: reqErr } = await supabase
       .from("job_requests")
@@ -154,6 +155,7 @@ export const listOpenJobRequests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     void context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Use admin client: marketplace listing must work for any authenticated
     // corp, even before they've submitted an offer. Only safe columns are
     // selected — contact_name/contact_phone are never returned here.
@@ -174,6 +176,7 @@ export const getJobRequestWithOffers = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Admin client: corp may not yet have an offer (RLS would block).
     // We redact sensitive fields below for non-owners.
     const { data: req, error: rErr } = await supabaseAdmin
