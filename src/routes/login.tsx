@@ -1,11 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, Loader2, BadgeCheck, Zap, Shield } from "lucide-react";
+import { Mail, Lock, Loader2, BadgeCheck, Zap, Shield, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { mapAuthError } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +18,8 @@ const loginSchema = z.object({
   password: z.string().min(6, "סיסמה לפחות 6 תווים").max(72),
 });
 
+type LoginValues = z.infer<typeof loginSchema>;
+
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
@@ -22,28 +27,31 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onTouched",
+    defaultValues: { email: "", password: "" },
+  });
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard" });
   }, [loading, session, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsed = loginSchema.safeParse({ email, password });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "פרטים לא תקינים");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword(parsed.data);
-    setSubmitting(false);
+  const onSubmit = async (data: LoginValues) => {
+    setFormError(null);
+    const { error } = await supabase.auth.signInWithPassword(data);
     if (error) {
-      toast.error(
-        error.message === "Invalid login credentials" ? "אימייל או סיסמה שגויים" : error.message,
-      );
+      const mapped = mapAuthError(error.message);
+      if (mapped.target === "email") setError("email", { type: "server", message: mapped.message });
+      else if (mapped.target === "password")
+        setError("password", { type: "server", message: mapped.message });
+      else setFormError(mapped.message);
       return;
     }
     toast.success("ברוך הבא!");
@@ -51,13 +59,12 @@ function LoginPage() {
   };
 
   const handleGoogle = async () => {
-    setSubmitting(true);
+    setFormError(null);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: "https://buildforce-connect.lovable.app/dashboard",
     });
     if (result.error) {
-      setSubmitting(false);
-      toast.error("התחברות עם Google נכשלה");
+      setFormError("התחברות עם Google נכשלה");
       return;
     }
     if (result.redirected) return;
@@ -90,7 +97,7 @@ function LoginPage() {
               variant="outline"
               className="w-full h-11 gap-2 border-border/80 bg-card/60 font-semibold hover:bg-card"
               onClick={handleGoogle}
-              disabled={submitting}
+              disabled={isSubmitting}
             >
               <GoogleIcon />
               המשך עם Google
@@ -100,7 +107,14 @@ function LoginPage() {
               <span className="h-px flex-1 bg-border/60" /> או <span className="h-px flex-1 bg-border/60" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {formError && (
+              <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-sm font-semibold">
                   כתובת אימייל
@@ -111,13 +125,20 @@ function LoginPage() {
                     id="email"
                     type="email"
                     autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
+                    aria-invalid={errors.email ? true : undefined}
+                    {...register("email")}
+                    className={`h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 ${
+                      errors.email ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""
+                    }`}
                     placeholder="you@example.com"
                   />
                 </div>
+                {errors.email && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-destructive">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -138,21 +159,28 @@ function LoginPage() {
                     id="password"
                     type="password"
                     autoComplete="current-password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
+                    aria-invalid={errors.password ? true : undefined}
+                    {...register("password")}
+                    className={`h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 ${
+                      errors.password ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""
+                    }`}
                     placeholder="••••••••"
                   />
                 </div>
+                {errors.password && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-destructive">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 className="w-full h-11 bg-gradient-primary text-primary-foreground font-bold shadow-elegant hover:opacity-95 transition-opacity"
-                disabled={submitting}
+                disabled={isSubmitting}
               >
-                {submitting ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מתחבר…
                   </>

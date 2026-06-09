@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers, closeJobRequest } from "@/lib/job-requests.functions";
+import { useAuth } from "@/hooks/use-auth";
 import { awardOffer } from "@/lib/job-offers.functions";
 
 export const Route = createFileRoute("/my-requests/$id")({
@@ -66,6 +67,8 @@ const STATUS_META: Record<string, { label: string; color: string; dot: string }>
 
 function MyRequestPage() {
   const { id } = Route.useParams();
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const fetchData = useServerFn(getJobRequestWithOffers);
   const awardFn = useServerFn(awardOffer);
@@ -74,9 +77,18 @@ function MyRequestPage() {
   const [confirmingAwardId, setConfirmingAwardId] = useState<string | null>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
 
+  // Redirect unauthenticated visitors to login instead of firing a request
+  // that 401s and crashes the page.
+  useEffect(() => {
+    if (!loading && !session) {
+      void navigate({ to: "/login", replace: true });
+    }
+  }, [loading, session, navigate]);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["job-request", id],
     queryFn: () => fetchData({ data: { id } }),
+    enabled: !!session,
   });
 
   const handleAward = async (offerId: string) => {
@@ -150,7 +162,7 @@ function MyRequestPage() {
     );
   }
 
-  if (error || !data) {
+  if (error || !data?.request) {
     return (
       <AppShell title="בקשה">
         <div className="enterprise-card p-10 text-center">

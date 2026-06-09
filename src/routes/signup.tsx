@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   UserPlus,
@@ -23,11 +25,13 @@ import {
   BadgeCheck,
   Zap,
   Shield,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
+import { mapAuthError } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,9 +52,7 @@ const baseSchema = z.object({
   business_id: z
     .string()
     .trim()
-    .min(8, "ח.פ / ע.מ חייב להיות 9 ספרות")
-    .max(15)
-    .regex(/^[0-9]+$/, "רק ספרות"),
+    .regex(/^[0-9]{9}$/, "ח.פ / ע.מ חייב להיות 9 ספרות"),
   contractor_license_number: z.string().trim().max(30).optional().or(z.literal("")),
   contractor_classification: z.string().trim().max(50).optional().or(z.literal("")),
 });
@@ -70,7 +72,9 @@ const signupSchema = baseSchema.superRefine((d, ctx) => {
   }
 });
 
-type RoleChoice = "contractor" | "corporation";
+type FormValues = z.infer<typeof signupSchema>;
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
@@ -79,115 +83,181 @@ export const Route = createFileRoute("/signup")({
 function SignupPage() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
-  const [role, setRole] = useState<RoleChoice>("contractor");
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    password: "",
-    city: "",
-    business_name: "",
-    business_id: "",
-    contractor_license_number: "",
-    contractor_classification: "",
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(signupSchema),
+    mode: "onTouched",
+    defaultValues: {
+      full_name: "",
+      email: "",
+      phone: "",
+      password: "",
+      city: "",
+      role: "contractor",
+      business_name: "",
+      business_id: "",
+      contractor_license_number: "",
+      contractor_classification: "",
+    },
   });
+
+  const role = watch("role");
+
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
   const [booksFile, setBooksFile] = useState<File | null>(null);
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+  const [booksError, setBooksError] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [agreedError, setAgreedError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/dashboard" });
   }, [loading, session, navigate]);
 
-  const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const onSubmit = async (data: FormValues) => {
+    setFormError(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsed = signupSchema.safeParse({ ...form, role });
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "פרטים לא תקינים");
-      return;
-    }
-    if (role === "contractor" && !licenseFile) {
-      toast.error("יש להעלות תעודת קבלן רשום (PDF / תמונה)");
-      return;
-    }
-    if (role === "contractor" && !booksFile) {
-      toast.error("יש להעלות אישור ניהול ספרים (PDF / תמונה)");
-      return;
+    // Inline validation for controls that live outside react-hook-form.
+    let ok = true;
+    if (data.role === "contractor") {
+      if (!licenseFile) {
+        setLicenseError("יש להעלות תעודת קבלן רשום (PDF / תמונה)");
+        ok = false;
+      }
+      if (!booksFile) {
+        setBooksError("יש להעלות אישור ניהול ספרים (PDF / תמונה)");
+        ok = false;
+      }
     }
     if (!agreed) {
-      toast.error("יש לאשר את תנאי השימוש כדי להמשיך");
-      return;
+      setAgreedError("יש לאשר את תנאי השימוש כדי להמשיך");
+      ok = false;
     }
-    setSubmitting(true);
+    if (!ok) return;
+
     const { data: signupData, error } = await supabase.auth.signUp({
-      email: parsed.data.email,
-      password: parsed.data.password,
+      email: data.email,
+      password: data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
-          full_name: parsed.data.full_name,
-          phone: parsed.data.phone,
-          company_name: parsed.data.business_name,
-          business_name: parsed.data.business_name,
-          business_id: parsed.data.business_id,
-          contractor_license_number: parsed.data.contractor_license_number || null,
-          contractor_classification: parsed.data.contractor_classification || null,
-          city: parsed.data.city,
-          role: parsed.data.role,
+          full_name: data.full_name,
+          phone: data.phone,
+          company_name: data.business_name,
+          business_name: data.business_name,
+          business_id: data.business_id,
+          contractor_license_number: data.contractor_license_number || null,
+          contractor_classification: data.contractor_classification || null,
+          city: data.city,
+          role: data.role,
         },
       },
     });
+
     if (error) {
-      setSubmitting(false);
-      toast.error(
-        error.message.includes("already") ? "המשתמש כבר רשום — נסה להתחבר" : error.message,
-      );
+      const mapped = mapAuthError(error.message);
+      if (mapped.target === "email") {
+        setError("email", { type: "server", message: mapped.message });
+      } else if (mapped.target === "password") {
+        setError("password", { type: "server", message: mapped.message });
+      } else {
+        setFormError(mapped.message);
+      }
+      return;
+    }
+
+    // Supabase returns an identities array; an empty one means the email is
+    // already registered (Supabase obfuscates this as a "success" when email
+    // confirmation is on, instead of returning an error).
+    if (signupData.user && (signupData.user.identities?.length ?? 0) === 0) {
+      setError("email", {
+        type: "server",
+        message: "אימייל זה כבר רשום במערכת — התחבר/י במקום זאת",
+      });
       return;
     }
 
     const userId = signupData.user?.id;
-    if (userId && role === "contractor") {
-      const uploaded: { license?: string; books?: string } = {};
-      const upload = async (file: File, kind: "license" | "books") => {
-        const ext = file.name.split(".").pop() || "bin";
-        const path = `${userId}/${kind}-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("contractor-docs").upload(path, file);
-        if (!upErr) uploaded[kind] = path;
-      };
-      if (licenseFile) await upload(licenseFile, "license");
-      if (booksFile) await upload(booksFile, "books");
-      if (Object.keys(uploaded).length > 0) {
-        await supabase
-          .from("profiles")
-          .update({
-            license_doc_url: uploaded.license ?? null,
-            books_cert_url: uploaded.books ?? null,
-          })
-          .eq("user_id", userId);
+
+    // Doc uploads require an authenticated session. When email confirmation is
+    // enabled there is no session yet, so we can't upload as the user here —
+    // tell them, but don't lose the signup.
+    if (userId && data.role === "contractor" && (licenseFile || booksFile)) {
+      if (signupData.session) {
+        const uploaded: { license?: string; books?: string } = {};
+        const upload = async (file: File, kind: "license" | "books") => {
+          const ext = file.name.split(".").pop() || "bin";
+          const path = `${userId}/${kind}-${Date.now()}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("contractor-docs")
+            .upload(path, file);
+          if (upErr) {
+            console.error(`Failed to upload ${kind} doc`, upErr);
+            return;
+          }
+          uploaded[kind] = path;
+        };
+        if (licenseFile) await upload(licenseFile, "license");
+        if (booksFile) await upload(booksFile, "books");
+
+        if (Object.keys(uploaded).length > 0) {
+          const { error: updErr } = await supabase
+            .from("profiles")
+            .update({
+              license_doc_url: uploaded.license ?? null,
+              books_cert_url: uploaded.books ?? null,
+            })
+            .eq("user_id", userId);
+          if (updErr) console.error("Failed to attach contractor docs to profile", updErr);
+        }
+        if (!uploaded.license || !uploaded.books) {
+          toast.warning("חלק מהמסמכים לא הועלו. ניתן להשלים אותם מההגדרות לאחר ההתחברות.");
+        }
+      } else {
+        toast.message("נרשמת! לאחר אימות האימייל תוכל/י להעלות את מסמכי הקבלן מההגדרות.");
       }
     }
 
-    setSubmitting(false);
-    toast.success("נרשמת בהצלחה! בדוק את האימייל לאישור החשבון.");
-    navigate({ to: "/login" });
+    if (signupData.session) {
+      toast.success("נרשמת בהצלחה!");
+      navigate({ to: "/dashboard" });
+    } else {
+      toast.success("נרשמת בהצלחה! בדוק/י את האימייל לאישור החשבון.");
+      navigate({ to: "/login" });
+    }
   };
 
   const handleGoogle = async () => {
-    setSubmitting(true);
+    setFormError(null);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: "https://buildforce-connect.lovable.app/dashboard",
     });
     if (result.error) {
-      setSubmitting(false);
-      toast.error("הרשמה עם Google נכשלה");
+      setFormError("הרשמה עם Google נכשלה");
       return;
     }
     if (result.redirected) return;
     navigate({ to: "/dashboard" });
+  };
+
+  const pickFile = (
+    setFile: (f: File | null) => void,
+    setErr: (m: string | null) => void,
+  ) => (f: File | null) => {
+    if (f && f.size > MAX_FILE_BYTES) {
+      setErr("הקובץ גדול מ-5MB");
+      return;
+    }
+    setErr(null);
+    setFile(f);
   };
 
   return (
@@ -215,14 +285,14 @@ function SignupPage() {
               <div className="grid grid-cols-2 gap-3">
                 <RoleCard
                   active={role === "contractor"}
-                  onClick={() => setRole("contractor")}
+                  onClick={() => setValue("role", "contractor", { shouldValidate: true })}
                   icon={HardHat}
                   title="קבלן / יזם"
                   sub="פותח בקשות לפועלים"
                 />
                 <RoleCard
                   active={role === "corporation"}
-                  onClick={() => setRole("corporation")}
+                  onClick={() => setValue("role", "corporation", { shouldValidate: true })}
                   icon={Briefcase}
                   title="תאגיד כוח אדם"
                   sub="שולח הצעות לקבלנים"
@@ -235,7 +305,7 @@ function SignupPage() {
               variant="outline"
               className="w-full h-11 gap-2 border-border/80 bg-card/60 font-semibold hover:bg-card"
               onClick={handleGoogle}
-              disabled={submitting}
+              disabled={isSubmitting}
             >
               <GoogleIcon />
               הרשמה עם Google
@@ -246,14 +316,21 @@ function SignupPage() {
               <span className="h-px flex-1 bg-border/60" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {formError && (
+              <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
               <Field
                 id="full_name"
                 label="שם מלא"
                 icon={User}
                 required
-                value={form.full_name}
-                onChange={update("full_name")}
+                registration={register("full_name")}
+                error={errors.full_name?.message}
               />
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
@@ -262,8 +339,8 @@ function SignupPage() {
                   type="email"
                   icon={Mail}
                   required
-                  value={form.email}
-                  onChange={update("email")}
+                  registration={register("email")}
+                  error={errors.email?.message}
                 />
                 <Field
                   id="phone"
@@ -271,8 +348,8 @@ function SignupPage() {
                   type="tel"
                   icon={Phone}
                   required
-                  value={form.phone}
-                  onChange={update("phone")}
+                  registration={register("phone")}
+                  error={errors.phone?.message}
                   placeholder="050-1234567"
                 />
               </div>
@@ -282,8 +359,8 @@ function SignupPage() {
                 type="password"
                 icon={Lock}
                 required
-                value={form.password}
-                onChange={update("password")}
+                registration={register("password")}
+                error={errors.password?.message}
                 placeholder="לפחות 6 תווים"
               />
 
@@ -299,16 +376,16 @@ function SignupPage() {
                     label={role === "corporation" ? "שם התאגיד" : "שם העסק"}
                     icon={Building2}
                     required
-                    value={form.business_name}
-                    onChange={update("business_name")}
+                    registration={register("business_name")}
+                    error={errors.business_name?.message}
                   />
                   <Field
                     id="business_id"
                     label="ח.פ / ע.מ"
                     icon={Hash}
                     required
-                    value={form.business_id}
-                    onChange={update("business_id")}
+                    registration={register("business_id")}
+                    error={errors.business_id?.message}
                     placeholder="9 ספרות"
                   />
                 </div>
@@ -317,8 +394,8 @@ function SignupPage() {
                   label="עיר"
                   icon={MapPin}
                   required
-                  value={form.city}
-                  onChange={update("city")}
+                  registration={register("city")}
+                  error={errors.city?.message}
                 />
               </div>
 
@@ -340,8 +417,8 @@ function SignupPage() {
                       label="מס' קבלן רשום"
                       icon={Award}
                       required
-                      value={form.contractor_license_number}
-                      onChange={update("contractor_license_number")}
+                      registration={register("contractor_license_number")}
+                      error={errors.contractor_license_number?.message}
                       placeholder="לדוגמה: 12345"
                     />
                     <Field
@@ -349,8 +426,8 @@ function SignupPage() {
                       label="סיווג"
                       icon={Briefcase}
                       required
-                      value={form.contractor_classification}
-                      onChange={update("contractor_classification")}
+                      registration={register("contractor_classification")}
+                      error={errors.contractor_classification?.message}
                       placeholder="100 / 131 / ..."
                     />
                   </div>
@@ -360,8 +437,9 @@ function SignupPage() {
                     icon={FileText}
                     required
                     file={licenseFile}
-                    onFile={setLicenseFile}
+                    onFile={pickFile(setLicenseFile, setLicenseError)}
                     accept=".pdf,image/*"
+                    error={licenseError}
                   />
                   <FileField
                     id="books_file"
@@ -369,32 +447,39 @@ function SignupPage() {
                     icon={BookOpen}
                     required
                     file={booksFile}
-                    onFile={setBooksFile}
+                    onFile={pickFile(setBooksFile, setBooksError)}
                     accept=".pdf,image/*"
+                    error={booksError}
                   />
                 </div>
               )}
 
               {/* Terms */}
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-primary"
-                />
-                <span className="text-xs leading-relaxed text-muted-foreground">
-                  אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת הפלטפורמה
-                  (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס לפי המוסכם.
-                </span>
-              </label>
+              <div className="space-y-1.5">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-card/40 p-3.5">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => {
+                      setAgreed(e.target.checked);
+                      if (e.target.checked) setAgreedError(null);
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-primary"
+                  />
+                  <span className="text-xs leading-relaxed text-muted-foreground">
+                    אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת הפלטפורמה
+                    (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס לפי המוסכם.
+                  </span>
+                </label>
+                {agreedError && <FieldError message={agreedError} />}
+              </div>
 
               <Button
                 type="submit"
                 className="w-full h-11 bg-gradient-primary text-primary-foreground font-bold shadow-elegant hover:opacity-95"
-                disabled={submitting}
+                disabled={isSubmitting}
               >
-                {submitting ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="ms-2 h-4 w-4 animate-spin" /> יוצר חשבון…
                   </>
@@ -501,14 +586,23 @@ function RoleCard({
   );
 }
 
+function FieldError({ message }: { message: string }) {
+  return (
+    <p className="flex items-center gap-1 text-xs font-medium text-destructive">
+      <AlertCircle className="h-3 w-3 shrink-0" />
+      {message}
+    </p>
+  );
+}
+
 function Field({
   id,
   label,
   icon: Icon,
   type = "text",
   required,
-  value,
-  onChange,
+  registration,
+  error,
   placeholder,
 }: {
   id: string;
@@ -516,8 +610,8 @@ function Field({
   icon: React.ComponentType<{ className?: string }>;
   type?: string;
   required?: boolean;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  registration: UseFormRegisterReturn;
+  error?: string;
   placeholder?: string;
 }) {
   return (
@@ -531,13 +625,15 @@ function Field({
         <Input
           id={id}
           type={type}
-          required={required}
-          value={value}
-          onChange={onChange}
-          className="h-10 pr-10 bg-card/50 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
+          aria-invalid={error ? true : undefined}
+          {...registration}
+          className={`h-10 pr-10 bg-card/50 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 ${
+            error ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""
+          }`}
           placeholder={placeholder}
         />
       </div>
+      {error && <FieldError message={error} />}
     </div>
   );
 }
@@ -561,6 +657,7 @@ function FileField({
   file,
   onFile,
   accept,
+  error,
 }: {
   id: string;
   label: string;
@@ -569,6 +666,7 @@ function FileField({
   file: File | null;
   onFile: (f: File | null) => void;
   accept?: string;
+  error?: string | null;
 }) {
   return (
     <div className="space-y-1.5">
@@ -579,9 +677,11 @@ function FileField({
       <label
         htmlFor={id}
         className={`flex cursor-pointer items-center gap-3 rounded-xl border border-dashed px-3 py-2.5 transition-colors ${
-          file
-            ? "border-emerald-500/60 bg-emerald-500/5"
-            : "border-border/60 bg-card/30 hover:border-primary/50"
+          error
+            ? "border-destructive/60 bg-destructive/5"
+            : file
+              ? "border-emerald-500/60 bg-emerald-500/5"
+              : "border-border/60 bg-card/30 hover:border-primary/50"
         }`}
       >
         {file ? (
@@ -598,16 +698,10 @@ function FileField({
           type="file"
           accept={accept}
           className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0] ?? null;
-            if (f && f.size > 5 * 1024 * 1024) {
-              alert("הקובץ גדול מ-5MB");
-              return;
-            }
-            onFile(f);
-          }}
+          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
         />
       </label>
+      {error && <FieldError message={error} />}
     </div>
   );
 }
