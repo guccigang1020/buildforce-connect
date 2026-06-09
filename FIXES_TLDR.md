@@ -59,24 +59,37 @@ There's a "Bidding corps can view requests they bid on" rule on the `job_request
 that needs to check the `job_offers` table. But `job_offers` has a rule that checks back
 to `job_requests`. This creates a loop.
 
-A previous migration **fixed** this by wrapping the check in a `SECURITY DEFINER` function
-called `has_bid_on_request()` — a function runs under the definer's privileges, so it
-doesn't re-evaluate RLS and avoids the circle. But the function **lost EXECUTE permission**
-for logged-in users.
+The fix is to wrap the check in a `SECURITY DEFINER` function called `has_bid_on_request()` —
+a function runs under the definer's privileges, so it doesn't re-evaluate RLS and avoids
+the circle. This function was defined in a migration but may not have been applied to the
+database.
 
 ### The fix
-**File:** `supabase/migrations/20260609173000_fix_has_bid_on_request_permission.sql`
+**File:** `supabase/migrations/20260609173100_create_has_bid_on_request_function.sql`
 
-This migration re-grants the permission:
+This migration creates the function and updates the policy to use it:
 
 ```sql
+CREATE OR REPLACE FUNCTION public.has_bid_on_request(_request_id uuid, _corporation_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.job_offers
+    WHERE request_id = _request_id
+      AND corporation_id = _corporation_id
+  )
+$$;
+
 GRANT EXECUTE ON FUNCTION public.has_bid_on_request(uuid, uuid) TO authenticated;
 ```
 
-And ensures the policy uses the safe function-based approach.
-
 > ⚠️ **You must apply this migration to the database** for the fix to take effect.
-> Same as above: Supabase Dashboard → SQL Editor → paste the GRANT → Run.
+> Supabase Dashboard → SQL Editor → paste the code above → Run.
 
 ---
 
