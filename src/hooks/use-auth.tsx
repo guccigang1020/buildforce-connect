@@ -81,6 +81,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastError = rolesError;
         console.error(`Failed to load auth roles (attempt ${attempt})`, rolesError);
 
+        // Permission/auth failures won't recover on retry — bail immediately
+        // instead of spinning through the backoff loop.
+        const code = (rolesError as { code?: string } | null)?.code;
+        if (code === "42501" || code === "PGRST301" || code === "401" || code === "403") {
+          break;
+        }
+
         if (attempt < 3) {
           await wait(250 * attempt);
         }

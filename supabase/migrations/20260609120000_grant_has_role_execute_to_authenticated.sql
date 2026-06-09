@@ -1,0 +1,29 @@
+-- ============================================================
+-- Fix: profiles (and other tables) return 403 for logged-in users
+--
+-- public.has_role() is referenced directly inside RLS policies that
+-- are evaluated for the `authenticated` role, e.g. the profiles policy
+-- "Admins can view all profiles":
+--     USING (public.has_role(auth.uid(), 'admin'))
+--
+-- A previous "security hardening" migration
+-- (20260512151352_…) ran:
+--     REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role)
+--       FROM authenticated;
+--
+-- Because RLS policy expressions execute with the privileges of the
+-- querying role, an authenticated user reading ANY row of profiles
+-- triggers evaluation of that admin policy, which calls has_role().
+-- Without EXECUTE, Postgres raises "permission denied for function
+-- has_role" (SQLSTATE 42501), which PostgREST surfaces as HTTP 403 —
+-- even when the user is only reading their own profile.
+--
+-- has_role() is SECURITY DEFINER and only reports role membership
+-- (no sensitive data, no side effects), so granting EXECUTE to
+-- authenticated is the standard, safe Supabase pattern. The earlier
+-- concern ("clients should not call it via RPC") is moot: a user can
+-- already read their own roles from user_roles, and the function still
+-- runs under the definer's search_path.
+-- ============================================================
+
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
