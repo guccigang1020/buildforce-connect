@@ -589,6 +589,7 @@ export const getAttendanceRecord = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ recordId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: rec } = await supabase
       .from("attendance_records")
       .select("*, project_teams:team_id(name), projects:project_id(name, address)")
