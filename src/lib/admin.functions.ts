@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { assertAdmin, fetchAdminDashboardData } from "@/lib/admin.server";
 
 const BOOTSTRAP_ADMIN_EMAILS = ["chmv1243@gmail.com", "bbuildforceprime@gmail.com"];
 
@@ -12,6 +10,7 @@ export const selfBootstrapAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Verify the requesting user is the designated admin email
     const { data: authData, error: uErr } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -42,6 +41,7 @@ export const selfBootstrapAdmin = createServerFn({ method: "POST" })
 export const adminGetDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { assertAdmin, fetchAdminDashboardData } = await import("@/lib/admin.server");
     await assertAdmin(context.userId);
     return fetchAdminDashboardData();
   });
@@ -58,6 +58,10 @@ export const adminSetVerificationStatus = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const [{ supabaseAdmin }, { assertAdmin }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/admin.server"),
+    ]);
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -93,6 +97,10 @@ export const adminToggleRole = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const [{ supabaseAdmin }, { assertAdmin }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/admin.server"),
+    ]);
     await assertAdmin(context.userId);
     if (data.action === "remove") {
       const { error } = await supabaseAdmin
@@ -124,6 +132,10 @@ export const adminGetDocumentUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ path: z.string().min(1).max(500) }).parse(d))
   .handler(async ({ data, context }) => {
+    const [{ supabaseAdmin }, { assertAdmin }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/admin.server"),
+    ]);
     await assertAdmin(context.userId);
     const { data: signed, error } = await supabaseAdmin.storage
       .from("contractor-docs")
