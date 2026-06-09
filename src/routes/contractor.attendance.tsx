@@ -43,7 +43,7 @@ type AttendanceRecord = {
   exception_note: string | null;
   frozen_at: string | null;
   rejection_reason: string | null;
-  disputed_at: string | null;
+  disputed_at?: string | null;
   start_photo_url: string | null;
   end_photo_url: string | null;
   start_gps_lat: number | null;
@@ -167,7 +167,7 @@ function Page() {
     queryFn: () => list({ data: { date: selectedDate } }),
   });
 
-  const records = (data?.records ?? []) as AttendanceRecord[];
+  const records = (data?.records ?? []) as unknown as AttendanceRecord[];
   const pending = records.filter(
     (r) => (r.status === "pending" || r.status === "exception") && r.end_time,
   );

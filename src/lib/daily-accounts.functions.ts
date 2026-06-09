@@ -3,6 +3,43 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+type DailyApprovedAccountRow = {
+  id?: string;
+  attendance_record_id: string;
+  work_date: string;
+  project_id: string;
+  contractor_id: string;
+  corporation_id: string;
+  team_id: string;
+  team_leader_id: string;
+  project_name: string;
+  contractor_name: string | null;
+  corporation_name: string | null;
+  site_manager_name: string | null;
+  team_name: string | null;
+  team_leader_name: string | null;
+  workers_actual: number | null;
+  workers_expected: number | null;
+  start_time: string | null;
+  end_time: string | null;
+  total_hours: number | null;
+  total_worker_hours: number | null;
+  hourly_rate: number | null;
+  total_cost: number | null;
+  approval_method: string;
+  approved_at: string | null;
+  has_exception: boolean;
+  exception_reason: string | null;
+  start_photo_url: string | null;
+  end_photo_url: string | null;
+  start_gps_lat: number | null;
+  start_gps_lng: number | null;
+  end_gps_lat: number | null;
+  end_gps_lng: number | null;
+  generated_by: string;
+  generated_at: string;
+};
+
 // Contractor triggers "Close Day" for a specific date.
 // Finds all approved/auto_approved attendance_records for that contractor on that date,
 // creates daily_approved_accounts rows (immutable snapshots), and sets frozen_at on
@@ -96,9 +133,18 @@ export const generateDailyAccounts = createServerFn({ method: "POST" })
     });
 
     // Upsert — ignoreDuplicates makes re-runs safe (idempotent)
-    const { error: insertError } = await supabaseAdmin
-      .from("daily_approved_accounts")
-      .upsert(accountRows, { onConflict: "attendance_record_id", ignoreDuplicates: true });
+    const dailyAccountsTable = supabaseAdmin.from(
+      "daily_approved_accounts" as never,
+    ) as unknown as {
+      upsert: (
+        values: DailyApprovedAccountRow[],
+        options: { onConflict: string; ignoreDuplicates: boolean },
+      ) => Promise<{ error: { message: string } | null }>;
+    };
+    const { error: insertError } = await dailyAccountsTable.upsert(accountRows, {
+      onConflict: "attendance_record_id",
+      ignoreDuplicates: true,
+    });
 
     if (insertError) throw new Error(insertError.message);
 
@@ -149,9 +195,15 @@ export const listContractorDailyAccounts = createServerFn({ method: "POST" })
     const start = `${month}-01`;
     const end = new Date(year, mon, 0).toISOString().slice(0, 10);
 
-    let q = supabase
-      .from("daily_approved_accounts")
-      .select("*")
+    const dailyAccountsQuery = supabase.from("daily_approved_accounts" as never).select("*") as unknown as {
+      eq: (column: string, value: string) => typeof dailyAccountsQuery;
+      gte: (column: string, value: string) => typeof dailyAccountsQuery;
+      lte: (column: string, value: string) => typeof dailyAccountsQuery;
+      order: (column: string, options: { ascending: boolean }) => typeof dailyAccountsQuery;
+      then: PromiseLike<{ data: DailyApprovedAccountRow[] | null; error: { message: string } | null }>['then'];
+    };
+
+    let q = dailyAccountsQuery
       .eq("contractor_id", userId)
       .gte("work_date", start)
       .lte("work_date", end)
@@ -176,9 +228,15 @@ export const listCorporationDailyAccounts = createServerFn({ method: "POST" })
     const start = `${month}-01`;
     const end = new Date(year, mon, 0).toISOString().slice(0, 10);
 
-    let q = supabase
-      .from("daily_approved_accounts")
-      .select("*")
+    const dailyAccountsQuery = supabase.from("daily_approved_accounts" as never).select("*") as unknown as {
+      eq: (column: string, value: string) => typeof dailyAccountsQuery;
+      gte: (column: string, value: string) => typeof dailyAccountsQuery;
+      lte: (column: string, value: string) => typeof dailyAccountsQuery;
+      order: (column: string, options: { ascending: boolean }) => typeof dailyAccountsQuery;
+      then: PromiseLike<{ data: DailyApprovedAccountRow[] | null; error: { message: string } | null }>['then'];
+    };
+
+    let q = dailyAccountsQuery
       .eq("corporation_id", userId)
       .gte("work_date", start)
       .lte("work_date", end)
