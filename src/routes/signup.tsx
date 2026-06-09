@@ -178,7 +178,7 @@ function SignupPage() {
   const handleGoogle = async () => {
     setSubmitting(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
+      redirect_uri: "https://buildforce-connect.lovable.app/dashboard",
     });
     if (result.error) {
       setSubmitting(false);

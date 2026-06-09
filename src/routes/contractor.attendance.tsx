@@ -72,41 +72,50 @@ export const Route = createFileRoute("/contractor/attendance")({
   component: Page,
 });
 
-const STATUS_META: Record<string, { label: string; dot: string; className: string }> = {
+const STATUS_META: Record<string, { label: string; dot: string; chipClass: string; barClass: string }> = {
   pending: {
     label: "ממתין לאישור",
     dot: "bg-amber-500",
-    className: "border-amber-500/40 bg-amber-500/10 text-amber-700",
+    chipClass: "status-chip-pending",
+    barClass: "status-bar-pending",
   },
   approved: {
     label: "אושר",
     dot: "bg-emerald-500",
-    className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
+    chipClass: "status-chip-approved",
+    barClass: "status-bar-approved",
   },
   auto_approved: {
     label: "אושר אוטומטית",
     dot: "bg-slate-400",
-    className: "border-slate-400/40 bg-slate-500/10 text-slate-400",
+    chipClass:
+      "inline-flex items-center rounded-full border border-border/60 bg-muted/60 px-2.5 py-0.5 text-[11px] font-bold text-muted-foreground",
+    barClass: "status-bar-approved",
   },
   exception: {
     label: "חריגה",
     dot: "bg-orange-500",
-    className: "border-orange-500/40 bg-orange-500/10 text-orange-700",
+    chipClass: "status-chip-disputed",
+    barClass: "status-bar-disputed",
   },
   rejected: {
     label: "נדחה",
     dot: "bg-red-500",
-    className: "border-destructive/40 bg-destructive/10 text-destructive",
+    chipClass: "status-chip-rejected",
+    barClass: "status-bar-rejected",
   },
   disputed: {
     label: "במחלוקת",
     dot: "bg-red-600",
-    className: "border-red-600/40 bg-red-600/10 text-red-700",
+    chipClass: "status-chip-rejected",
+    barClass: "status-bar-rejected",
   },
   correction_requested: {
     label: "בקשת תיקון",
     dot: "bg-purple-500",
-    className: "border-purple-500/40 bg-purple-500/10 text-purple-700",
+    chipClass:
+      "inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-[11px] font-bold text-purple-700",
+    barClass: "status-bar-disputed",
   },
 };
 
@@ -231,37 +240,29 @@ function Page() {
     >
       {/* KPI summary */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="kpi-card p-4">
+          <div className="kpi-icon kpi-icon-primary">
             <Users className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{records.length}</div>
           <div className="mt-0.5 text-xs text-muted-foreground">רשומות</div>
         </div>
-        <div
-          className={`rounded-2xl border p-4 ${
-            pending.length > 0 ? "border-amber-500/30 bg-amber-500/5" : "border-border/60 bg-card"
-          }`}
-        >
-          <div
-            className={`grid h-9 w-9 place-items-center rounded-xl ${
-              pending.length > 0 ? "bg-amber-500/15 text-amber-600" : "bg-primary/10 text-primary"
-            }`}
-          >
+        <div className={`kpi-card p-4${pending.length > 0 ? " kpi-card-warning" : ""}`}>
+          <div className={`kpi-icon ${pending.length > 0 ? "kpi-icon-warning" : "kpi-icon-primary"}`}>
             <Clock className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{pending.length}</div>
           <div className="mt-0.5 text-xs text-muted-foreground">ממתינים לאישור</div>
         </div>
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600">
+        <div className="kpi-card kpi-card-success p-4">
+          <div className="kpi-icon kpi-icon-success">
             <Calendar className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{totalHours.toFixed(1)}</div>
           <div className="mt-0.5 text-xs text-muted-foreground">שעות סה"כ</div>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="kpi-card p-4">
+          <div className="kpi-icon kpi-icon-primary">
             <DollarSign className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">
@@ -305,7 +306,7 @@ function Page() {
 
       {/* Pending approval banner */}
       {pending.length > 0 && (
-        <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/8 px-5 py-4 animate-fade-up delay-100">
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/8 px-5 py-4 status-bar-pending animate-fade-up delay-100">
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500/15 text-amber-600">
               <Clock className="h-4 w-4" />
@@ -331,12 +332,16 @@ function Page() {
       {/* Records list */}
       <div className="space-y-3">
         {isLoading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-            <Loader2 className="ms-2 h-4 w-4 animate-spin" /> טוען נוכחות…
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+            ))}
           </div>
         ) : records.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
-            <Clock className="mx-auto h-10 w-10 text-muted-foreground/40" />
+          <div className="empty-state">
+            <div className="empty-state-icon mx-auto">
+              <Clock className="h-8 w-8 text-primary" />
+            </div>
             <p className="mt-4 font-semibold">אין רשומות נוכחות לתאריך זה</p>
             <p className="mt-1 text-sm text-muted-foreground">
               הרשומות יופיעו כאשר צוותים יתחילו לדווח נוכחות.
@@ -352,7 +357,7 @@ function Page() {
             return (
               <div
                 key={r.id}
-                className="rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-border"
+                className={`rounded-2xl border border-border/60 bg-card p-5 transition-colors hover:border-border ${s.barClass}`}
               >
                 <div className="flex flex-wrap items-start gap-4">
                   <div className="min-w-0 flex-1 space-y-2.5">
@@ -365,27 +370,18 @@ function Page() {
                           {r.project_teams?.name ? ` · ${r.project_teams.name}` : ""}
                         </span>
                       </div>
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.className}`}
-                      >
-                        {s.label}
-                      </span>
+                      <span className={s.chipClass}>{s.label}</span>
                     </div>
 
                     {/* Details */}
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" />
-                        <span>
-                          <span className="font-semibold text-foreground">
-                            {r.workers_actual ?? "—"}
-                          </span>
-                          /{r.workers_expected} עובדים
-                        </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="info-chip">
+                        <Users className="h-3 w-3" />
+                        <span className="font-semibold">{r.workers_actual ?? "—"}</span>/{r.workers_expected} עובדים
                       </span>
                       {r.start_time && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
+                        <span className="info-chip">
+                          <Clock className="h-3 w-3" />
                           {new Date(r.start_time).toLocaleTimeString("he-IL", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -395,13 +391,13 @@ function Page() {
                         </span>
                       )}
                       {r.total_hours != null && (
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
+                        <span className="info-chip">
+                          <Calendar className="h-3 w-3" />
                           {r.total_hours} שעות
                         </span>
                       )}
                       {r.total_cost != null && Number(r.total_cost) > 0 && (
-                        <span className="font-bold text-emerald-600">
+                        <span className="info-chip font-bold text-emerald-600">
                           ₪{Number(r.total_cost).toLocaleString()}
                         </span>
                       )}
@@ -539,11 +535,7 @@ function RecordDrawer({
                 {record.projects?.name}
                 {record.project_teams?.name ? ` · ${record.project_teams.name}` : ""}
               </span>
-              <span
-                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.className}`}
-              >
-                {s.label}
-              </span>
+              <span className={s.chipClass}>{s.label}</span>
             </div>
           </div>
           <button

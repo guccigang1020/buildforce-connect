@@ -96,62 +96,56 @@ function Page() {
         {/* Dashboard summary bar */}
         {projects.length > 0 && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
-            <div className="enterprise-card p-4 flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 shrink-0">
-                <FolderOpen className="h-4 w-4 text-primary" />
+            <div className="kpi-card p-4">
+              <div className="kpi-icon kpi-icon-primary">
+                <FolderOpen className="h-4 w-4" />
               </div>
-              <div>
-                <div className="text-xl font-extrabold">{projects.length}</div>
-                <div className="text-[11px] text-muted-foreground">פרויקטים סה״כ</div>
-              </div>
+              <div className="mt-3 text-xl font-extrabold">{projects.length}</div>
+              <div className="mt-0.5 text-[11px] text-muted-foreground">פרויקטים סה״כ</div>
             </div>
-            <div className="enterprise-card p-4 flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-500/15 shrink-0">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <div className="kpi-card kpi-card-success p-4">
+              <div className="kpi-icon kpi-icon-success">
+                <CheckCircle2 className="h-4 w-4" />
               </div>
-              <div>
-                <div className="text-xl font-extrabold text-emerald-700">{readyCount}</div>
-                <div className="text-[11px] text-muted-foreground">מוכנים</div>
-              </div>
+              <div className="mt-3 text-xl font-extrabold">{readyCount}</div>
+              <div className="mt-0.5 text-[11px] text-muted-foreground">מוכנים</div>
             </div>
-            <div className="enterprise-card p-4 flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-amber-500/15 shrink-0">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
+            <div className={`kpi-card p-4${notReadyCount > 0 ? " kpi-card-warning" : ""}`}>
+              <div className={`kpi-icon ${notReadyCount > 0 ? "kpi-icon-warning" : "kpi-icon-muted"}`}>
+                <AlertCircle className="h-4 w-4" />
               </div>
-              <div>
-                <div className="text-xl font-extrabold text-amber-700">{notReadyCount}</div>
-                <div className="text-[11px] text-muted-foreground">דרושה הגדרה</div>
-              </div>
+              <div className="mt-3 text-xl font-extrabold">{notReadyCount}</div>
+              <div className="mt-0.5 text-[11px] text-muted-foreground">דרושה הגדרה</div>
             </div>
-            <div className="enterprise-card p-4 flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 shrink-0">
-                <BarChart3 className="h-4 w-4 text-primary" />
+            <div className="kpi-card kpi-card-primary p-4">
+              <div className="kpi-icon kpi-icon-filled">
+                <BarChart3 className="h-4 w-4" />
               </div>
-              <div>
-                <div className="text-xl font-extrabold">{projects.length > 0 ? Math.round((readyCount / projects.length) * 100) : 0}%</div>
-                <div className="text-[11px] text-muted-foreground">אחוז מוכנות</div>
+              <div className="mt-3 text-xl font-extrabold">
+                {projects.length > 0 ? Math.round((readyCount / projects.length) * 100) : 0}%
               </div>
+              <div className="mt-0.5 text-[11px] text-muted-foreground">אחוז מוכנות</div>
             </div>
           </div>
         )}
 
         {/* Projects list */}
         {isLoading ? (
-          <div className="space-y-4 animate-pulse">
+          <div className="space-y-4">
             {[...Array(2)].map((_, i) => (
               <div key={i} className="enterprise-card overflow-hidden">
-                <div className="p-5">
-                  <div className="h-6 w-48 rounded bg-muted" />
-                  <div className="mt-2 h-4 w-32 rounded bg-muted" />
-                  <div className="mt-4 h-10 w-full rounded-xl bg-muted" />
+                <div className="p-5 space-y-3">
+                  <div className="skeleton-title animate-pulse bg-muted/40" />
+                  <div className="skeleton-body animate-pulse bg-muted/40" />
+                  <div className="skeleton-kpi animate-pulse bg-muted/40" />
                 </div>
               </div>
             ))}
           </div>
         ) : projects.length === 0 ? (
           <div className="enterprise-card flex flex-col items-center gap-4 border-dashed p-14 text-center animate-fade-up delay-100">
-            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted/50">
-              <MapPin className="h-8 w-8 text-muted-foreground/50" />
+            <div className="empty-state-icon mx-auto">
+              <MapPin className="h-8 w-8 text-primary" />
             </div>
             <div>
               <h3 className="font-bold">אין פרויקטים פעילים</h3>
@@ -277,13 +271,13 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
             <span className="font-semibold">{stepsComplete}/3 שלבים</span>
           </div>
           {isReady ? (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5" /> מוכן לעבודה
-            </div>
+            <span className="status-chip-approved">
+              <CheckCircle2 className="h-3 w-3" /> מוכן לעבודה
+            </span>
           ) : (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700">
-              <AlertCircle className="h-3.5 w-3.5" /> דרושה הגדרה
-            </div>
+            <span className="status-chip-pending">
+              <AlertCircle className="h-3 w-3" /> דרושה הגדרה
+            </span>
           )}
         </div>
       </div>
@@ -294,9 +288,9 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           <span>התקדמות הגדרה</span>
           <span className="font-semibold">{stepsComplete}/3</span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="progress-track">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${stepsComplete === 3 ? "bg-emerald-500" : stepsComplete >= 2 ? "bg-amber-500" : "bg-destructive/60"}`}
+            className={`progress-fill${stepsComplete === 3 ? " progress-fill-success" : stepsComplete >= 2 ? " progress-fill-warning" : ""}`}
             style={{ width: `${(stepsComplete / 3) * 100}%` }}
           />
         </div>
@@ -460,7 +454,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
             {/* Teams mini table */}
             {teams.length > 0 && (
               <div className="rounded-xl border border-border/60 overflow-hidden">
-                <div className="grid grid-cols-5 bg-secondary/50 px-3 py-2 text-[11px] font-bold text-muted-foreground">
+                <div className="premium-table-header grid grid-cols-5 px-3 py-2.5">
                   <span>צוות</span>
                   <span>ראש צוות</span>
                   <span>עובדים</span>
@@ -468,7 +462,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
                   <span>QR</span>
                 </div>
                 {teams.map((t) => (
-                  <div key={t.id} className="grid grid-cols-5 items-center border-t border-border/40 px-3 py-2.5 text-sm">
+                  <div key={t.id} className="premium-table-row grid grid-cols-5 items-center px-3 py-2.5 text-sm">
                     <span className="font-semibold truncate">{t.name}</span>
                     <div className="text-xs text-muted-foreground truncate">
                       <div>{t.team_leader_name}</div>

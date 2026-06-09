@@ -28,7 +28,7 @@ function ForgotPasswordPage() {
     }
     setSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: "https://buildforce-connect.lovable.app/reset-password",
     });
     setSubmitting(false);
     if (error) {

@@ -2,6 +2,7 @@
 // SSRF-safe: never derived from request headers (Origin/Host could be spoofed
 // to exfiltrate the caller's Authorization JWT).
 const ALLOWED_BASE_URLS = [
+  "https://buildforce-connect.lovable.app",
   "https://buildforceprime.com",
   "https://www.buildforceprime.com",
   "https://project--2bcb68ec-eafd-47db-806c-3c3a3144f33e.lovable.app",
