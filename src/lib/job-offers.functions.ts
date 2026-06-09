@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sendTransactionalEmailServer } from "@/lib/email/send.server";
 
 const submitSchema = z.object({
   requestId: z.string().uuid(),
@@ -22,6 +20,10 @@ export const submitOffer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => submitSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const [{ supabaseAdmin }, { sendTransactionalEmailServer }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/email/send.server"),
+    ]);
 
     // Reject unverified corporations at the server boundary
     const { data: corpProfile } = await supabaseAdmin
@@ -101,6 +103,7 @@ export const listOffersForRequest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Owners see all offers; corporations only see their own (sealed-bid)
     const { data: req } = await supabaseAdmin
@@ -168,6 +171,10 @@ export const awardOffer = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ offerId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const [{ supabaseAdmin }, { sendTransactionalEmailServer }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/email/send.server"),
+    ]);
 
     // Fetch offer + ensure ownership
     const { data: offer, error: oErr } = await supabase
