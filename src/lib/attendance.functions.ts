@@ -98,6 +98,7 @@ export const startWorkday = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: team, error: tErr } = await supabase
       .from("project_teams")
       .select(
@@ -203,6 +204,7 @@ export const endWorkday = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: rec } = await supabase
       .from("attendance_records")
       .select(
@@ -293,6 +295,7 @@ export const reportException = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: rec } = await supabase
       .from("attendance_records")
       .select("id, team_leader_id, contractor_id, frozen_at, project_id")
@@ -362,6 +365,7 @@ export const approveAttendance = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ recordId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: rec } = await supabase
       .from("attendance_records")
       .select("id, contractor_id, frozen_at, end_time")
@@ -415,6 +419,7 @@ export const rejectAttendance = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const supabaseAdmin = await getSupabaseAdmin();
     const { data: rec } = await supabase
       .from("attendance_records")
       .select("contractor_id, frozen_at, project_id, team_id")
@@ -613,7 +618,7 @@ export const getAttendanceRecord = createServerFn({ method: "POST" })
       const { data: signed } = await supabaseAdmin.storage
         .from("attendance-photos")
         .createSignedUrls(paths, 3600);
-      (signed ?? []).forEach((s) => {
+      (signed ?? []).forEach((s: { path?: string | null; signedUrl?: string | null }) => {
         if (s.path && s.signedUrl) signedUrls[s.path] = s.signedUrl;
       });
     }
