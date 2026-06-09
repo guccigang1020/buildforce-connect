@@ -8,6 +8,7 @@ import {
   PaintRoller,
   Wrench,
   Building2,
+  Sparkles,
   ShieldCheck,
   Zap,
   Star,
@@ -40,27 +41,10 @@ import heroImg from "@/assets/hero-construction.jpg";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PlatformShowcase } from "@/components/platform-showcase";
-import { CORPORATIONS } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
-
-/* ---------- SECURE CHAT ---------- */
-const SAMPLE_REQUEST_ID = "BF-2847";
-
-function SecureChatButton({ supplierName }: { supplierName: string }) {
-  return (
-    <Link
-      to="/login"
-      aria-label={`פתח צ׳אט מאובטח עם ${supplierName}`}
-      title="צ׳אט מאובטח בפלטפורמה"
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30 transition-transform hover:scale-105 hover:bg-primary/25"
-    >
-      <Lock className="h-4 w-4" />
-    </Link>
-  );
-}
 
 function Home() {
   const { session, loading } = useAuth();
@@ -85,7 +69,7 @@ function Home() {
       <PeaceOfMind />
       <Categories />
       <WhyTrust />
-      <Corporations />
+      <SavingsShowcase />
       <EarlyAccess />
       <CTABanner />
       <SiteFooter />
@@ -224,28 +208,9 @@ function Hero() {
                   </span>
                 </div>
                 {[
-                  {
-                    name: "כוח אדם דניאל בע״מ",
-                    price: "₪185",
-                    rating: 4.9,
-                    badge: true,
-                    phone: "972541234567",
-                    best: true,
-                  },
-                  {
-                    name: "אלקטרה מנפאואר",
-                    price: "₪192",
-                    rating: 4.8,
-                    badge: true,
-                    phone: "972542345678",
-                  },
-                  {
-                    name: "מצדה כוח אדם",
-                    price: "₪198",
-                    rating: 4.7,
-                    badge: false,
-                    phone: "972543456789",
-                  },
+                  { name: "ספק מאומת · BF-3947", price: "₪185", rating: 4.9, badge: true, best: true },
+                  { name: "ספק מאומת · BF-5210", price: "₪192", rating: 4.8, badge: true },
+                  { name: "ספק מאומת · BF-1864", price: "₪198", rating: 4.7, badge: false },
                 ].map((c, i) => (
                   <div
                     key={i}
@@ -274,7 +239,12 @@ function Hero() {
                         </div>
                         <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
                       </div>
-                      <SecureChatButton supplierName={c.name} />
+                      <span
+                        title="הזהות נחשפת רק אחרי בחירת זוכה"
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-secondary text-muted-foreground ring-1 ring-border/60"
+                      >
+                        <Lock className="h-4 w-4" />
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -284,8 +254,8 @@ function Hero() {
                 asChild
                 className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95"
               >
-                <Link to="/requests/$id" params={{ id: SAMPLE_REQUEST_ID }}>
-                  השוואת הצעות מלאה
+                <Link to="/signup">
+                  פתח חשבון וקבל הצעות
                 </Link>
               </Button>
             </div>
@@ -636,52 +606,67 @@ function WhyTrust() {
   );
 }
 
-/* ---------- VERIFIED CORPORATIONS ---------- */
-function Corporations() {
+/* ---------- SAVINGS ENGINE ---------- */
+function SavingsShowcase() {
   return (
-    <section id="corps" className="border-y border-border/60 bg-card/30 py-20 md:py-28">
+    <section id="savings" className="border-y border-border/60 bg-card/30 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <SectionHeader
-          eyebrow="תאגידים מאומתים"
-          title="ספקים שעוברים בדיקה. שיעבדו בלי הפתעות."
-          subtitle="כל תאגיד מסומן באישור BuildForce עבר בדיקת רישוי, ביטוח, ותקני בטיחות."
+          eyebrow="מנוע החיסכון"
+          title="הבידול האמיתי: אתה רואה בדיוק כמה חסכת."
+          subtitle="המכרז ההפוך מוריד את המחיר — ומנוע החיסכון מתרגם את זה למספר אחד מוחשי, על כל הצעה ובסיכום החודשי."
         />
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {CORPORATIONS.map((c) => (
-            <Link
-              key={c.id}
-              to="/corporations/$id"
-              params={{ id: c.id }}
-              className="hover-lift block rounded-2xl border border-border/60 bg-card p-5"
+
+        <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-5">
+          {/* Big number */}
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/12 via-emerald-500/5 to-transparent p-8 lg:col-span-3">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-700">
+              <TrendingDown className="h-3.5 w-3.5" /> חיסכון חודשי לדוגמה
+            </div>
+            <div className="mt-4 text-6xl font-black tracking-tight text-emerald-600 md:text-7xl">
+              ₪18,000
+              <span className="mr-2 align-middle text-2xl font-bold text-emerald-600/70">/ חודש</span>
+            </div>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+              לעומת ההצעה היקרה ביותר שקיבלת. כל ₪ של פער, כפול כל שעת עבודה — חוזר אליך.
+            </p>
+            <div className="mt-6 inline-flex flex-wrap items-center gap-2 rounded-2xl border border-border/60 bg-card/70 px-4 py-3 font-mono text-sm">
+              <span className="font-bold">3,000 שעות</span>
+              <span className="text-muted-foreground">×</span>
+              <span className="font-bold">6 ₪ פער/שעה</span>
+              <span className="text-muted-foreground">=</span>
+              <span className="font-extrabold text-emerald-600">₪18,000</span>
+            </div>
+          </div>
+
+          {/* How it shows up */}
+          <div className="flex flex-col gap-4 lg:col-span-2">
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <Sparkles className="h-4 w-4 text-primary" /> על כל הצעה
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                ”ההצעה הזו זולה ב-6 ₪/שעה מההצעה היקרה ביותר“ — כך הערך מוחשי לכל אורך הדרך.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <div className="flex items-center gap-2 text-sm font-bold">
+                <FileBarChart className="h-4 w-4 text-primary" /> בסיכום החודשי
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                סך החיסכון שצברת מוצג בשקלים — ומגובה בנתוני נוכחות אמיתיים מהשטח.
+              </p>
+            </div>
+            <Button
+              asChild
+              className="h-12 bg-gradient-primary text-base font-semibold text-primary-foreground shadow-elegant hover:opacity-95"
             >
-              <div className="flex items-center gap-3">
-                <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-primary text-lg font-extrabold text-primary-foreground shadow-elegant">
-                  {c.name[0]}
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 text-sm font-bold">
-                    {c.name} {c.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/60 pt-4 text-xs">
-                <div>
-                  <div className="text-muted-foreground">עובדים</div>
-                  <div className="font-bold">{c.workers}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">אזורים</div>
-                  <div className="font-bold">{c.regions}</div>
-                </div>
-              </div>
-              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> זמין השבוע
-              </div>
-            </Link>
-          ))}
+              <Link to="/signup">
+                התחל לחסוך — חינם לקבלן
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>

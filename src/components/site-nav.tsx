@@ -30,7 +30,7 @@ export function SiteNav() {
   const links = [
     { label: "איך זה עובד", to: "/" as const, hash: "how" },
     { label: "פלטפורמה", to: "/" as const, hash: "platform" },
-    { label: "תאגידים", to: "/" as const, hash: "corps" },
+    { label: "החיסכון", to: "/" as const, hash: "savings" },
   ];
 
   const handleSignOut = async () => {
