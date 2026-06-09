@@ -24,6 +24,8 @@ import {
   BarChart2,
   Zap,
   Award,
+  Phone,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -196,6 +198,16 @@ function MyRequestPage() {
   const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
   const priceSpread = maxPrice - minPrice;
 
+  // ── Savings Engine (מנוע החיסכון) — the core differentiator from the business
+  // plan: translate the reverse auction into one number — how much the contractor
+  // saves vs. the most EXPENSIVE offer, per-hour and per-month.
+  const HOURS_PER_WORKER_MONTH = 176; // ~22 work days × 8h
+  // Once awarded we measure against the winning price; while open, the best (lowest) offer.
+  const chosenPrice = winningOffer ? Number(winningOffer.price_per_hour) : minPrice;
+  const savingsPerHour = maxPrice > chosenPrice ? maxPrice - chosenPrice : 0;
+  const monthlySavings =
+    savingsPerHour > 0 ? Math.round(savingsPerHour * totalWorkers * HOURS_PER_WORKER_MONTH) : 0;
+
   // Deadline countdown
   const deadlineHours = (request as { deadline_at?: string }).deadline_at
     ? Math.round((new Date((request as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000)
@@ -322,18 +334,45 @@ function MyRequestPage() {
           </div>
         )}
 
-        {/* Competitive Intelligence Panel */}
+        {/* Savings Engine — the core differentiator (business plan §6) */}
         {sortedOffers.length > 0 && (
           <div className="enterprise-card p-5 animate-fade-up delay-100">
             <div className="mb-4 flex items-center gap-2">
               <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
                 <BarChart2 className="h-4 w-4 text-primary" />
               </div>
-              <h3 className="font-bold">ניתוח תחרותי</h3>
+              <h3 className="font-bold">מנוע החיסכון</h3>
               <span className="text-xs text-muted-foreground">
-                {offers.length} הצעות · מחיר ממוצע: {avgPrice} ₪/שעה
+                {offers.length} הצעות · ממוצע {avgPrice} ₪/שעה
               </span>
             </div>
+
+            {/* Hero savings number */}
+            {monthlySavings > 0 && (
+              <div className="mb-4 overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-l from-emerald-500/10 via-emerald-500/5 to-transparent p-5">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                      <TrendingDown className="h-3.5 w-3.5" />
+                      {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
+                    </div>
+                    <div className="mt-1 text-3xl font-extrabold tracking-tight text-emerald-700 md:text-4xl">
+                      ₪{monthlySavings.toLocaleString()}
+                      <span className="mr-1.5 text-base font-bold text-emerald-600/70">/ חודש</span>
+                    </div>
+                  </div>
+                  <div className="text-left text-xs text-muted-foreground">
+                    <div>
+                      לעומת ההצעה היקרה ביותר (<b className="text-foreground">{maxPrice} ₪</b>)
+                    </div>
+                    <div className="mt-0.5 font-mono text-[11px]">
+                      {savingsPerHour} ₪/שעה × {totalWorkers} עובדים × 176 ש׳
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
                 <div className="text-xs text-muted-foreground mb-1">מינימום</div>
@@ -403,6 +442,8 @@ function MyRequestPage() {
                 const isWinner = o.status === "awarded";
                 const isRejected = o.status === "rejected" || o.status === "withdrawn";
                 const priceNum = Number(o.price_per_hour);
+                const savedVsMax = maxPrice > priceNum ? maxPrice - priceNum : 0;
+                const reveal = o as { corp_name?: string; corp_phone?: string; corp_email?: string };
                 const workersNum = Number(o.available_workers);
                 const valueScore = getValueScore(priceNum, workersNum, o.insurance ?? false);
                 const pricePosition = priceSpread > 0
@@ -446,7 +487,14 @@ function MyRequestPage() {
                           </div>
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-bold">תאגיד אנונימי</span>
+                              <span className="font-bold">
+                                {isWinner && reveal.corp_name ? reveal.corp_name : "תאגיד אנונימי"}
+                              </span>
+                              {savedVsMax > 0 && !isRejected && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                  <TrendingDown className="h-2.5 w-2.5" /> זול ב-{savedVsMax}₪/שעה מהיקרה
+                                </span>
+                              )}
                               {idx === 0 && !isRejected && request.status === "open" && (
                                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                                   <Star className="h-2.5 w-2.5" /> הצעה זולה ביותר
@@ -627,11 +675,41 @@ function MyRequestPage() {
               <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-primary shadow-glow">
                 <Coins className="h-6 w-6 text-primary-foreground" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h4 className="text-lg font-bold">הזכייה הושלמה</h4>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  התאגיד הזוכה קיבל את פרטי הקשר שלך במייל. אנא צור איתו קשר תוך 48 שעות.
+                  פרטי הקשר נחשפו לשני הצדדים. אנא צרו קשר תוך 48 שעות.
                 </p>
+                {(() => {
+                  const w = winningOffer as {
+                    corp_name?: string;
+                    corp_phone?: string;
+                    corp_email?: string;
+                  };
+                  return w.corp_name ? (
+                    <div className="mt-3 rounded-xl border border-primary/20 bg-card/70 p-4">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        התאגיד הזוכה
+                      </div>
+                      <div className="mt-1 text-base font-extrabold">{w.corp_name}</div>
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                        {w.corp_phone && (
+                          <a
+                            href={`tel:${w.corp_phone}`}
+                            className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+                          >
+                            <Phone className="h-3.5 w-3.5" /> {w.corp_phone}
+                          </a>
+                        )}
+                        {w.corp_email && (
+                          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5" /> {w.corp_email}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-800">
                   כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
                 </div>

@@ -213,9 +213,36 @@ export const getJobRequestWithOffers = createServerFn({ method: "POST" })
 
     // Non-owners can only see their own offer (sealed-bid integrity).
     const allOffers = offers ?? [];
-    const visibleOffers = isOwner
+    let visibleOffers = isOwner
       ? allOffers
       : allOffers.filter((o) => o.corporation_id === userId);
+
+    // Plan: identities are masked until award, then "contact details are revealed".
+    // Reveal the winning corporation's name + contact to the owner once awarded.
+    if (isOwner) {
+      const awarded = visibleOffers.find((o) => o.status === "awarded");
+      if (awarded) {
+        const { data: corp } = await supabaseAdmin
+          .from("profiles")
+          .select("company_name, business_name, full_name, phone, email")
+          .eq("user_id", awarded.corporation_id)
+          .maybeSingle();
+        if (corp) {
+          const corpName =
+            corp.company_name || corp.business_name || corp.full_name || "תאגיד מאומת";
+          visibleOffers = visibleOffers.map((o) =>
+            o.id === awarded.id
+              ? {
+                  ...o,
+                  corp_name: corpName,
+                  corp_phone: corp.phone ?? "",
+                  corp_email: corp.email ?? "",
+                }
+              : o,
+          );
+        }
+      }
+    }
 
     return {
       request: { ...req, contact_name, contact_phone },
