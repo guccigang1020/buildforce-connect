@@ -1,7 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function getSupabaseAdmin() {
+  const mod = await import("@/integrations/supabase/client.server");
+  return mod.supabaseAdmin;
+}
 
 function cleanPhone(p?: string | null): string | null {
   if (!p) return null;
@@ -23,6 +27,7 @@ async function logNotification(
   recipientRole: string,
   payload: Record<string, unknown>,
 ) {
+  const supabaseAdmin = await getSupabaseAdmin();
   await supabaseAdmin.from("attendance_notifications").insert({
     record_id: recordId,
     kind,
@@ -62,6 +67,7 @@ async function assertWithinSite(
 }
 
 async function uploadPhoto(recordId: string, kind: string, base64: string): Promise<string> {
+  const supabaseAdmin = await getSupabaseAdmin();
   const { data: rec } = await supabaseAdmin
     .from("attendance_records")
     .select("project_id, team_id, work_date")
