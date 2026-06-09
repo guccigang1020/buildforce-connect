@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AppShell } from "@/components/app-shell";
 import { ROLES, CITIES, NATIONALITIES, type RequestItem } from "@/lib/mock-data";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/new-request")({
   head: () => ({
@@ -72,6 +73,7 @@ const newItem = (): RequestItem => ({
 
 function NewRequestPage() {
   const navigate = useNavigate();
+  const { session, loading } = useAuth();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -88,6 +90,13 @@ function NewRequestPage() {
     contactPhone: "",
     acceptTerms: false,
   });
+
+  useEffect(() => {
+    if (!loading && !session) {
+      toast.error("יש להתחבר כדי לפרסם בקשה");
+      navigate({ to: "/login" });
+    }
+  }, [loading, session, navigate]);
 
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -132,6 +141,11 @@ function NewRequestPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
+    if (!session) {
+      toast.error("יש להתחבר כדי לפרסם בקשה");
+      navigate({ to: "/login" });
+      return;
+    }
     setSubmitting(true);
     try {
       const result = await submitRequest({
