@@ -154,7 +154,33 @@ P3-1 / OQ-3, now upgraded to high priority.
 
 ---
 
-## Current Status: 🟢 Full reverse-auction validated (post → bid → award). Remaining: 3 non-blocking bugs + migration-drift reconciliation
+## Business-plan alignment work (branch ido/refactor-v1)
+- ✅ **P0-1 Savings Engine** (plan's #1 differentiator) wired into the live request
+  page: hero "₪/month saved vs. the highest offer" + per-offer "cheaper by X₪/hr"
+  badge. Validated live = ₪42,240/mo on a 235→205 spread, 8 workers. Was dead code.
+- ✅ **P0-2 Winner reveal at award**: server fn returns winning corp name+phone+email
+  to owner; card + win panel show it. Validated live.
+- ✅ **Role-based routing**: corporation → /corporation-dashboard, contractor →
+  /dashboard (was: corp landed on contractor view). Validated live.
+- ✅ **Branded BF-XXXX tender IDs** replacing raw UUID prefixes everywhere. Validated.
+- ✅ **No-broken-pages sweep**: dashboard, contractor/corp accounts, projects,
+  attendance all render with zero crashes/error banners across both roles.
+- Demo accounts created via signup UI: `demo.corp.beta@gmail.com` / `Demo2026!`
+  (approved corp). Email-confirm skipped via admin API. Seed request `d5798196`
+  has the 2-bid spread used for the savings demo.
+- Commits: 20de690 (savings+reveal), 055d27a (routing+ids).
+
+### Remaining (larger efforts — need a steer or setup)
+- Landing page still uses mock `CORPORATIONS`; redesign to communicate the value
+  prop (reverse auction → savings → attendance → anti-circumvention). Investor-facing.
+- Full **attendance GPS+photo → daily account → invoice** demo needs a team_leader
+  account + project assignment to run end-to-end (code exists).
+- Role assignment: `ensure_user_bootstrap` re-adds a default contractor role.
+- `corporation_workforce` 404 (schema drift) — low demo value.
+
+---
+
+## Current Status: 🟢 Demo-critical P0 + key UX done & validated on ido/refactor-v1. Next: landing-page value prop / full attendance demo.
 
 Implementation of Phase 1 is **gated** behind Phase 0 (see plan §4). Do **not**
 write fix migrations or production code until all four P0 items pass. Reason:
