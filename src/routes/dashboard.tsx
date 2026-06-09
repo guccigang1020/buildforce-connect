@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -114,18 +114,29 @@ function makeTrend(
 }
 
 function DashboardPage() {
-  const { hasRole, profile } = useAuth();
+  const { hasRole, profile, session, loading } = useAuth();
+  const navigate = useNavigate();
   const fetchMine = useServerFn(listMyJobRequests);
   const fetchStats = useServerFn(getContractorDashboardStats);
+
+  // Redirect unauthenticated visitors to login instead of firing data
+  // requests that 401 and crash the page (matches corporation-dashboard).
+  useEffect(() => {
+    if (!loading && !session) {
+      void navigate({ to: "/login", replace: true });
+    }
+  }, [loading, session, navigate]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-requests"],
     queryFn: () => fetchMine({ data: {} as never }),
+    enabled: !!session,
   });
 
   const { data: wsData, isLoading: wsLoading } = useQuery({
     queryKey: ["contractor-dashboard-stats"],
     queryFn: () => fetchStats(),
+    enabled: !!session,
   });
 
   const isAdmin = hasRole("admin");
@@ -179,7 +190,7 @@ function DashboardPage() {
 
   const wsStats = wsData as ContractorStats | undefined;
   const showWsPanel =
-    !wsLoading && wsStats && (wsStats.activeProjects > 0 || wsStats.monthly.total > 0);
+    !wsLoading && !!wsStats?.monthly && (wsStats.activeProjects > 0 || wsStats.monthly.total > 0);
 
   return (
     <AppShell
