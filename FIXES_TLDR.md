@@ -51,6 +51,35 @@ sensitive. This is the standard Supabase setup; removing it was the mistake.
 
 ---
 
+## 1b. "Infinite recursion detected in policy for relation job_requests"
+
+### What was actually wrong
+The database prevents circular dependencies between **Row Level Security (RLS)** policies.
+There's a "Bidding corps can view requests they bid on" rule on the `job_requests` table
+that needs to check the `job_offers` table. But `job_offers` has a rule that checks back
+to `job_requests`. This creates a loop.
+
+A previous migration **fixed** this by wrapping the check in a `SECURITY DEFINER` function
+called `has_bid_on_request()` — a function runs under the definer's privileges, so it
+doesn't re-evaluate RLS and avoids the circle. But the function **lost EXECUTE permission**
+for logged-in users.
+
+### The fix
+**File:** `supabase/migrations/20260609173000_fix_has_bid_on_request_permission.sql`
+
+This migration re-grants the permission:
+
+```sql
+GRANT EXECUTE ON FUNCTION public.has_bid_on_request(uuid, uuid) TO authenticated;
+```
+
+And ensures the policy uses the safe function-based approach.
+
+> ⚠️ **You must apply this migration to the database** for the fix to take effect.
+> Same as above: Supabase Dashboard → SQL Editor → paste the GRANT → Run.
+
+---
+
 ## 2. Signup errors were popups, after submit, sometimes in English
 
 ### What was wrong
