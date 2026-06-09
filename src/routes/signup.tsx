@@ -92,7 +92,6 @@ function SignupPage() {
     contractor_classification: "",
   });
   const [licenseFile, setLicenseFile] = useState<File | null>(null);
-  const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
   const [booksFile, setBooksFile] = useState<File | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -113,6 +112,10 @@ function SignupPage() {
     }
     if (role === "contractor" && !licenseFile) {
       toast.error("יש להעלות תעודת קבלן רשום (PDF / תמונה)");
+      return;
+    }
+    if (role === "contractor" && !booksFile) {
+      toast.error("יש להעלות אישור ניהול ספרים (PDF / תמונה)");
       return;
     }
     if (!agreed) {
@@ -148,22 +151,20 @@ function SignupPage() {
 
     const userId = signupData.user?.id;
     if (userId && role === "contractor") {
-      const uploaded: { license?: string; insurance?: string; books?: string } = {};
-      const upload = async (file: File, kind: "license" | "insurance" | "books") => {
+      const uploaded: { license?: string; books?: string } = {};
+      const upload = async (file: File, kind: "license" | "books") => {
         const ext = file.name.split(".").pop() || "bin";
         const path = `${userId}/${kind}-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("contractor-docs").upload(path, file);
         if (!upErr) uploaded[kind] = path;
       };
       if (licenseFile) await upload(licenseFile, "license");
-      if (insuranceFile) await upload(insuranceFile, "insurance");
       if (booksFile) await upload(booksFile, "books");
       if (Object.keys(uploaded).length > 0) {
         await supabase
           .from("profiles")
           .update({
             license_doc_url: uploaded.license ?? null,
-            insurance_doc_url: uploaded.insurance ?? null,
             books_cert_url: uploaded.books ?? null,
           })
           .eq("user_id", userId);
@@ -363,17 +364,10 @@ function SignupPage() {
                     accept=".pdf,image/*"
                   />
                   <FileField
-                    id="insurance_file"
-                    label="ביטוח צד ג' (אופציונלי כעת)"
-                    icon={ShieldCheck}
-                    file={insuranceFile}
-                    onFile={setInsuranceFile}
-                    accept=".pdf,image/*"
-                  />
-                  <FileField
                     id="books_file"
-                    label="אישור ניהול ספרים (אופציונלי כעת)"
+                    label="אישור ניהול ספרים"
                     icon={BookOpen}
+                    required
                     file={booksFile}
                     onFile={setBooksFile}
                     accept=".pdf,image/*"
