@@ -895,3 +895,41 @@
     color: transparent;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Global accessibility & polish baseline (UI/UX Pro Max checklist)
+   Applied app-wide so every screen inherits it without per-file edits.
+   ════════════════════════════════════════════════════════════════ */
+
+/* 1. Pointer affordance — every interactive element shows a hand cursor. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+summary,
+select:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* 2. Visible keyboard focus — accessible ring for keyboard users only. */
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring, oklch(0.62 0.24 258));
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 0.375rem);
+}
+
+/* 3. Respect prefers-reduced-motion — disable entrance/looping animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

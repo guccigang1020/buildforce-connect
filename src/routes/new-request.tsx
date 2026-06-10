@@ -46,9 +46,7 @@ type FormState = {
   items: RequestItem[];
   location: string;
   startDate: string;
-  duration: string;
   commitmentMonths: string;
-  budget: string;
   description: string;
   contactName: string;
   contactPhone: string;
@@ -58,11 +56,18 @@ type FormState = {
 const STEPS = [
   { n: 1, label: "פריטי בקשה" },
   { n: 2, label: "מיקום ולו״ז" },
-  { n: 3, label: "תקציב ופרטים" },
+  { n: 3, label: "פרטים נוספים" },
   { n: 4, label: "פרטי קשר" },
 ];
 
 const MARKET_RATE = 175;
+
+const TODAY = new Date().toISOString().split("T")[0];
+
+const isValidILPhone = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  return /^(?:972|0)(?:[23489]|5[0-9]|7[0-9])\d{7}$/.test(digits);
+};
 
 const newItem = (): RequestItem => ({
   id: `it-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -73,7 +78,7 @@ const newItem = (): RequestItem => ({
 
 function NewRequestPage() {
   const navigate = useNavigate();
-  const { session, loading } = useAuth();
+  const { session, loading, profile } = useAuth();
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -82,9 +87,7 @@ function NewRequestPage() {
     items: [newItem()],
     location: "",
     startDate: "",
-    duration: "",
     commitmentMonths: "",
-    budget: "",
     description: "",
     contactName: "",
     contactPhone: "",
@@ -97,6 +100,17 @@ function NewRequestPage() {
       navigate({ to: "/login" });
     }
   }, [loading, session, navigate]);
+
+  // Pre-fill contact details from the logged-in user's profile, but only
+  // for fields the user hasn't already started typing into.
+  useEffect(() => {
+    if (!profile) return;
+    setForm((f) => ({
+      ...f,
+      contactName: f.contactName || profile.full_name || "",
+      contactPhone: f.contactPhone || profile.phone || "",
+    }));
+  }, [profile]);
 
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -121,20 +135,22 @@ function NewRequestPage() {
   const estDailyCost = totalWorkers * MARKET_RATE * 8;
   const estMonthlyCost = estDailyCost * 22;
 
+  const isStartDateValid = Boolean(form.startDate && form.startDate >= TODAY);
+  const isPhoneValid = Boolean(form.contactPhone && isValidILPhone(form.contactPhone));
+
   const canNext = () => {
     if (step === 1) return itemsValid && form.items.length > 0;
-    if (step === 2)
-      return Boolean(form.location && form.startDate && form.duration && form.commitmentMonths);
+    if (step === 2) return Boolean(form.location && form.commitmentMonths && isStartDateValid);
     if (step === 3) return true;
-    if (step === 4) return Boolean(form.contactName && form.contactPhone && form.acceptTerms);
+    if (step === 4) return Boolean(form.contactName && isPhoneValid && form.acceptTerms);
     return false;
   };
 
   const isStepComplete = (n: number) => {
     if (n === 1) return itemsValid && form.items.length > 0;
-    if (n === 2) return Boolean(form.location && form.startDate && form.duration && form.commitmentMonths);
+    if (n === 2) return Boolean(form.location && form.commitmentMonths && isStartDateValid);
     if (n === 3) return true;
-    if (n === 4) return Boolean(form.contactName && form.contactPhone && form.acceptTerms);
+    if (n === 4) return Boolean(form.contactName && isPhoneValid && form.acceptTerms);
     return false;
   };
 
@@ -152,9 +168,7 @@ function NewRequestPage() {
         data: {
           location: form.location,
           startDate: form.startDate,
-          duration: form.duration,
           commitmentMonths: form.commitmentMonths,
-          budget: form.budget,
           description: form.description,
           contactName: form.contactName,
           contactPhone: form.contactPhone,
@@ -186,11 +200,14 @@ function NewRequestPage() {
           </div>
           <h2 className="mt-6 text-3xl font-extrabold tracking-tight">הבקשה פורסמה בהצלחה</h2>
           <p className="mt-3 max-w-md text-muted-foreground">
-            תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך במייל ובלוח
-            הבקרה.
+            תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך במייל ובלוח הבקרה.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant">
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-primary text-primary-foreground shadow-elegant"
+            >
               <Link to="/dashboard">לצפייה בלוח הבקרה</Link>
             </Button>
             <Button
@@ -203,12 +220,10 @@ function NewRequestPage() {
                   items: [newItem()],
                   location: "",
                   startDate: "",
-                  duration: "",
                   commitmentMonths: "",
-                  budget: "",
                   description: "",
-                  contactName: "",
-                  contactPhone: "",
+                  contactName: profile?.full_name ?? "",
+                  contactPhone: profile?.phone ?? "",
                   acceptTerms: false,
                 });
               }}
@@ -266,7 +281,11 @@ function NewRequestPage() {
                   </div>
                   <div
                     className={`text-center text-[11px] font-medium md:text-xs ${
-                      isFuture ? "text-muted-foreground/60" : isCurrent ? "text-foreground font-semibold" : "text-muted-foreground"
+                      isFuture
+                        ? "text-muted-foreground/80"
+                        : isCurrent
+                          ? "text-foreground font-semibold"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {s.label}
@@ -325,8 +344,7 @@ function NewRequestPage() {
                 </div>
                 {totalWorkers > 0 && (
                   <div className="rounded-xl bg-secondary/40 p-3 text-xs text-muted-foreground">
-                    סה״כ{" "}
-                    <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על
+                    סה״כ <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על
                     פני {form.items.length} שורות.
                   </div>
                 )}
@@ -335,11 +353,7 @@ function NewRequestPage() {
 
             {step === 2 && (
               <div className="space-y-5">
-                <StepHeader
-                  icon={MapPin}
-                  title="איפה ומתי?"
-                  subtitle="מיקום האתר ומועד התחלה."
-                />
+                <StepHeader icon={MapPin} title="איפה ומתי?" subtitle="מיקום האתר ומועד התחלה." />
                 <div>
                   <Label className="mb-2 block">עיר / אזור</Label>
                   {/* Scrollable pill grid */}
@@ -360,30 +374,26 @@ function NewRequestPage() {
                     ))}
                   </div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label htmlFor="start" className="mb-2 block">תאריך התחלה</Label>
-                    <Input
-                      id="start"
-                      type="date"
-                      value={form.startDate}
-                      onChange={(e) => update("startDate", e.target.value)}
-                      className="h-12"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="duration" className="mb-2 block">משך עבודה</Label>
-                    <Input
-                      id="duration"
-                      placeholder="לדוגמה: 3 חודשים"
-                      value={form.duration}
-                      onChange={(e) => update("duration", e.target.value)}
-                      className="h-12"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="start" className="mb-2 block">
+                    תאריך התחלה
+                  </Label>
+                  <Input
+                    id="start"
+                    type="date"
+                    min={TODAY}
+                    value={form.startDate}
+                    onChange={(e) => update("startDate", e.target.value)}
+                    className="h-12"
+                  />
+                  {form.startDate && !isStartDateValid && (
+                    <p className="mt-1.5 text-xs font-medium text-destructive">
+                      תאריך ההתחלה לא יכול להיות בעבר
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label className="mb-2 block">משך התחייבות מינימלי (חודשים)</Label>
+                  <Label className="mb-2 block">תקופת התקשרות (חודשים)</Label>
                   <div className="flex flex-wrap gap-2">
                     {["1", "3", "6", "12", "24"].map((month) => (
                       <button
@@ -412,20 +422,12 @@ function NewRequestPage() {
                 <StepHeader
                   icon={FileText}
                   title="פרטים נוספים"
-                  subtitle="תקציב מוערך ופרטי הפרויקט (אופציונלי)."
+                  subtitle="פרטי הפרויקט (אופציונלי)."
                 />
                 <div>
-                  <Label htmlFor="budget" className="mb-2 block">תקציב לשעת עובד (₪)</Label>
-                  <Input
-                    id="budget"
-                    placeholder="לדוגמה: 180-210"
-                    value={form.budget}
-                    onChange={(e) => update("budget", e.target.value)}
-                    className="h-12"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="desc" className="mb-2 block">תיאור הפרויקט</Label>
+                  <Label htmlFor="desc" className="mb-2 block">
+                    תיאור הפרויקט
+                  </Label>
                   <Textarea
                     id="desc"
                     rows={5}
@@ -434,7 +436,7 @@ function NewRequestPage() {
                     onChange={(e) => update("description", e.target.value)}
                     maxLength={1000}
                   />
-                  <div className="mt-1 text-xs text-muted-foreground">
+                  <div className="mt-1 text-xs text-muted-foreground" dir="ltr">
                     {form.description.length}/1000
                   </div>
                 </div>
@@ -450,7 +452,9 @@ function NewRequestPage() {
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <Label htmlFor="name" className="mb-2 block">שם מלא</Label>
+                    <Label htmlFor="name" className="mb-2 block">
+                      שם מלא
+                    </Label>
                     <Input
                       id="name"
                       placeholder="ישראל ישראלי"
@@ -461,16 +465,24 @@ function NewRequestPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone" className="mb-2 block">טלפון נייד</Label>
+                    <Label htmlFor="phone" className="mb-2 block">
+                      טלפון נייד
+                    </Label>
                     <Input
                       id="phone"
                       type="tel"
+                      dir="ltr"
                       placeholder="050-0000000"
                       value={form.contactPhone}
                       onChange={(e) => update("contactPhone", e.target.value)}
-                      className="h-12"
+                      className="h-12 text-end"
                       maxLength={20}
                     />
+                    {form.contactPhone && !isPhoneValid && (
+                      <p className="mt-1.5 text-xs font-medium text-destructive">
+                        מספר טלפון לא תקין
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="rounded-xl border border-border/60 bg-secondary/40 p-4 text-sm text-muted-foreground">
@@ -491,7 +503,9 @@ function NewRequestPage() {
                     </div>
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">התחלה</div>
-                      <div className="font-semibold">{form.startDate || "—"}</div>
+                      <div className="font-semibold" dir="ltr">
+                        {form.startDate || "—"}
+                      </div>
                     </div>
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">עובדים</div>
@@ -499,15 +513,22 @@ function NewRequestPage() {
                     </div>
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">התחייבות</div>
-                      <div className="font-semibold">{form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}</div>
+                      <div className="font-semibold">
+                        {form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}
+                      </div>
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {form.items.filter((it) => it.role).map((it) => (
-                      <span key={it.id} className="inline-block ml-2 mb-1 rounded-full border border-border/50 bg-secondary/60 px-2 py-0.5">
-                        {it.count}× {it.role}
-                      </span>
-                    ))}
+                    {form.items
+                      .filter((it) => it.role)
+                      .map((it) => (
+                        <span
+                          key={it.id}
+                          className="inline-block me-2 mb-1 rounded-full border border-border/50 bg-secondary/60 px-2 py-0.5"
+                        >
+                          {it.count}× {it.role}
+                        </span>
+                      ))}
                   </div>
                 </div>
 
@@ -584,17 +605,11 @@ function NewRequestPage() {
             </div>
             <ul className="mt-4 space-y-2.5 text-sm">
               <PreviewRow icon={MapPin} label="מיקום" value={form.location || "—"} />
-              <PreviewRow icon={Calendar} label="התחלה" value={form.startDate || "—"} />
-              <PreviewRow icon={Calendar} label="משך" value={form.duration || "—"} />
+              <PreviewRow icon={Calendar} label="התחלה" value={form.startDate || "—"} ltr />
               <PreviewRow
                 icon={Lock}
-                label="התחייבות"
+                label="משך"
                 value={form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}
-              />
-              <PreviewRow
-                icon={Briefcase}
-                label="תקציב"
-                value={form.budget ? `₪${form.budget}` : "—"}
               />
             </ul>
 
@@ -607,11 +622,15 @@ function NewRequestPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">עלות יומית משוערת</span>
-                  <span className="font-extrabold text-foreground">₪{estDailyCost.toLocaleString()}</span>
+                  <span className="font-extrabold text-foreground" dir="ltr">
+                    ₪{estDailyCost.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">עלות חודשית (×22 ימים)</span>
-                  <span className="font-extrabold text-primary">₪{estMonthlyCost.toLocaleString()}</span>
+                  <span className="font-extrabold text-primary" dir="ltr">
+                    ₪{estMonthlyCost.toLocaleString()}
+                  </span>
                 </div>
               </div>
             )}
@@ -667,7 +686,9 @@ function ItemRow({
           >
             <option value="">בחר תחום…</option>
             {ROLES.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>
+                {r}
+              </option>
             ))}
           </select>
         </div>
@@ -683,7 +704,9 @@ function ItemRow({
           >
             <option value="">בחר לאום…</option>
             {NATIONALITIES.map((n) => (
-              <option key={n} value={n}>{n}</option>
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>
@@ -727,18 +750,21 @@ function PreviewRow({
   icon: Icon,
   label,
   value,
+  ltr,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
+  ltr?: boolean;
 }) {
   return (
     <li className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 last:border-0">
       <span className="inline-flex items-center gap-2 text-muted-foreground">
         <Icon className="h-4 w-4" /> {label}
       </span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <span className="font-semibold text-foreground" dir={ltr ? "ltr" : undefined}>
+        {value}
+      </span>
     </li>
   );
 }
-

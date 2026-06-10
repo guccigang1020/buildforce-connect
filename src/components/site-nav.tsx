@@ -136,7 +136,7 @@ export function SiteNav() {
         </div>
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden text-foreground"
+          className="grid h-10 w-10 place-items-center text-foreground md:hidden"
           aria-label="תפריט"
         >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -151,7 +151,7 @@ export function SiteNav() {
                 to={l.to}
                 hash={l.hash}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="flex items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {l.label}
               </Link>

@@ -48,7 +48,7 @@ export const Route = createFileRoute("/my-requests/$id")({
 const STATUS_META: Record<string, { label: string; color: string; dot: string }> = {
   open: {
     label: "פתוחה למכרז",
-    color: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+    color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     dot: "bg-emerald-500",
   },
   awarded: {
@@ -143,7 +143,9 @@ function MyRequestPage() {
           <div className="enterprise-card p-5">
             <div className="h-5 w-40 rounded bg-muted mb-4" />
             <div className="grid grid-cols-3 gap-3">
-              {[...Array(3)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted" />)}
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-16 rounded-xl bg-muted" />
+              ))}
             </div>
           </div>
           {/* Offer card skeletons */}
@@ -174,9 +176,12 @@ function MyRequestPage() {
           </div>
           <h2 className="text-xl font-bold">הבקשה לא נמצאה</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "ייתכן שהבקשה נמחקה או שאין לך הרשאה."}
+            ייתכן שהבקשה נמחקה, הקישור שגוי, או שאין לך הרשאה לצפות בה.
           </p>
-          <Button asChild className="mt-6 bg-gradient-primary text-primary-foreground">
+          <Button
+            asChild
+            className="mt-6 bg-gradient-primary text-primary-foreground shadow-elegant"
+          >
             <Link to="/dashboard">חזרה ללוח הבקרה</Link>
           </Button>
         </div>
@@ -196,7 +201,8 @@ function MyRequestPage() {
   const prices = sortedOffers.map((o) => Number(o.price_per_hour));
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-  const avgPrice = prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+  const avgPrice =
+    prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
   const priceSpread = maxPrice - minPrice;
 
   // ── Savings Engine (מנוע החיסכון) — the core differentiator from the business
@@ -211,7 +217,10 @@ function MyRequestPage() {
 
   // Deadline countdown
   const deadlineHours = (request as { deadline_at?: string }).deadline_at
-    ? Math.round((new Date((request as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000)
+    ? Math.round(
+        (new Date((request as { deadline_at: string }).deadline_at).getTime() - Date.now()) /
+          3600000,
+      )
     : null;
 
   // Value score per offer
@@ -221,38 +230,39 @@ function MyRequestPage() {
     return Math.min(100, Math.round(raw));
   };
 
-  const closeAction = isOwner && request.status === "open" ? (
-    confirmingClose ? (
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">לסגור את הבקשה?</span>
+  const closeAction =
+    isOwner && request.status === "open" ? (
+      confirmingClose ? (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">לסגור את הבקשה?</span>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={handleClose}
+            className="h-7 px-2.5 text-xs"
+          >
+            אישור
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setConfirmingClose(false)}
+            className="h-7 px-2.5 text-xs"
+          >
+            ביטול
+          </Button>
+        </div>
+      ) : (
         <Button
+          variant="outline"
           size="sm"
-          variant="destructive"
-          onClick={handleClose}
-          className="h-7 px-2.5 text-xs"
+          onClick={() => setConfirmingClose(true)}
+          className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/5"
         >
-          אישור
+          <X className="h-4 w-4" /> סגור בקשה
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setConfirmingClose(false)}
-          className="h-7 px-2.5 text-xs"
-        >
-          ביטול
-        </Button>
-      </div>
-    ) : (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setConfirmingClose(true)}
-        className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/5"
-      >
-        <X className="h-4 w-4" /> סגור בקשה
-      </Button>
-    )
-  ) : undefined;
+      )
+    ) : undefined;
 
   return (
     <AppShell title={`בקשה ${maskedRequestId(request.id)}`} action={closeAction}>
@@ -272,8 +282,13 @@ function MyRequestPage() {
                   בקשת כוח אדם
                 </h2>
                 {deadlineHours !== null && deadlineHours > 0 && (
-                  <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineHours < 24 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-amber-500/30 bg-amber-500/10 text-amber-700"}`}>
-                    <Clock className="h-3 w-3" /> {deadlineHours < 24 ? `נסגר בעוד ${deadlineHours} שעות!` : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
+                  <div
+                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineHours < 24 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-amber-500/30 bg-amber-500/10 text-amber-400"}`}
+                  >
+                    <Clock className="h-3 w-3" />{" "}
+                    {deadlineHours < 24
+                      ? `נסגר בעוד ${deadlineHours} שעות!`
+                      : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
                   </div>
                 )}
               </div>
@@ -337,8 +352,8 @@ function MyRequestPage() {
 
         {/* Savings Engine — the core differentiator (business plan §6) */}
         {sortedOffers.length > 0 && (
-          <div className="enterprise-card p-5 animate-fade-up delay-100">
-            <div className="mb-4 flex items-center gap-2">
+          <div className="enterprise-card overflow-hidden animate-fade-up delay-100">
+            <div className="flex items-center gap-2 border-b border-border/40 px-5 py-4 md:px-6">
               <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
                 <BarChart2 className="h-4 w-4 text-primary" />
               </div>
@@ -348,25 +363,35 @@ function MyRequestPage() {
               </span>
             </div>
 
-            {/* Hero savings number */}
+            {/* Hero savings number — the emotional centerpiece */}
             {monthlySavings > 0 && (
-              <div className="mb-4 overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-l from-emerald-500/10 via-emerald-500/5 to-transparent p-5">
-                <div className="flex flex-wrap items-end justify-between gap-3">
+              <div className="relative overflow-hidden border-b border-emerald-500/20 bg-gradient-to-br from-emerald-500/14 via-emerald-500/5 to-transparent px-5 py-7 md:px-8 md:py-9">
+                <div className="pointer-events-none absolute -top-16 -end-16 h-56 w-56 rounded-full bg-emerald-500/10 blur-3xl" />
+                <div className="relative flex flex-wrap items-end justify-between gap-6">
                   <div>
-                    <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-400">
                       <TrendingDown className="h-3.5 w-3.5" />
                       {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
                     </div>
-                    <div className="mt-1 text-3xl font-extrabold tracking-tight text-emerald-700 md:text-4xl">
-                      ₪{monthlySavings.toLocaleString()}
-                      <span className="mr-1.5 text-base font-bold text-emerald-600/70">/ חודש</span>
+                    <div className="mt-3 text-5xl font-black leading-none tracking-tight text-emerald-400 md:text-6xl">
+                      <span dir="ltr">₪{monthlySavings.toLocaleString()}</span>
+                      <span className="mr-2 align-middle text-lg font-bold text-emerald-400/80">
+                        / חודש
+                      </span>
                     </div>
                   </div>
-                  <div className="text-left text-xs text-muted-foreground">
-                    <div>
-                      לעומת ההצעה היקרה ביותר (<b className="text-foreground">{maxPrice} ₪</b>)
+                  <div className="rounded-2xl border border-border/60 bg-card/70 px-4 py-3 text-sm">
+                    <div className="text-muted-foreground">
+                      לעומת ההצעה היקרה ביותר (
+                      <b className="text-foreground" dir="ltr">
+                        {maxPrice} ₪
+                      </b>
+                      )
                     </div>
-                    <div className="mt-0.5 font-mono text-[11px]">
+                    <div
+                      className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground"
+                      dir="ltr"
+                    >
                       {savingsPerHour} ₪/שעה × {totalWorkers} עובדים × 176 ש׳
                     </div>
                   </div>
@@ -374,33 +399,38 @@ function MyRequestPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
-                <div className="text-xs text-muted-foreground mb-1">מינימום</div>
-                <div className="text-lg font-extrabold text-emerald-700">{minPrice} ₪</div>
+            <div className="p-5 md:p-6">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                  <div className="mb-1 text-xs text-muted-foreground">מינימום</div>
+                  <div className="text-lg font-extrabold text-emerald-400">{minPrice} ₪</div>
+                </div>
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
+                  <div className="mb-1 text-xs text-muted-foreground">ממוצע</div>
+                  <div className="text-lg font-extrabold text-primary">{avgPrice} ₪</div>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-secondary/30 p-3 text-center">
+                  <div className="mb-1 text-xs text-muted-foreground">מקסימום</div>
+                  <div className="text-lg font-extrabold">{maxPrice} ₪</div>
+                </div>
               </div>
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
-                <div className="text-xs text-muted-foreground mb-1">ממוצע</div>
-                <div className="text-lg font-extrabold text-primary">{avgPrice} ₪</div>
-              </div>
-              <div className="rounded-xl border border-border/60 bg-secondary/30 p-3 text-center">
-                <div className="text-xs text-muted-foreground mb-1">מקסימום</div>
-                <div className="text-lg font-extrabold">{maxPrice} ₪</div>
-              </div>
+              {priceSpread > 0 && (
+                <div className="mt-4">
+                  <div className="mb-1.5 flex flex-wrap justify-between gap-1 text-[11px] text-muted-foreground">
+                    <span>
+                      פיזור מחירים ({minPrice} – {maxPrice} ₪)
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-primary">
+                      <TrendingDown className="h-3 w-3" /> חסכון פוטנציאלי: {maxPrice - minPrice}{" "}
+                      ₪/שעה
+                    </span>
+                  </div>
+                  <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-l from-destructive/30 to-emerald-500/30" />
+                  </div>
+                </div>
+              )}
             </div>
-            {priceSpread > 0 && (
-              <div className="mt-3">
-                <div className="mb-1.5 flex justify-between text-[11px] text-muted-foreground">
-                  <span>פיזור מחירים ({minPrice} – {maxPrice} ₪)</span>
-                  <span className="inline-flex items-center gap-1 text-primary font-semibold">
-                    <TrendingDown className="h-3 w-3" /> חסכון פוטנציאלי: {maxPrice - minPrice} ₪/שעה
-                  </span>
-                </div>
-                <div className="h-3 w-full rounded-full bg-muted overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-l from-destructive/30 to-emerald-500/30 rounded-full" />
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -417,25 +447,24 @@ function MyRequestPage() {
               </span>
             </div>
             {minPrice > 0 && (
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <TrendingDown className="h-3.5 w-3.5" /> מינימום: {minPrice} ₪/שעה
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                <TrendingDown className="h-3.5 w-3.5" /> מינימום:{" "}
+                <span dir="ltr">{minPrice} ₪/שעה</span>
               </div>
             )}
           </div>
 
           {offers.length === 0 ? (
-            <div className="enterprise-card flex flex-col items-center gap-4 p-12 text-center">
-              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted/50">
-                <Coins className="h-8 w-8 text-muted-foreground/50" />
+            <div className="empty-state">
+              <div className="empty-state-icon mx-auto">
+                <Coins className="h-8 w-8 text-primary" />
               </div>
-              <div>
-                <h4 className="font-bold">ממתינים להצעות</h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {request.status === "open"
-                    ? "תאגידים מאומתים יקבלו את הבקשה במייל ויגישו הצעות בקרוב."
-                    : "לא התקבלו הצעות לפני סגירת הבקשה."}
-                </p>
-              </div>
+              <h4 className="text-lg font-bold">ממתינים להצעות</h4>
+              <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+                {request.status === "open"
+                  ? "תאגידים מאומתים יקבלו את הבקשה במייל ויגישו הצעות בקרוב."
+                  : "לא התקבלו הצעות לפני סגירת הבקשה."}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -444,12 +473,15 @@ function MyRequestPage() {
                 const isRejected = o.status === "rejected" || o.status === "withdrawn";
                 const priceNum = Number(o.price_per_hour);
                 const savedVsMax = maxPrice > priceNum ? maxPrice - priceNum : 0;
-                const reveal = o as { corp_name?: string; corp_phone?: string; corp_email?: string };
+                const reveal = o as {
+                  corp_name?: string;
+                  corp_phone?: string;
+                  corp_email?: string;
+                };
                 const workersNum = Number(o.available_workers);
                 const valueScore = getValueScore(priceNum, workersNum, o.insurance ?? false);
-                const pricePosition = priceSpread > 0
-                  ? Math.round(((priceNum - minPrice) / priceSpread) * 100)
-                  : 0;
+                const pricePosition =
+                  priceSpread > 0 ? Math.round(((priceNum - minPrice) / priceSpread) * 100) : 0;
                 const isConfirming = confirmingAwardId === o.id;
 
                 return (
@@ -474,7 +506,7 @@ function MyRequestPage() {
                               isWinner
                                 ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
                                 : idx === 0 && !isRejected
-                                  ? "bg-emerald-500/15 text-emerald-700"
+                                  ? "bg-emerald-500/15 text-emerald-400"
                                   : "bg-secondary text-foreground"
                             }`}
                           >
@@ -492,25 +524,30 @@ function MyRequestPage() {
                                 {isWinner && reveal.corp_name ? reveal.corp_name : "תאגיד אנונימי"}
                               </span>
                               {savedVsMax > 0 && !isRejected && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                                  <TrendingDown className="h-2.5 w-2.5" /> זול ב-{savedVsMax}₪/שעה מהיקרה
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+                                  <TrendingDown className="h-2.5 w-2.5" /> זול ב-{savedVsMax}₪/שעה
+                                  מהיקרה
                                 </span>
                               )}
                               {idx === 0 && !isRejected && request.status === "open" && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
                                   <Star className="h-2.5 w-2.5" /> הצעה זולה ביותר
                                 </span>
                               )}
                               {isWinner && (
-                                <Badge className="bg-primary text-primary-foreground text-[10px]">
+                                <Badge className="bg-primary text-primary-foreground text-[11px]">
                                   זוכה
                                 </Badge>
                               )}
                               {o.status === "withdrawn" && (
-                                <Badge variant="outline" className="text-[10px]">בוטלה</Badge>
+                                <Badge variant="outline" className="text-[11px]">
+                                  בוטלה
+                                </Badge>
                               )}
                               {o.status === "rejected" && (
-                                <Badge variant="outline" className="text-[10px]">לא נבחרה</Badge>
+                                <Badge variant="outline" className="text-[11px]">
+                                  לא נבחרה
+                                </Badge>
                               )}
                             </div>
                             <div className="mt-0.5 text-xs text-muted-foreground">
@@ -536,9 +573,10 @@ function MyRequestPage() {
                                 isWinner
                                   ? "text-primary"
                                   : idx === 0
-                                    ? "text-emerald-600"
+                                    ? "text-emerald-400"
                                     : "text-foreground"
                               }`}
+                              dir="ltr"
                             >
                               {o.price_per_hour} ₪
                             </div>
@@ -550,7 +588,9 @@ function MyRequestPage() {
                           {sortedOffers.length > 1 && (
                             <div className="text-center">
                               <div className="text-[11px] text-muted-foreground">ניקוד ערך</div>
-                              <div className={`text-lg font-extrabold ${valueScore >= 80 ? "text-emerald-600" : valueScore >= 60 ? "text-amber-600" : "text-muted-foreground"}`}>
+                              <div
+                                className={`text-lg font-extrabold ${valueScore >= 80 ? "text-emerald-400" : valueScore >= 60 ? "text-amber-500" : "text-muted-foreground"}`}
+                              >
                                 {valueScore}
                               </div>
                             </div>
@@ -562,7 +602,9 @@ function MyRequestPage() {
                       {sortedOffers.length > 1 && priceSpread > 0 && (
                         <div className="mt-3">
                           <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> מיקום במחיר</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Zap className="h-3 w-3" /> מיקום במחיר
+                            </span>
                             <span>{pricePosition}% מהמקסימום</span>
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -595,11 +637,11 @@ function MyRequestPage() {
                       {/* Requirements warning */}
                       {(o.requires_personal_guarantee || o.requires_security_check) && (
                         <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500">
                             <AlertTriangle className="h-3.5 w-3.5" />
                             תנאי התאגיד לזכייה
                           </div>
-                          <ul className="mt-1.5 space-y-0.5 text-xs text-amber-900/80">
+                          <ul className="mt-1.5 space-y-0.5 text-xs text-amber-200/80">
                             {o.requires_personal_guarantee && <li>• ערבות אישית מהקבלן</li>}
                             {o.requires_security_check && <li>• צ׳ק לביטחון מהקבלן</li>}
                           </ul>
@@ -641,9 +683,13 @@ function MyRequestPage() {
                                   className="bg-gradient-primary text-primary-foreground shadow-elegant gap-1.5"
                                 >
                                   {actingId === o.id ? (
-                                    <><Loader2 className="h-4 w-4 animate-spin" /> בוחר…</>
+                                    <>
+                                      <Loader2 className="h-4 w-4 animate-spin" /> בוחר…
+                                    </>
                                   ) : (
-                                    <><Trophy className="h-4 w-4" /> אישור סופי</>
+                                    <>
+                                      <Trophy className="h-4 w-4" /> אישור סופי
+                                    </>
                                   )}
                                 </Button>
                               </div>
@@ -698,6 +744,7 @@ function MyRequestPage() {
                           <a
                             href={`tel:${w.corp_phone}`}
                             className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+                            dir="ltr"
                           >
                             <Phone className="h-3.5 w-3.5" /> {w.corp_phone}
                           </a>
@@ -711,7 +758,7 @@ function MyRequestPage() {
                     </div>
                   ) : null;
                 })()}
-                <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-800">
+                <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-300">
                   כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
                 </div>
               </div>

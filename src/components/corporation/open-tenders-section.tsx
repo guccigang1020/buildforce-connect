@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MapPin, Calendar, Clock, Send, Loader2, ListChecks } from "lucide-react";
+import { MapPin, Calendar, Clock, Send, Loader2, ListChecks, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
@@ -31,7 +32,7 @@ type OpenRequest = {
   deadline_at: string | null;
 };
 
-export function OpenTendersSection() {
+export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
   const fetchOpen = useServerFn(listOpenJobRequests);
   const { data, isLoading } = useQuery({
     queryKey: ["open-job-requests"],
@@ -65,15 +66,19 @@ export function OpenTendersSection() {
           ))}
         </div>
       ) : requests.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 py-12 text-center">
-          <ListChecks className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
-          <p className="text-sm font-semibold text-muted-foreground">אין כרגע מכרזים פתוחים</p>
-          <p className="mt-1 text-xs text-muted-foreground">מכרזים חדשים יופיעו כאן ברגע שיפורסמו.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <ListChecks className="h-7 w-7 text-primary" />
+          </div>
+          <p className="text-sm font-bold text-foreground">אין כרגע מכרזים פתוחים</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            מכרזים חדשים יופיעו כאן ברגע שיפורסמו — תוכל להגיש הצעת מחיר סגורה מיד.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {requests.map((r, idx) => (
-            <TenderRow key={r.id} req={r} rank={idx + 1} />
+            <TenderRow key={r.id} req={r} rank={idx + 1} isApproved={isApproved} />
           ))}
         </div>
       )}
@@ -81,7 +86,15 @@ export function OpenTendersSection() {
   );
 }
 
-function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
+function TenderRow({
+  req,
+  rank,
+  isApproved,
+}: {
+  req: OpenRequest;
+  rank: number;
+  isApproved: boolean;
+}) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:shadow-card status-bar-live md:p-5">
       <div className="flex min-w-0 items-start gap-3">
@@ -99,7 +112,7 @@ function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
               <Calendar className="h-3 w-3" /> {req.start_date} · {req.duration}
             </span>
             {req.deadline_at && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600">
                 <Clock className="h-3 w-3" /> סגירה{" "}
                 {new Date(req.deadline_at).toLocaleDateString("he-IL")}
               </span>
@@ -109,7 +122,9 @@ function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
             <span>התחייבות {req.commitment_months} חודשים</span>
             {req.budget && (
-              <span className="font-semibold text-foreground">תקציב {req.budget}</span>
+              <span className="font-semibold text-foreground" dir="ltr">
+                תקציב {req.budget}
+              </span>
             )}
           </div>
         </div>
@@ -118,17 +133,23 @@ function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
         <Link
           to="/requests/$id"
           params={{ id: req.id }}
-          className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          className="flex h-10 items-center px-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
         >
           פרטים
         </Link>
-        <SubmitOfferDialog requestId={req.id} />
+        <SubmitOfferDialog requestId={req.id} isApproved={isApproved} />
       </div>
     </div>
   );
 }
 
-function SubmitOfferDialog({ requestId }: { requestId: string }) {
+function SubmitOfferDialog({
+  requestId,
+  isApproved,
+}: {
+  requestId: string;
+  isApproved: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pricePerHour, setPricePerHour] = useState("");
@@ -193,57 +214,84 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
     }
   };
 
+  if (!isApproved) {
+    return (
+      <Button
+        type="button"
+        disabled
+        title="החשבון ממתין לאימות אדמין — לא ניתן להגיש הצעות עדיין"
+        className="h-10 gap-1.5"
+        variant="outline"
+      >
+        <Lock className="h-3.5 w-3.5" /> ממתין לאישור
+      </Button>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
+        <Button className="h-10 gap-1.5 bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95">
           <Send className="h-3.5 w-3.5" /> הגש הצעה
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>הגשת הצעה למכרז</DialogTitle>
+          <DialogTitle>הגשת הצעה סגורה למכרז</DialogTitle>
+          <DialogDescription>
+            ההצעה שלך חסויה — הלקוח לא יראה את שם החברה או הצעות מתחרות עד לרגע הזכייה.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Primary bid input */}
+          <div className="space-y-1.5 rounded-xl border border-primary/25 bg-primary/5 p-3">
+            <Label htmlFor="price" className="text-sm font-bold text-foreground">
+              מחיר לשעה (₪) *
+            </Label>
+            <Input
+              id="price"
+              type="number"
+              min="1"
+              step="0.5"
+              dir="ltr"
+              value={pricePerHour}
+              onChange={(e) => setPricePerHour(e.target.value)}
+              required
+              className="h-12 text-lg font-bold"
+              placeholder="₪ לשעה"
+            />
+            <p className="text-xs text-muted-foreground">
+              זוהי הצעת המחיר הסגורה שלך לפרויקט — ללא תקציב מוצהר מראש מהלקוח.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="price">מחיר לשעה (₪) *</Label>
-              <Input
-                id="price"
-                type="number"
-                min="1"
-                step="0.5"
-                value={pricePerHour}
-                onChange={(e) => setPricePerHour(e.target.value)}
-                required
-                className="h-11"
-                placeholder="₪"
-              />
-            </div>
             <div className="space-y-1.5">
               <Label htmlFor="workers">עובדים זמינים *</Label>
               <Input
                 id="workers"
                 type="number"
                 min="1"
+                dir="ltr"
                 value={availableWorkers}
                 onChange={(e) => setAvailableWorkers(e.target.value)}
                 required
                 className="h-11"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
+              <Input
+                id="sd"
+                placeholder="למשל: 01/06/2026"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+                className="h-11"
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
-            <Input
-              id="sd"
-              placeholder="למשל: 01/06/2026"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-              className="h-11"
-            />
-          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="rt">זמן תגובה (שעות)</Label>
@@ -252,6 +300,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 type="number"
                 min="1"
                 max="168"
+                dir="ltr"
                 value={responseTimeHours}
                 onChange={(e) => setResponseTimeHours(e.target.value)}
                 className="h-11"
@@ -264,12 +313,14 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 type="number"
                 min="0"
                 max="365"
+                dir="ltr"
                 value={warrantyDays}
                 onChange={(e) => setWarrantyDays(e.target.value)}
                 className="h-11"
               />
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <Checkbox
               id="ins"
@@ -280,7 +331,8 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
               כלול ביטוח מלא
             </Label>
           </div>
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+
+          <div className="space-y-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
             <div className="text-xs font-bold text-amber-600">
               דרישות לערבות העסקה (במידה והקבלן יבחר בהצעתך)
             </div>
@@ -304,11 +356,12 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
                 דורש צ׳ק לבטחון מהקבלן
               </Label>
             </div>
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               ניתן לסמן אחד מהם, את שניהם, או אף אחד. הדרישות יוצגו לקבלן יחד עם ההצעה.
             </div>
           </div>
-          <div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="note">הערות</Label>
             <Textarea
               id="note"
@@ -319,6 +372,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
               placeholder="פרטים נוספים על ההצעה..."
             />
           </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -328,13 +382,17 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
             >
               ביטול
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-95"
+            >
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" /> שולח...
                 </>
               ) : (
-                "שלח הצעה"
+                "שלח הצעה סגורה"
               )}
             </Button>
           </DialogFooter>

@@ -13,10 +13,15 @@ const FEATURES = [
     title: "תאגידים נלחמים על המחיר שלך",
     body: "פותח בקשה אחת — ועשרות תאגידים מתחילים להוריד הצעות זה מול זה. אתה רואה את המחיר יורד בזמן אמת, עם טיימר 48 שעות וגרף חי שמראה כל הורדה.",
     image: featureAuction,
+    soon: false,
     bullets: [
-      { icon: Flame, text: "ספירה לאחור חיה — ככל שמתקרבים לדדליין, ההצעות הופכות אגרסיביות יותר" },
-      { icon: TrendingDown, text: "גרף ירידת מחיר אנימטיבי בזמן אמת" },
-      { icon: Eye, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו" },
+      {
+        icon: Flame,
+        text: "ספירה לאחור חיה — ככל שמתקרבים לדדליין, ההצעות הופכות אגרסיביות יותר",
+        soon: false,
+      },
+      { icon: TrendingDown, text: "גרף ירידת מחיר אנימטיבי בזמן אמת", soon: false },
+      { icon: Eye, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו", soon: false },
     ],
     accent: "from-orange-500 to-amber-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(232,93,58,0.55)]",
@@ -24,12 +29,13 @@ const FEATURES = [
   {
     eyebrow: "עובדים אמיתיים · ספקים מאומתים",
     title: "פועלים שמגיעים לאתר. נקודה.",
-    body: "כל ספק ב-BuildForce עובר אימות מקצועי, ביטוחי ורגולטורי. אם פועל לא הופיע — אנחנו שולחים מחליף תוך 4 שעות, על חשבון התאגיד.",
+    body: "כל ספק ב-BuildForce עובר אימות מקצועי, ביטוחי ורגולטורי. החזון שלנו: אם פועל לא מגיע — שולחים מחליף תוך 4 שעות, על חשבון התאגיד.",
     image: featureWorkers,
+    soon: false,
     bullets: [
-      { icon: ShieldCheck, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות" },
-      { icon: Users, text: "דירוג פועל-לפי-פועל, לא רק תאגיד" },
-      { icon: Flame, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה' },
+      { icon: ShieldCheck, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות", soon: true },
+      { icon: Users, text: "דירוג פועל-לפי-פועל, לא רק תאגיד", soon: true },
+      { icon: Flame, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה', soon: true },
     ],
     accent: "from-emerald-500 to-teal-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(45,212,168,0.45)]",
@@ -37,17 +43,22 @@ const FEATURES = [
   {
     eyebrow: "צ׳אט מאובטח · אנונימיות מלאה",
     title: "השליטה אצלך — תמיד",
-    body: "מספרי טלפון, מיילים וקישורים נחסמים אוטומטית בצ׳אט עד החתימה. שיחות עוברות דרך מספרים וירטואליים שלנו. אף אחד לא עוקף אותך.",
+    body: "החזון: מספרי טלפון, מיילים וקישורים ייחסמו אוטומטית בצ׳אט עד החתימה, ושיחות יעברו דרך מספרים וירטואליים שלנו — כך שאף אחד לא יעקוף אותך.",
     image: featureChat,
+    soon: true,
     bullets: [
-      { icon: ShieldCheck, text: "מסיכת זהות עד חתימת הסכם" },
-      { icon: Flame, text: "חסימה אוטומטית של פרטי קשר חיצוניים" },
-      { icon: Eye, text: "Audit trail מלא: זמן, IP, חתימה דיגיטלית" },
+      { icon: ShieldCheck, text: "מסיכת זהות עד חתימת הסכם", soon: true },
+      { icon: Flame, text: "חסימה אוטומטית של פרטי קשר חיצוניים", soon: true },
+      { icon: Eye, text: "Audit trail מלא: זמן, IP, חתימה דיגיטלית", soon: true },
     ],
     accent: "from-fuchsia-500 to-violet-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(217,70,239,0.45)]",
   },
 ];
+
+function ComingSoonPill() {
+  return <span className="status-chip-pending shrink-0">בקרוב</span>;
+}
 
 export function PlatformShowcase() {
   return (
@@ -98,7 +109,7 @@ export function PlatformShowcase() {
                 <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              247 בקשות פעילות עכשיו
+              כל הצעה חדשה דוחפת את המחיר למטה
             </div>
             <h3 className="mt-3 max-w-2xl text-2xl font-extrabold md:text-4xl">
               קבלן אחד. הצעות אינסוף. מחיר שיורד.
@@ -126,7 +137,7 @@ export function PlatformShowcase() {
                   height={896}
                 />
                 <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${f.accent}`} />
-                <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
+                <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[11px] font-bold uppercase tracking-wider backdrop-blur">
                   <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${f.accent}`} />
                   {f.eyebrow}
                 </div>
@@ -134,17 +145,20 @@ export function PlatformShowcase() {
 
               {/* Copy */}
               <div>
-                <div
-                  className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${f.accent} bg-clip-text px-0 py-0 text-[11px] font-extrabold uppercase tracking-wider text-transparent`}
-                >
-                  {f.eyebrow}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div
+                    className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${f.accent} bg-clip-text px-0 py-0 text-[11px] font-extrabold uppercase tracking-wider text-transparent`}
+                  >
+                    {f.eyebrow}
+                  </div>
+                  {f.soon && <ComingSoonPill />}
                 </div>
                 <h3 className="mt-2 text-2xl font-extrabold leading-tight md:text-4xl">
                   {f.title}
                 </h3>
                 <p className="mt-3 text-base text-muted-foreground md:text-lg">{f.body}</p>
                 <ul className="mt-6 space-y-3">
-                  {f.bullets.map(({ icon: Icon, text }) => (
+                  {f.bullets.map(({ icon: Icon, text, soon }) => (
                     <li
                       key={text}
                       className="flex items-start gap-3 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur-sm"
@@ -154,7 +168,10 @@ export function PlatformShowcase() {
                       >
                         <Icon className="h-4 w-4" />
                       </span>
-                      <span className="pt-1.5 text-sm font-medium">{text}</span>
+                      <span className="flex flex-1 flex-wrap items-center justify-between gap-2 pt-1.5">
+                        <span className="text-sm font-medium">{text}</span>
+                        {soon && <ComingSoonPill />}
+                      </span>
                     </li>
                   ))}
                 </ul>

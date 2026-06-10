@@ -102,6 +102,9 @@ export const adminToggleRole = createServerFn({ method: "POST" })
       import("@/lib/admin.server"),
     ]);
     await assertAdmin(context.userId);
+    if (data.role === "admin" && data.action === "remove" && data.targetUserId === context.userId) {
+      throw new Error("לא ניתן להסיר הרשאת אדמין מעצמך");
+    }
     if (data.action === "remove") {
       const { error } = await supabaseAdmin
         .from("user_roles")

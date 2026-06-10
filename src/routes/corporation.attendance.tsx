@@ -29,30 +29,30 @@ type CorpAttendanceRecord = {
 const STATUS_META: Record<string, { label: string; className: string }> = {
   pending: {
     label: "ממתין לאישור",
-    className: "border-amber-500/40 bg-amber-500/10 text-amber-700",
+    className: "status-chip-pending",
   },
   approved: {
     label: "אושר",
-    className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700",
+    className: "status-chip-approved",
   },
   auto_approved: {
     label: "אושר אוטומטית",
-    className: "border-slate-400/40 bg-slate-100 text-slate-600",
+    className: "status-chip-approved",
   },
   exception: {
     label: "חריגה",
-    className: "border-orange-500/40 bg-orange-500/10 text-orange-700",
+    className: "status-chip-disputed",
   },
   rejected: {
     label: "נדחה",
-    className: "border-destructive/40 bg-destructive/10 text-destructive",
+    className: "status-chip-rejected",
   },
 };
 
 type FilterTab = "all" | "pending" | "approved" | "exception";
 
-export const Route = createFileRoute("/labor-supplier/attendance")({
-  head: () => ({ meta: [{ title: "נוכחות — תאגיד כוח אדם" }] }),
+export const Route = createFileRoute("/corporation/attendance")({
+  head: () => ({ meta: [{ title: "נוכחות צוותים — תאגיד" }] }),
   component: Page,
 });
 
@@ -218,9 +218,11 @@ function Page() {
                 >
                   {tab.label}
                   {tabCounts[tab.key] > 0 && (
-                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                      activeTab === tab.key ? "bg-primary/20" : "bg-border/60"
-                    }`}>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+                        activeTab === tab.key ? "bg-primary/20" : "bg-border/60"
+                      }`}
+                    >
                       {tabCounts[tab.key]}
                     </span>
                   )}
@@ -239,20 +241,27 @@ function Page() {
               ))}
             </div>
           ) : filteredRecords.length === 0 ? (
-            <div className="enterprise-card flex flex-col items-center gap-4 border-dashed p-12 text-center">
-              <div className="grid h-16 w-16 place-items-center rounded-2xl bg-muted/50">
-                <Users className="h-8 w-8 text-muted-foreground/50" />
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <Users className="h-8 w-8 text-primary" />
               </div>
-              <div>
-                <h4 className="font-bold">
-                  {records.length === 0 ? "אין רשומות נוכחות" : "לא נמצאו רשומות בסינון זה"}
-                </h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {records.length === 0
-                    ? "לא נמצאו רשומות נוכחות להיום."
-                    : "נסה לשנות את הסינון."}
-                </p>
-              </div>
+              <h4 className="font-bold">
+                {records.length === 0 ? "אין רשומות נוכחות" : "לא נמצאו רשומות בסינון זה"}
+              </h4>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {records.length === 0
+                  ? "רשומות נוכחות יופיעו כאן לאחר שראשי הצוותים ידווחו על יום עבודה."
+                  : "נסה לבחור סינון אחר כדי לראות רשומות נוספות."}
+              </p>
+              {records.length > 0 && activeTab !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("all")}
+                  className="mt-4 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+                >
+                  הצג את כל הרשומות
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -272,11 +281,18 @@ function Page() {
                       ? Math.round((r.workers_actual / r.workers_expected) * 100)
                       : null;
                   return (
-                    <div key={r.id} className="grid grid-cols-5 items-center border-t border-border/40 px-5 py-3.5 text-sm hover:bg-secondary/20 transition-colors">
+                    <div
+                      key={r.id}
+                      className="grid grid-cols-5 items-center border-t border-border/40 px-5 py-3.5 text-sm hover:bg-secondary/20 transition-colors"
+                    >
                       <span className="font-semibold truncate">{r.projects?.name ?? "—"}</span>
-                      <span className="text-muted-foreground truncate">{r.project_teams?.name ?? "—"}</span>
+                      <span className="text-muted-foreground truncate">
+                        {r.project_teams?.name ?? "—"}
+                      </span>
                       <div>
-                        <div className="text-xs font-semibold">{r.workers_actual ?? "—"}/{r.workers_expected} עובדים</div>
+                        <div className="text-xs font-semibold">
+                          {r.workers_actual ?? "—"}/{r.workers_expected} עובדים
+                        </div>
                         {fillRate !== null && (
                           <div className="mt-1 h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                             <div
@@ -286,12 +302,13 @@ function Page() {
                           </div>
                         )}
                       </div>
-                      <span className={`font-semibold ${r.total_cost != null ? "text-foreground" : "text-muted-foreground"}`}>
+                      <span
+                        dir="ltr"
+                        className={`font-semibold ${r.total_cost != null ? "text-foreground" : "text-muted-foreground"} text-end`}
+                      >
                         {r.total_cost != null ? `₪${Number(r.total_cost).toLocaleString()}` : "—"}
                       </span>
-                      <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.className}`}>
-                        {s.label}
-                      </span>
+                      <span className={`w-fit ${s.className}`}>{s.label}</span>
                     </div>
                   );
                 })}
@@ -320,17 +337,13 @@ function Page() {
                                 {r.workers_actual ?? "—"}/{r.workers_expected} עובדים
                               </span>
                               {r.total_cost != null && (
-                                <span className="font-semibold text-foreground">
+                                <span dir="ltr" className="font-semibold text-foreground">
                                   ₪{Number(r.total_cost).toLocaleString()}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.className}`}
-                          >
-                            {s.label}
-                          </span>
+                          <span className={s.className}>{s.label}</span>
                         </div>
 
                         {fillRate !== null && (
@@ -355,7 +368,7 @@ function Page() {
                         )}
 
                         {r.status === "exception" && (
-                          <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-orange-700">
+                          <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-status-disputed">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             חריגה דווחה — ממתין לאישור קבלן
                           </div>
@@ -389,11 +402,7 @@ function KpiCard({
   trend?: { label: string; positive: boolean };
 }) {
   return (
-    <div
-      className={`enterprise-card p-5 ${
-        highlight ? "border-primary/30 bg-primary/5" : ""
-      }`}
-    >
+    <div className={`enterprise-card p-5 ${highlight ? "border-primary/30 bg-primary/5" : ""}`}>
       <div
         className={`grid h-10 w-10 place-items-center rounded-xl ${
           highlight
@@ -404,24 +413,30 @@ function KpiCard({
         <Icon className="h-5 w-5" />
       </div>
       <div
-        className={`mt-4 text-2xl font-extrabold tracking-tight md:text-3xl ${
-          warn ? "text-orange-600" : ""
+        dir="ltr"
+        className={`mt-4 text-start text-2xl font-extrabold tracking-tight md:text-3xl ${
+          warn ? "text-status-disputed" : ""
         }`}
       >
         {value}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">{label}</div>
       {trend && (
-        <div className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-          trend.positive
-            ? "bg-emerald-500/10 text-emerald-700"
-            : "bg-orange-500/10 text-orange-700"
-        }`}>
-          {trend.positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+        <div
+          className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+            trend.positive
+              ? "bg-emerald-500/10 text-status-approved"
+              : "bg-orange-500/10 text-status-disputed"
+          }`}
+        >
+          {trend.positive ? (
+            <TrendingUp className="h-3 w-3" />
+          ) : (
+            <TrendingDown className="h-3 w-3" />
+          )}
           {trend.label}
         </div>
       )}
     </div>
   );
 }
-

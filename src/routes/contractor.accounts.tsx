@@ -10,6 +10,7 @@ import {
 } from "@/lib/daily-accounts.functions";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app-shell";
+import { NextStageNotice } from "@/components/next-stage-notice";
 import {
   CheckCircle2,
   Clock,
@@ -109,9 +110,14 @@ function Page() {
     queryFn: () => getPending({ data: {} }),
   });
 
-  const { data: accountsData, isLoading: accountsLoading, refetch: refetchAccounts } = useQuery({
+  const {
+    data: accountsData,
+    isLoading: accountsLoading,
+    refetch: refetchAccounts,
+  } = useQuery({
     queryKey: ["contractor-daily-accounts", selectedMonth],
     queryFn: () => listAccounts({ data: { month: selectedMonth } }),
+    retry: false,
   });
 
   const pendingRecords = (pendingData?.records ?? []) as unknown as PendingRecord[];
@@ -127,14 +133,16 @@ function Page() {
     }
     return Array.from(map.entries())
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, recs]): PendingDateGroup => ({
-        date,
-        count: recs.length,
-        totalCost: recs.reduce((s, r) => s + Number(r.total_cost ?? 0), 0),
-        totalHours: recs.reduce((s, r) => s + Number(r.total_hours ?? 0), 0),
-        autoCount: recs.filter((r) => r.status === "auto_approved").length,
-        records: recs,
-      }));
+      .map(
+        ([date, recs]): PendingDateGroup => ({
+          date,
+          count: recs.length,
+          totalCost: recs.reduce((s, r) => s + Number(r.total_cost ?? 0), 0),
+          totalHours: recs.reduce((s, r) => s + Number(r.total_hours ?? 0), 0),
+          autoCount: recs.filter((r) => r.status === "auto_approved").length,
+          records: recs,
+        }),
+      );
   })();
 
   // KPI from current month accounts
@@ -142,6 +150,26 @@ function Page() {
   const totalHours = accounts.reduce((s, a) => s + Number(a.total_hours ?? 0), 0);
   const totalCost = accounts.reduce((s, a) => s + Number(a.total_cost ?? 0), 0);
   const autoCount = accounts.filter((a) => a.approval_method === "auto").length;
+
+  // Nothing to close and no approved accounts yet → this whole screen depends on
+  // on-site attendance (a real-device pilot step). Show a clear "next stage"
+  // explainer instead of a zeroed page.
+  if (!accountsLoading && pendingGroups.length === 0 && accounts.length === 0) {
+    return (
+      <AppShell title="חשבון יומי">
+        <NextStageNotice
+          icon={FileCheck}
+          title="החשבון היומי שלך — השלב הבא"
+          description="כאן ייסגרו ימי העבודה ויתקבל חשבון יומי שקוף לכל צוות — אוטומטית מהנוכחות המאומתת באתר. מתחיל להתמלא ברגע שראשי הצוות מדווחים נוכחות (צילום + GPS)."
+          steps={[
+            "ראש הצוות פותח וסוגר יום עבודה מהנייד — צילום + מיקום GPS",
+            "אתה מאשר את היום (או שהוא מאושר אוטומטית) — שעות × תעריף",
+            "סוגרים את היום ומקבלים חשבון נעול, מוכן לחשבונית חודשית",
+          ]}
+        />
+      </AppShell>
+    );
+  }
 
   async function closeDay(group: PendingDateGroup) {
     setClosingDate(group.date);
@@ -163,22 +191,22 @@ function Page() {
     <AppShell title="חשבון יומי מאושר">
       {/* KPI strip */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="kpi-card p-4">
+          <div className="kpi-icon kpi-icon-primary">
             <FileCheck className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{totalAccounts}</div>
           <div className="mt-0.5 text-xs text-muted-foreground">חשבונות החודש</div>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="kpi-card p-4">
+          <div className="kpi-icon kpi-icon-primary">
             <Calendar className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{totalHours.toFixed(1)}</div>
           <div className="mt-0.5 text-xs text-muted-foreground">שעות מאושרות</div>
         </div>
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600">
+        <div className="kpi-card kpi-card-success p-4">
+          <div className="kpi-icon kpi-icon-success">
             <DollarSign className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">
@@ -186,8 +214,8 @@ function Page() {
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">עלות מאושרת</div>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-slate-500/10 text-slate-500">
+        <div className="kpi-card p-4">
+          <div className="kpi-icon kpi-icon-muted">
             <Zap className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{autoCount}</div>
@@ -203,10 +231,10 @@ function Page() {
             {pendingGroups.map((group) => (
               <div
                 key={group.date}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-amber-500/30 bg-amber-500/8 px-5 py-4"
+                className="flex flex-wrap items-center gap-4 rounded-2xl border border-amber-500/30 bg-amber-500/8 px-5 py-4 status-bar-pending"
               >
                 <div className="flex items-center gap-3">
-                  <div className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500/15 text-amber-600">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-400">
                     <Clock className="h-4 w-4" />
                   </div>
                   <div>
@@ -217,14 +245,12 @@ function Page() {
                       <span>{group.count} רשומות מאושרות</span>
                       <span>{group.totalHours.toFixed(1)} שעות</span>
                       {group.totalCost > 0 && (
-                        <span className="font-semibold text-emerald-600">
+                        <span className="font-semibold text-emerald-400">
                           ₪{group.totalCost.toLocaleString()}
                         </span>
                       )}
                       {group.autoCount > 0 && (
-                        <span className="text-slate-500">
-                          {group.autoCount} אושרו אוטומטית
-                        </span>
+                        <span className="text-slate-400">{group.autoCount} אושרו אוטומטית</span>
                       )}
                     </div>
                   </div>
@@ -232,7 +258,7 @@ function Page() {
                 <div className="ms-auto shrink-0">
                   <Button
                     size="sm"
-                    className="gap-1.5 bg-gradient-primary text-primary-foreground shadow-elegant"
+                    className="h-10 gap-1.5 bg-gradient-primary text-primary-foreground shadow-elegant"
                     disabled={closingDate === group.date}
                     onClick={() => setShowCloseDialog(group)}
                   >
@@ -253,7 +279,7 @@ function Page() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="h-9 rounded-xl border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
+            className="h-10 rounded-xl border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
           >
             {monthOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -264,15 +290,19 @@ function Page() {
         </div>
 
         {accountsLoading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-            <Loader2 className="ms-2 h-4 w-4 animate-spin" /> טוען חשבונות…
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+            ))}
           </div>
         ) : accounts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
-            <FileCheck className="mx-auto h-10 w-10 text-muted-foreground/40" />
-            <p className="mt-4 font-semibold">אין חשבונות לחודש זה</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              סגור ימים מאושרים כדי ליצור חשבונות יומיים.
+          <div className="empty-state">
+            <div className="empty-state-icon mx-auto">
+              <FileCheck className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-bold">אין חשבונות לחודש זה</h3>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+              סגור ימים מאושרים בעמוד הנוכחות כדי ליצור חשבונות יומיים נעולים.
             </p>
           </div>
         ) : (
@@ -312,12 +342,12 @@ function AccountCard({ account }: { account: DailyAccount }) {
                 {account.team_name ? ` · ${account.team_name}` : ""}
               </span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
               <CheckCircle2 className="h-3 w-3" />
               {isAuto ? "אושר אוטומטית" : "אושר ידנית"}
             </span>
             {account.has_exception && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-400">
                 <AlertTriangle className="h-3 w-3" />
                 חריגה
               </span>
@@ -378,7 +408,7 @@ function AccountCard({ account }: { account: DailyAccount }) {
         <div className="shrink-0 text-right">
           <div className="rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
             נוצר
-            <div className="text-[10px]">
+            <div className="text-[11px]">
               {new Date(account.generated_at).toLocaleDateString("he-IL")}
             </div>
           </div>
@@ -406,14 +436,12 @@ function CloseDayDialog({
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-bold">סגירת יום עבודה</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {formatDateHebrew(group.date)}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{formatDateHebrew(group.date)}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-secondary"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-secondary"
           >
             <X className="h-4 w-4" />
           </button>
@@ -421,7 +449,7 @@ function CloseDayDialog({
 
         {/* Records list */}
         <div className="mb-4 rounded-2xl border border-border/60 bg-muted/20 p-4">
-          <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <div className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
             רשומות לנעילה
           </div>
           <div className="space-y-2">
@@ -466,8 +494,8 @@ function CloseDayDialog({
         {/* Auto-approval warning */}
         {group.autoCount > 0 && (
           <div className="mb-4 flex items-start gap-3 rounded-2xl border border-slate-400/30 bg-slate-500/8 p-3">
-            <Zap className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-            <div className="text-sm text-slate-600">
+            <Zap className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            <div className="text-sm text-slate-300">
               <span className="font-bold">{group.autoCount} רשומות</span> אושרו אוטומטית על ידי
               המערכת (לא על ידי מנהל האתר).
             </div>
@@ -476,10 +504,10 @@ function CloseDayDialog({
 
         {/* Irreversibility warning */}
         <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/8 p-3">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <div className="text-sm text-amber-700">
-            פעולה זו <span className="font-bold">בלתי הפיכה</span>. הרשומות יינעלו לעריכה.
-            שינויים לאחר הנעילה מצריכים תהליך מחלוקת רשמי.
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+          <div className="text-sm text-amber-300">
+            פעולה זו <span className="font-bold">בלתי הפיכה</span>. הרשומות יינעלו לעריכה. שינויים
+            לאחר הנעילה מצריכים תהליך מחלוקת רשמי.
           </div>
         </div>
 
@@ -489,11 +517,7 @@ function CloseDayDialog({
             disabled={closing}
             onClick={onConfirm}
           >
-            {closing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Lock className="h-4 w-4" />
-            )}
+            {closing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
             סגור יום ונעל רשומות
           </Button>
           <Button variant="outline" onClick={onClose} disabled={closing}>

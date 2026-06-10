@@ -25,7 +25,6 @@ export async function fetchAdminDashboardData() {
     completedDealsResult,
     recentAwardsResult,
     monthlyAttendanceResult,
-    corporationsResult,
   ] = await Promise.all([
     supabaseAdmin
       .from("profiles")
@@ -54,11 +53,6 @@ export async function fetchAdminDashboardData() {
       .from("attendance_records")
       .select("total_cost, total_hours, workers_actual")
       .gte("work_date", monthStart),
-    // Active corporations
-    supabaseAdmin
-      .from("user_roles")
-      .select("user_id", { count: "exact", head: true })
-      .eq("role", "corporation"),
   ]);
 
   if (profilesResult.error) throw new Error(profilesResult.error.message);
@@ -66,6 +60,16 @@ export async function fetchAdminDashboardData() {
   if (auditResult.error) throw new Error(auditResult.error.message);
   if (activeAuctionsResult.error) throw new Error(activeAuctionsResult.error.message);
   if (completedDealsResult.error) throw new Error(completedDealsResult.error.message);
+
+  const allRoles = rolesResult.data ?? [];
+  // Admins are internal platform operators, not marketplace participants —
+  // exclude them from the verification queue (an admin should never see
+  // their own account, or a fellow admin's, sitting in "pending approval").
+  const adminUserIds = new Set(allRoles.filter((r) => r.role === "admin").map((r) => r.user_id));
+  const profiles = (profilesResult.data ?? []).filter((p) => !adminUserIds.has(p.user_id));
+  const totalCorporations = allRoles.filter(
+    (r) => r.role === "corporation" && !adminUserIds.has(r.user_id),
+  ).length;
 
   const attendanceRecs = monthlyAttendanceResult.data ?? [];
   const monthlyWorkforceValue = attendanceRecs.reduce(
@@ -78,14 +82,14 @@ export async function fetchAdminDashboardData() {
   );
 
   return {
-    profiles: profilesResult.data ?? [],
-    roles: rolesResult.data ?? [],
+    profiles,
+    roles: allRoles,
     auditLog: auditResult.data ?? [],
     activeAuctions: activeAuctionsResult.count ?? 0,
     completedDeals: completedDealsResult.count ?? 0,
     recentAwards: recentAwardsResult.count ?? 0,
     monthlyWorkforceValue,
     monthlyWorkerHours,
-    totalCorporations: corporationsResult.count ?? 0,
+    totalCorporations,
   };
 }

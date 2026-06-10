@@ -40,6 +40,8 @@ type Project = {
   site_radius_meters?: number | null;
   site_manager_name?: string | null;
   site_manager_phone?: string | null;
+  hourly_rate?: number | null;
+  expected_workers?: number | null;
 };
 
 type ProjectTeam = {
@@ -70,7 +72,9 @@ function Page() {
 
   const action = (
     <Link to="/contractor/attendance">
-      <Button variant="outline" size="sm">נוכחות</Button>
+      <Button variant="outline" size="sm">
+        נוכחות
+      </Button>
     </Link>
   );
 
@@ -86,8 +90,8 @@ function Page() {
             <div>
               <h2 className="font-bold">הגדרת פרויקטים פעילים</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                לאחר זכייה במכרז: סמן מיקום האתר, הוסף פרטי מנהל אתר וצוותים. ללא הגדרה מלאה לא
-                ניתן לרשום נוכחות.
+                לאחר זכייה במכרז: סמן מיקום האתר, הוסף פרטי מנהל אתר וצוותים. ללא הגדרה מלאה לא ניתן
+                לרשום נוכחות.
               </p>
             </div>
           </div>
@@ -111,7 +115,9 @@ function Page() {
               <div className="mt-0.5 text-[11px] text-muted-foreground">מוכנים</div>
             </div>
             <div className={`kpi-card p-4${notReadyCount > 0 ? " kpi-card-warning" : ""}`}>
-              <div className={`kpi-icon ${notReadyCount > 0 ? "kpi-icon-warning" : "kpi-icon-muted"}`}>
+              <div
+                className={`kpi-icon ${notReadyCount > 0 ? "kpi-icon-warning" : "kpi-icon-muted"}`}
+              >
                 <AlertCircle className="h-4 w-4" />
               </div>
               <div className="mt-3 text-xl font-extrabold">{notReadyCount}</div>
@@ -143,16 +149,14 @@ function Page() {
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="enterprise-card flex flex-col items-center gap-4 border-dashed p-14 text-center animate-fade-up delay-100">
-            <div className="empty-state-icon mx-auto">
+          <div className="empty-state animate-fade-up delay-100">
+            <div className="empty-state-icon">
               <MapPin className="h-8 w-8 text-primary" />
             </div>
-            <div>
-              <h3 className="font-bold">אין פרויקטים פעילים</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                פרויקטים יופיעו כאן לאחר זכייה במכרז.
-              </p>
-            </div>
+            <h3 className="font-bold">אין פרויקטים פעילים</h3>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              פרויקטים יופיעו כאן לאחר זכייה במכרז.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -300,7 +304,10 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
             { label: "מנהל", done: managerConfigured },
             { label: "צוותים", done: teamsConfigured },
           ].map(({ label, done }) => (
-            <span key={label} className={`inline-flex items-center gap-1 text-[10px] font-semibold ${done ? "text-emerald-700" : "text-muted-foreground"}`}>
+            <span
+              key={label}
+              className={`inline-flex items-center gap-1 text-[11px] font-semibold ${done ? "text-status-approved" : "text-muted-foreground"}`}
+            >
               {done ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
               {label}
             </span>
@@ -316,7 +323,11 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           done={gpsConfigured}
           open={gpsOpen}
           onToggle={() => setGpsOpen((v) => !v)}
-          summary={gpsConfigured ? `${Number(lat || project.site_lat).toFixed(4)}, ${Number(lng || project.site_lng).toFixed(4)} · רדיוס ${radius}מ'` : "לא הוגדר"}
+          summary={
+            gpsConfigured
+              ? `${Number(lat || project.site_lat).toFixed(4)}, ${Number(lng || project.site_lng).toFixed(4)} · רדיוס ${radius}מ'`
+              : "לא הוגדר"
+          }
         >
           <div className="space-y-3 pt-3">
             {gpsStatus === "idle" && (
@@ -339,7 +350,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
             {gpsStatus === "captured" && lat && lng && (
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-bold text-emerald-700">
+                  <div className="flex items-center gap-2 text-sm font-bold text-status-approved">
                     <CheckCircle2 className="h-4 w-4" /> מיקום GPS נלכד
                   </div>
                   <button
@@ -350,7 +361,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
                     שנה מיקום
                   </button>
                 </div>
-                <div className="mt-2 font-mono text-xs text-muted-foreground">
+                <div className="mt-2 font-mono text-xs text-muted-foreground" dir="ltr">
                   {Number(lat).toFixed(5)}, {Number(lng).toFixed(5)}
                 </div>
               </div>
@@ -358,9 +369,7 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
 
             {gpsStatus === "error" && (
               <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-                <div className="text-sm font-semibold text-destructive">
-                  לא ניתן לקבל מיקום GPS
-                </div>
+                <div className="text-sm font-semibold text-destructive">לא ניתן לקבל מיקום GPS</div>
                 <p className="mt-1 text-xs text-muted-foreground">
                   ודא שאישרת גישה למיקום בהגדרות הדפדפן שלך.
                 </p>
@@ -400,7 +409,11 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           done={managerConfigured}
           open={managerOpen}
           onToggle={() => setManagerOpen((v) => !v)}
-          summary={managerConfigured ? `${smName || project.site_manager_name} · ${smPhone || project.site_manager_phone}` : "לא הוגדר"}
+          summary={
+            managerConfigured
+              ? `${smName || project.site_manager_name} · ${smPhone || project.site_manager_phone}`
+              : "לא הוגדר"
+          }
         >
           <div className="grid grid-cols-2 gap-3 pt-3">
             <div>
@@ -418,7 +431,8 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
                 value={smPhone}
                 onChange={(e) => setSmPhone(e.target.value)}
                 placeholder="050-1234567"
-                className="h-10"
+                dir="ltr"
+                className="h-10 text-end"
               />
             </div>
           </div>
@@ -448,36 +462,71 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
           done={teamsConfigured}
           open={teamsOpen}
           onToggle={() => setTeamsOpen((v) => !v)}
-          summary={teamsConfigured ? `${teams.length} צוות${teams.length !== 1 ? "ות" : ""}` : "לא הוגדרו צוותים"}
+          summary={
+            teamsConfigured
+              ? `${teams.length} צוות${teams.length !== 1 ? "ות" : ""}`
+              : "לא הוגדרו צוותים"
+          }
         >
           <div className="pt-3 space-y-3">
+            {/* Explainer: what is a team leader / how the QR check-in works */}
+            <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-xs text-muted-foreground">
+              <QrCode className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div className="space-y-1">
+                <p>
+                  <span className="font-bold text-foreground">ראש צוות</span> הוא המנהל בשטח של
+                  הצוות — הוא <span className="font-semibold text-foreground">לא צריך להירשם</span>.
+                  אחרי שמוסיפים אותו כאן, מדפיסים/משתפים את ה-QR של הצוות וראש הצוות סורק אותו בנייד
+                  שלו כדי לפתוח ולסגור יום עבודה עם תמונה.
+                </p>
+                <p className="text-[11px] text-muted-foreground/80">
+                  הזמנה אוטומטית ב-WhatsApp — בקרוב
+                </p>
+              </div>
+            </div>
+
             {/* Teams mini table */}
             {teams.length > 0 && (
-              <div className="rounded-xl border border-border/60 overflow-hidden">
-                <div className="premium-table-header grid grid-cols-5 px-3 py-2.5">
-                  <span>צוות</span>
-                  <span>ראש צוות</span>
-                  <span>עובדים</span>
-                  <span>תעריף</span>
-                  <span>QR</span>
-                </div>
-                {teams.map((t) => (
-                  <div key={t.id} className="premium-table-row grid grid-cols-5 items-center px-3 py-2.5 text-sm">
-                    <span className="font-semibold truncate">{t.name}</span>
-                    <div className="text-xs text-muted-foreground truncate">
-                      <div>{t.team_leader_name}</div>
-                      <div>{t.team_leader_phone}</div>
-                    </div>
-                    <span className="font-semibold">{t.expected_workers}</span>
-                    <span className="text-xs">{t.hourly_rate ? `₪${t.hourly_rate}` : "—"}</span>
-                    <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
+              <>
+                <div className="rounded-xl border border-border/60 overflow-hidden">
+                  <div className="premium-table-header grid grid-cols-5 px-3 py-2.5">
+                    <span>צוות</span>
+                    <span>ראש צוות</span>
+                    <span>עובדים</span>
+                    <span>תעריף</span>
+                    <span>QR</span>
                   </div>
-                ))}
-              </div>
+                  {teams.map((t) => (
+                    <div
+                      key={t.id}
+                      className="premium-table-row grid grid-cols-5 items-center px-3 py-2.5 text-sm"
+                    >
+                      <span className="font-semibold truncate">{t.name}</span>
+                      <div className="text-xs text-muted-foreground truncate">
+                        <div className="truncate">{t.team_leader_name}</div>
+                        <div dir="ltr" className="text-end">
+                          {t.team_leader_phone}
+                        </div>
+                      </div>
+                      <span className="font-semibold">{t.expected_workers}</span>
+                      <span className="text-xs" dir="ltr">
+                        {t.hourly_rate ? `₪${t.hourly_rate}` : "—"}
+                      </span>
+                      <TeamQr teamId={t.id} teamName={t.name} projectName={project.name} />
+                    </div>
+                  ))}
+                </div>
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <QrCode className="h-3 w-3 shrink-0" />
+                  תן לראש הצוות לסרוק את ה-QR כדי לדווח נוכחות.
+                </p>
+              </>
             )}
             <div>
               <AddTeamForm
                 projectId={project.id}
+                hourlyRate={project.hourly_rate ?? null}
+                expectedWorkers={project.expected_workers ?? null}
                 onSaved={() => qc.invalidateQueries({ queryKey: ["teams", project.id] })}
               />
             </div>
@@ -485,16 +534,16 @@ function ProjectCard({ project, onChange }: { project: Project; onChange: () => 
         </AccordionSection>
 
         {isReady && teams.length > 0 && (
-          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-sm text-emerald-900 mt-2">
+          <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-4 text-sm text-status-approved">
             <div className="flex items-center gap-2 font-bold">
-              <CheckCircle2 className="h-4 w-4" /> הפרויקט מוכן
+              <CheckCircle2 className="h-4 w-4" /> הפרויקט מוכן לעבודה
             </div>
-            <p className="mt-1 text-xs">
-              ראש הצוות יכול להיכנס ל-{" "}
-              <Link to="/team-leader" className="font-bold underline">
-                דף ראש צוות
-              </Link>{" "}
-              ולפתוח יום עבודה.
+            <p className="mt-1 text-xs text-muted-foreground">
+              שתפו את קוד ה-<span className="font-semibold text-foreground">QR</span> של כל צוות עם
+              ראש הצוות — סריקה בנייד פותחת מסך נוכחות (צילום + GPS), ללא הרשמה.
+              <span className="mt-1 block text-muted-foreground/90">
+                דיווחי הנוכחות, החשבון היומי והחשבוניות ייכנסו לפעולה בפיילוט.
+              </span>
             </p>
           </div>
         )}
@@ -528,36 +577,67 @@ function AccordionSection({
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold hover:bg-secondary/30 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <div className={`grid h-7 w-7 place-items-center rounded-lg ${done ? "bg-emerald-500/15" : "bg-primary/15"}`}>
-            <Icon className={`h-3.5 w-3.5 ${done ? "text-emerald-600" : "text-primary"}`} />
+          <div
+            className={`grid h-7 w-7 place-items-center rounded-lg ${done ? "bg-emerald-500/15" : "bg-primary/15"}`}
+          >
+            <Icon className={`h-3.5 w-3.5 ${done ? "text-status-approved" : "text-primary"}`} />
           </div>
           <span>{title}</span>
           {done && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
         </div>
         <div className="flex items-center gap-2">
-          {!open && <span className="text-xs text-muted-foreground font-normal truncate max-w-[140px]">{summary}</span>}
-          {open ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+          {!open && (
+            <span className="text-xs text-muted-foreground font-normal truncate max-w-[140px]">
+              {summary}
+            </span>
+          )}
+          {open ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          )}
         </div>
       </button>
       {open && (
-        <div className="border-t border-border/40 bg-secondary/10 px-4 pb-4">
-          {children}
-        </div>
+        <div className="border-t border-border/40 bg-secondary/10 px-4 pb-4">{children}</div>
       )}
     </div>
   );
 }
 
-function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () => void }) {
+// Israeli phone: strip non-digits, accept 0XXXXXXXXX (9-10 digits) or 972XXXXXXXXX
+function isValidIsraeliPhone(raw: string): boolean {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("972")) {
+    const rest = digits.slice(3);
+    return rest.length >= 8 && rest.length <= 9;
+  }
+  if (digits.startsWith("0")) {
+    return digits.length >= 9 && digits.length <= 10;
+  }
+  return false;
+}
+
+function AddTeamForm({
+  projectId,
+  hourlyRate,
+  expectedWorkers,
+  onSaved,
+}: {
+  projectId: string;
+  hourlyRate: number | null;
+  expectedWorkers: number | null;
+  onSaved: () => void;
+}) {
   const upsert = useServerFn(upsertProjectTeam);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [tlName, setTlName] = useState("");
   const [tlPhone, setTlPhone] = useState("");
-  const [tlUserId, setTlUserId] = useState("");
-  const [workers, setWorkers] = useState(5);
-  const [rate, setRate] = useState(60);
+  const [workers, setWorkers] = useState(expectedWorkers ?? 5);
   const [busy, setBusy] = useState(false);
+
+  const rate = hourlyRate ?? 0;
 
   if (!open)
     return (
@@ -567,16 +647,18 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
     );
 
   const save = async () => {
-    if (!name || !tlName || !tlPhone || !tlUserId) return toast.error("כל השדות חובה");
+    if (name.trim().length < 2) return toast.error("יש להזין שם צוות (לפחות 2 תווים)");
+    if (tlName.trim().length < 2) return toast.error("יש להזין שם ראש צוות (לפחות 2 תווים)");
+    if (!isValidIsraeliPhone(tlPhone)) return toast.error("מספר הטלפון של ראש הצוות אינו תקין");
+    if (!workers || workers < 1) return toast.error("יש להזין כמות עובדים תקינה");
     setBusy(true);
     try {
       await upsert({
         data: {
           projectId,
-          name,
-          teamLeaderName: tlName,
-          teamLeaderPhone: tlPhone,
-          teamLeaderUserId: tlUserId,
+          name: name.trim(),
+          teamLeaderName: tlName.trim(),
+          teamLeaderPhone: tlPhone.trim(),
           expectedWorkers: workers,
           hourlyRate: rate,
         },
@@ -586,7 +668,6 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
       setName("");
       setTlName("");
       setTlPhone("");
-      setTlUserId("");
       onSaved();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "שגיאה");
@@ -611,19 +692,19 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
           onChange={(e) => setTlName(e.target.value)}
           className="h-10"
         />
-        <Input
-          placeholder="טלפון 050-..."
-          value={tlPhone}
-          onChange={(e) => setTlPhone(e.target.value)}
-          className="h-10"
-        />
+        <div>
+          <Input
+            placeholder="טלפון 050-..."
+            value={tlPhone}
+            onChange={(e) => setTlPhone(e.target.value)}
+            dir="ltr"
+            className="h-10 text-end"
+          />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            הטלפון משמש רק לזיהוי ראש הצוות עבור ה-QR והתראות — אין צורך בהרשמה או חשבון.
+          </p>
+        </div>
       </div>
-      <Input
-        placeholder="מזהה משתמש (UUID) של ראש הצוות"
-        value={tlUserId}
-        onChange={(e) => setTlUserId(e.target.value)}
-        className="h-10"
-      />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="mb-1.5 block text-xs">עובדים צפויים</Label>
@@ -637,17 +718,17 @@ function AddTeamForm({ projectId, onSaved }: { projectId: string; onSaved: () =>
         </div>
         <div>
           <Label className="mb-1.5 block text-xs">תעריף ₪/שעה</Label>
-          <Input
-            type="number"
-            min={1}
-            value={rate}
-            onChange={(e) => setRate(Number(e.target.value))}
-            className="h-10"
-          />
+          <Input type="number" value={rate} disabled className="h-10 bg-muted/50" />
+          <p className="mt-1 text-[11px] text-muted-foreground">נקבע לפי ההצעה הזוכה</p>
         </div>
       </div>
       <div className="flex gap-2">
-        <Button onClick={save} disabled={busy} size="sm" className="gap-2 bg-gradient-primary text-primary-foreground">
+        <Button
+          onClick={save}
+          disabled={busy}
+          size="sm"
+          className="gap-2 bg-gradient-primary text-primary-foreground"
+        >
           {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
           שמור
         </Button>
@@ -688,14 +769,30 @@ function TeamQr({
 
   return (
     <div className="relative">
-      <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)} className="gap-1.5 h-8 px-2.5 text-xs">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setOpen((v) => !v)}
+        title="QR לראש הצוות"
+        className="gap-1.5 h-8 px-2.5 text-xs"
+      >
         <QrCode className="h-3.5 w-3.5" /> QR
       </Button>
       {open && (
         <div className="absolute left-0 top-full z-20 mt-2 w-52 rounded-xl border border-border/60 bg-card p-3 shadow-lg">
+          <div className="mb-1.5 text-xs font-bold">QR לראש הצוות</div>
           <img src={qrSrc} alt={`QR ${teamName}`} width={180} height={180} className="rounded-lg" />
-          <div className="mt-1.5 truncate text-[10px] text-muted-foreground">{url}</div>
-          <Button size="sm" className="mt-2 w-full gap-1.5 bg-gradient-primary text-primary-foreground" onClick={printQr}>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            ראש הצוות סורק כדי לדווח נוכחות — ללא צורך בהרשמה.
+          </p>
+          <div className="mt-1.5 truncate text-[11px] text-muted-foreground" dir="ltr">
+            {url}
+          </div>
+          <Button
+            size="sm"
+            className="mt-2 w-full gap-1.5 bg-gradient-primary text-primary-foreground"
+            onClick={printQr}
+          >
             <Printer className="h-3.5 w-3.5" /> הדפס מדבקה
           </Button>
           <Button

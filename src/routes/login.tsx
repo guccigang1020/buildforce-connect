@@ -86,9 +86,7 @@ function LoginPage() {
 
           <div className="animate-fade-up">
             <h1 className="text-3xl font-extrabold tracking-tight">ברוך הבא</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              חזרת לפלטפורמה? מתחברים.
-            </p>
+            <p className="mt-1.5 text-sm text-muted-foreground">חזרת לפלטפורמה? מתחברים.</p>
           </div>
 
           <div className="mt-8 animate-fade-up delay-100 space-y-5">
@@ -103,8 +101,9 @@ function LoginPage() {
               המשך עם Google
             </Button>
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
-              <span className="h-px flex-1 bg-border/60" /> או <span className="h-px flex-1 bg-border/60" />
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border/60" /> או{" "}
+              <span className="h-px flex-1 bg-border/60" />
             </div>
 
             {formError && (
@@ -120,7 +119,7 @@ function LoginPage() {
                   כתובת אימייל
                 </Label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                  <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
@@ -128,7 +127,9 @@ function LoginPage() {
                     aria-invalid={errors.email ? true : undefined}
                     {...register("email")}
                     className={`h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 ${
-                      errors.email ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""
+                      errors.email
+                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
+                        : ""
                     }`}
                     placeholder="you@example.com"
                   />
@@ -154,7 +155,7 @@ function LoginPage() {
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+                  <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="password"
                     type="password"
@@ -162,7 +163,9 @@ function LoginPage() {
                     aria-invalid={errors.password ? true : undefined}
                     {...register("password")}
                     className={`h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 ${
-                      errors.password ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""
+                      errors.password
+                        ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
+                        : ""
                     }`}
                     placeholder="••••••••"
                   />

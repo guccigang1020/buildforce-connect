@@ -11,7 +11,7 @@ const itemSchema = z.object({
 const inputSchema = z.object({
   location: z.string().min(1),
   startDate: z.string().min(1),
-  duration: z.string().min(1),
+  duration: z.string().optional().default(""),
   commitmentMonths: z.string().min(1),
   budget: z.string().optional().default(""),
   description: z.string().optional().default(""),
@@ -30,13 +30,17 @@ export const createJobRequest = createServerFn({ method: "POST" })
       import("@/lib/email/send.server"),
     ]);
 
+    // `duration` is NOT NULL in the DB; the form no longer collects it
+    // directly, so derive it from the commitment period when absent.
+    const duration = data.duration || `${data.commitmentMonths} חודשים`;
+
     const { data: req, error: reqErr } = await supabase
       .from("job_requests")
       .insert({
         user_id: userId,
         location: data.location,
         start_date: data.startDate,
-        duration: data.duration,
+        duration,
         commitment_months: data.commitmentMonths,
         budget: data.budget || null,
         description: data.description || null,
@@ -213,9 +217,7 @@ export const getJobRequestWithOffers = createServerFn({ method: "POST" })
 
     // Non-owners can only see their own offer (sealed-bid integrity).
     const allOffers = offers ?? [];
-    let visibleOffers = isOwner
-      ? allOffers
-      : allOffers.filter((o) => o.corporation_id === userId);
+    let visibleOffers = isOwner ? allOffers : allOffers.filter((o) => o.corporation_id === userId);
 
     // Plan: identities are masked until award, then "contact details are revealed".
     // Reveal the winning corporation's name + contact to the owner once awarded.

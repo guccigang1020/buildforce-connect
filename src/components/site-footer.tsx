@@ -41,8 +41,12 @@ export function SiteFooter() {
         <div>
           <div className="text-sm font-bold">צור קשר</div>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>support@buildforce.co.il</li>
-            <li>03-000-0000</li>
+            <li dir="ltr" className="text-end">
+              support@buildforce.co.il
+            </li>
+            <li dir="ltr" className="text-end">
+              03-000-0000
+            </li>
             <li>תל אביב, ישראל</li>
           </ul>
         </div>

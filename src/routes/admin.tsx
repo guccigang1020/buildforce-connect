@@ -194,11 +194,7 @@ function AdminDashboard() {
     >
       {/* KPI strip — row 1: marketplace health */}
       <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
-        <StatCard
-          label="סה״כ משתמשים"
-          value={stats.total}
-          icon={<Users className="h-5 w-5" />}
-        />
+        <StatCard label="סה״כ משתמשים" value={stats.total} icon={<Users className="h-5 w-5" />} />
         <StatCard
           label="ממתינים לאישור"
           value={stats.pending}
@@ -235,7 +231,11 @@ function AdminDashboard() {
           label="שעות עבודה החודש"
           value={monthlyWorkerHours > 0 ? Math.round(monthlyWorkerHours).toLocaleString() : 0}
           icon={<BarChart3 className="h-5 w-5" />}
-          sub={monthlyWorkforceValue > 0 ? `₪${Math.round(monthlyWorkforceValue / 1000)}K ערך` : undefined}
+          sub={
+            monthlyWorkforceValue > 0
+              ? `₪${Math.round(monthlyWorkforceValue / 1000)}K ערך`
+              : undefined
+          }
         />
         <StatCard
           label="מאושרים (%)"
@@ -253,7 +253,7 @@ function AdminDashboard() {
             <TabsTrigger value="pending">
               ממתינים
               {stats.pending > 0 && (
-                <span className="ms-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                <span className="ms-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[11px] font-bold text-primary">
                   {stats.pending}
                 </span>
               )}
@@ -281,16 +281,33 @@ function AdminDashboard() {
       {tab === "activity" ? (
         <ActivityLog entries={auditLog} isLoading={isLoading} />
       ) : error ? (
-        <Card className="p-6 text-sm text-destructive">
-          שגיאה בטעינת ניהול: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
-        </Card>
+        <div className="empty-state border-destructive/30 bg-destructive/5">
+          <div className="empty-state-icon border-destructive/20 bg-destructive/10">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h3 className="font-bold">שגיאה בטעינת נתוני הניהול</h3>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            לא הצלחנו לטעון את הנתונים. נסה לרענן את הדף.
+          </p>
+        </div>
       ) : isLoading ? (
-        <div className="grid place-items-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="space-y-3 animate-pulse">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border/60 bg-card p-4">
+              <div className="h-5 w-40 rounded bg-muted" />
+              <div className="mt-2 h-4 w-64 rounded bg-muted" />
+            </div>
+          ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center text-muted-foreground">
-          אין משתמשים בקטגוריה זו
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <Users className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="font-bold">אין משתמשים בקטגוריה זו</h3>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {search ? "נסה לשנות את מילות החיפוש." : "משתמשים חדשים יופיעו כאן לאחר הרשמה."}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -311,15 +328,26 @@ function AdminDashboard() {
 function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading: boolean }) {
   if (isLoading) {
     return (
-      <div className="grid place-items-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-3 animate-pulse">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border/60 bg-card p-4">
+            <div className="h-4 w-32 rounded bg-muted" />
+            <div className="mt-2 h-3 w-48 rounded bg-muted" />
+          </div>
+        ))}
       </div>
     );
   }
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center text-muted-foreground">
-        אין פעולות להצגה
+      <div className="empty-state">
+        <div className="empty-state-icon">
+          <Activity className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="font-bold">אין פעולות להצגה</h3>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          פעולות ניהול שיתבצעו במערכת יופיעו כאן.
+        </p>
       </div>
     );
   }
@@ -327,7 +355,10 @@ function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading:
   return (
     <Card className="divide-y divide-border/60 overflow-hidden">
       {entries.map((e) => (
-        <div key={e.id} className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-card/60 transition-colors">
+        <div
+          key={e.id}
+          className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-card/60 transition-colors"
+        >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="font-mono text-xs">
@@ -391,11 +422,12 @@ function StatCard({
       >
         {icon}
       </div>
-      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">
-        {value}{suffix}
+      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl" dir="ltr">
+        {value}
+        {suffix}
       </div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
-      {sub && <div className="mt-0.5 text-[10px] text-muted-foreground/70">{sub}</div>}
+      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -442,22 +474,41 @@ function UserRow({
           </div>
           <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
             {profile.business_name && (
-              <span>עסק: <span className="text-foreground">{profile.business_name}</span></span>
+              <span>
+                עסק: <span className="text-foreground">{profile.business_name}</span>
+              </span>
             )}
             {profile.business_id && (
-              <span>ח.פ: <span className="text-foreground">{profile.business_id}</span></span>
+              <span>
+                ח.פ:{" "}
+                <span className="text-foreground" dir="ltr">
+                  {profile.business_id}
+                </span>
+              </span>
             )}
             {profile.contractor_license_number && (
-              <span>רישיון: <span className="text-foreground">{profile.contractor_license_number}</span></span>
+              <span>
+                רישיון:{" "}
+                <span className="text-foreground" dir="ltr">
+                  {profile.contractor_license_number}
+                </span>
+              </span>
             )}
             {profile.phone && (
-              <span>טלפון: <span className="text-foreground">{profile.phone}</span></span>
+              <span>
+                טלפון:{" "}
+                <span className="text-foreground" dir="ltr">
+                  {profile.phone}
+                </span>
+              </span>
             )}
             {profile.city && (
-              <span>עיר: <span className="text-foreground">{profile.city}</span></span>
+              <span>
+                עיר: <span className="text-foreground">{profile.city}</span>
+              </span>
             )}
-            <span className="text-[11px]">
-              {new Date(profile.created_at).toLocaleDateString("he-IL")}
+            <span className="text-xs">
+              נרשם ב-{new Date(profile.created_at).toLocaleDateString("he-IL")}
             </span>
           </div>
         </div>
@@ -478,11 +529,9 @@ function UserRow({
 }
 
 function StatusBadge({ status }: { status: AdminProfile["verification_status"] }) {
-  if (status === "approved")
-    return <Badge className="bg-green-500/15 text-green-400 hover:bg-green-500/20">מאושר</Badge>;
-  if (status === "rejected")
-    return <Badge className="bg-red-500/15 text-red-400 hover:bg-red-500/20">נדחה</Badge>;
-  return <Badge className="bg-amber-500/15 text-amber-400 hover:bg-amber-500/20">ממתין</Badge>;
+  if (status === "approved") return <span className="status-chip-approved">מאושר</span>;
+  if (status === "rejected") return <span className="status-chip-rejected">נדחה</span>;
+  return <span className="status-chip-pending">ממתין</span>;
 }
 
 function ReviewDialog({

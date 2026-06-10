@@ -13,6 +13,7 @@ import {
 } from "@/lib/attendance.functions";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app-shell";
+import { NextStageNotice } from "@/components/next-stage-notice";
 import {
   CheckCircle2,
   XCircle,
@@ -72,7 +73,10 @@ export const Route = createFileRoute("/contractor/attendance")({
   component: Page,
 });
 
-const STATUS_META: Record<string, { label: string; dot: string; chipClass: string; barClass: string }> = {
+const STATUS_META: Record<
+  string,
+  { label: string; dot: string; chipClass: string; barClass: string }
+> = {
   pending: {
     label: "ממתין לאישור",
     dot: "bg-amber-500",
@@ -174,6 +178,26 @@ function Page() {
   const totalHours = records.reduce((s, r) => s + (r.total_hours ?? 0), 0);
   const totalCost = records.reduce((s, r) => s + Number(r.total_cost ?? 0), 0);
 
+  // Attendance records only exist once crews check in on-site (a real-device
+  // pilot step). With none yet, show a clear "next stage" explainer rather than
+  // an empty approvals screen.
+  if (!isLoading && records.length === 0) {
+    return (
+      <AppShell title="נוכחות">
+        <NextStageNotice
+          icon={CheckCircle2}
+          title="אישור נוכחות יומית — השלב הבא"
+          description="כאן תאשר את ימי העבודה שראשי הצוות פותחים וסוגרים מהנייד עם צילום ומיקום GPS. המסך מתחיל לפעול ברגע שמתועדת נוכחות ראשונה באתר."
+          steps={[
+            "ראש הצוות סורק את ה-QR ופותח/סוגר יום עבודה עם צילום + GPS",
+            "הרשומה מופיעה כאן לאישור — עם תמונה, שעות ומיקום",
+            "אישור בלחיצה (או אישור אוטומטי) → היום עובר לחשבון היומי",
+          ]}
+        />
+      </AppShell>
+    );
+  }
+
   function goDate(delta: number) {
     const d = new Date(selectedDate + "T00:00:00");
     d.setDate(d.getDate() + delta);
@@ -248,7 +272,9 @@ function Page() {
           <div className="mt-0.5 text-xs text-muted-foreground">רשומות</div>
         </div>
         <div className={`kpi-card p-4${pending.length > 0 ? " kpi-card-warning" : ""}`}>
-          <div className={`kpi-icon ${pending.length > 0 ? "kpi-icon-warning" : "kpi-icon-primary"}`}>
+          <div
+            className={`kpi-icon ${pending.length > 0 ? "kpi-icon-warning" : "kpi-icon-primary"}`}
+          >
             <Clock className="h-4 w-4" />
           </div>
           <div className="mt-3 text-2xl font-extrabold">{pending.length}</div>
@@ -277,7 +303,7 @@ function Page() {
         <button
           type="button"
           onClick={() => goDate(-1)}
-          className="grid h-8 w-8 place-items-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:bg-secondary"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:bg-secondary"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -289,7 +315,7 @@ function Page() {
           <button
             type="button"
             onClick={() => setSelectedDate(todayIso)}
-            className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+            className="h-10 shrink-0 rounded-lg border border-primary/30 bg-primary/5 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
           >
             היום
           </button>
@@ -298,7 +324,7 @@ function Page() {
           type="button"
           onClick={() => goDate(1)}
           disabled={selectedDate >= todayIso}
-          className="grid h-8 w-8 place-items-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -351,9 +377,7 @@ function Page() {
           records.map((r) => {
             const s = STATUS_META[r.status] ?? STATUS_META.pending;
             const canApprove =
-              (r.status === "pending" || r.status === "exception") &&
-              !!r.end_time &&
-              !r.frozen_at;
+              (r.status === "pending" || r.status === "exception") && !!r.end_time && !r.frozen_at;
             return (
               <div
                 key={r.id}
@@ -377,7 +401,8 @@ function Page() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="info-chip">
                         <Users className="h-3 w-3" />
-                        <span className="font-semibold">{r.workers_actual ?? "—"}</span>/{r.workers_expected} עובדים
+                        <span className="font-semibold">{r.workers_actual ?? "—"}</span>/
+                        {r.workers_expected} עובדים
                       </span>
                       {r.start_time && (
                         <span className="info-chip">
@@ -405,10 +430,9 @@ function Page() {
 
                     {/* Exception note */}
                     {r.exception_reason && (
-                      <div className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs text-orange-700">
+                      <div className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs text-orange-400">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                        חריגה:{" "}
-                        {EXCEPTION_REASON_LABELS[r.exception_reason] ?? r.exception_reason}
+                        חריגה: {EXCEPTION_REASON_LABELS[r.exception_reason] ?? r.exception_reason}
                         {r.exception_note ? ` — ${r.exception_note}` : ""}
                       </div>
                     )}
@@ -453,7 +477,7 @@ function Page() {
                     <div className="shrink-0 text-right">
                       <div className="rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
                         נעול
-                        <div className="text-[10px]">
+                        <div className="text-[11px]">
                           {new Date(r.frozen_at).toLocaleDateString("he-IL")}
                         </div>
                       </div>
@@ -541,7 +565,7 @@ function RecordDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="ms-3 grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:bg-secondary"
+            className="ms-3 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:bg-secondary"
           >
             <X className="h-4 w-4" />
           </button>
@@ -633,15 +657,15 @@ function RecordDrawer({
               {/* Exception context */}
               {record.exception_reason && (
                 <div className="rounded-2xl border border-orange-400/30 bg-orange-500/5 p-4 space-y-1.5">
-                  <div className="flex items-center gap-2 text-sm font-bold text-orange-700">
+                  <div className="flex items-center gap-2 text-sm font-bold text-orange-400">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
                     חריגה דווחה
                   </div>
-                  <div className="text-sm text-orange-700">
+                  <div className="text-sm text-orange-400">
                     {EXCEPTION_REASON_LABELS[record.exception_reason] ?? record.exception_reason}
                   </div>
                   {record.exception_note && (
-                    <div className="text-sm text-orange-600/80">{record.exception_note}</div>
+                    <div className="text-sm text-orange-300/90">{record.exception_note}</div>
                   )}
                 </div>
               )}
@@ -794,7 +818,7 @@ function ApproveAllDialog({
           <button
             type="button"
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-secondary"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-secondary"
           >
             <X className="h-4 w-4" />
           </button>
@@ -814,12 +838,12 @@ function ApproveAllDialog({
 
         {exceptionCount > 0 && (
           <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/8 p-4">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <div className="text-sm">
-              <span className="font-bold text-amber-700">
+              <span className="font-bold text-amber-300">
                 {exceptionCount} רשומות מכילות חריגות.
               </span>{" "}
-              <span className="text-amber-600">האישור הכולל יכלול אותן. בדוק לפני אישור.</span>
+              <span className="text-amber-400">האישור הכולל יכלול אותן. בדוק לפני אישור.</span>
             </div>
           </div>
         )}
@@ -874,7 +898,7 @@ function PhotoCard({
       <div className="px-3 py-2">
         <div className="text-xs font-semibold">{label}</div>
         {time && (
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-[11px] text-muted-foreground">
             {new Date(time).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
           </div>
         )}
@@ -885,7 +909,7 @@ function PhotoCard({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+    <div className="mb-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
       {children}
     </div>
   );
@@ -930,7 +954,7 @@ function ReportExceptionInline({
       <Button
         size="sm"
         variant="outline"
-        className="gap-1.5 border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
+        className="gap-1.5 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
         onClick={() => setOpen(true)}
       >
         <AlertTriangle className="h-3.5 w-3.5" /> דווח חריגה
@@ -939,7 +963,7 @@ function ReportExceptionInline({
 
   return (
     <div className="w-full space-y-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-      <div className="text-xs font-bold text-amber-700">דיווח חריגה בנוכחות</div>
+      <div className="text-xs font-bold text-amber-400">דיווח חריגה בנוכחות</div>
       <select
         value={reason}
         onChange={(e) => setReason(e.target.value as never)}

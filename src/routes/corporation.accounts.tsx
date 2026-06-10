@@ -4,12 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { listCorporationDailyAccounts } from "@/lib/daily-accounts.functions";
 import { AppShell } from "@/components/app-shell";
+import { NextStageNotice } from "@/components/next-stage-notice";
 import {
   CheckCircle2,
   DollarSign,
   Calendar,
   AlertTriangle,
-  Loader2,
   Lock,
   FileCheck,
   Zap,
@@ -71,12 +71,37 @@ function Page() {
 
   const listAccounts = useServerFn(listCorporationDailyAccounts);
 
-  const { data: accountsData, isLoading } = useQuery({
+  const {
+    data: accountsData,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["corporation-daily-accounts", selectedMonth],
     queryFn: () => listAccounts({ data: { month: selectedMonth } }),
+    retry: false,
   });
 
   const accounts = (accountsData?.accounts ?? []) as DailyAccount[];
+
+  // The attendance → daily-account → invoice pipeline only has data once crews
+  // check in on-site (a real-device pilot step). Until then, show a clear
+  // "next stage" explainer instead of a zeroed/erroring screen.
+  if (!isLoading && (isError || accounts.length === 0)) {
+    return (
+      <AppShell title="חשבונות וחשבוניות">
+        <NextStageNotice
+          icon={FileCheck}
+          title="חשבונות וחשבוניות — השלב הבא"
+          description="כאן יופיעו החשבונות היומיים והחשבונית החודשית שלך — נבנים אוטומטית מנוכחות העובדים המאומתת באתר. החלק הזה נכנס לפעולה בפיילוט, ברגע שהצוותים מתחילים לדווח נוכחות."
+          steps={[
+            "ראש הצוות פותח וסוגר יום עבודה מהנייד — צילום + מיקום GPS",
+            "כל יום עבודה הופך לחשבון שקוף: שעות × תעריף מאושר",
+            "בסוף החודש מתקבלת חשבונית מוכנה ומגובה בראיות — ללא מחלוקות",
+          ]}
+        />
+      </AppShell>
+    );
+  }
 
   const totalAccounts = accounts.length;
   const totalHours = accounts.reduce((s, a) => s + Number(a.total_hours ?? 0), 0);
@@ -89,55 +114,49 @@ function Page() {
     <AppShell title="חשבונות יומיים מאושרים">
       {/* KPI strip */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="kpi-card p-5">
+          <div className="kpi-icon kpi-icon-primary">
             <FileCheck className="h-4 w-4" />
           </div>
-          <div className="mt-3 text-2xl font-extrabold">{totalAccounts}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">חשבונות החודש</div>
+          <div className="mt-4 text-2xl font-extrabold tracking-tight">{totalAccounts}</div>
+          <div className="mt-0.5 text-xs font-medium text-muted-foreground">חשבונות החודש</div>
         </div>
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="kpi-card p-5">
+          <div className="kpi-icon kpi-icon-primary">
             <Calendar className="h-4 w-4" />
           </div>
-          <div className="mt-3 text-2xl font-extrabold">{totalHours.toFixed(1)}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
+          <div className="mt-4 text-2xl font-extrabold tracking-tight" dir="ltr">
+            {totalHours.toFixed(1)}
+          </div>
+          <div className="mt-0.5 text-xs font-medium text-muted-foreground">
             שעות ({totalWorkerHours.toFixed(0)} שעות-עובד)
           </div>
         </div>
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600">
+        <div className="kpi-card kpi-card-success p-5">
+          <div className="kpi-icon kpi-icon-success">
             <DollarSign className="h-4 w-4" />
           </div>
-          <div className="mt-3 text-2xl font-extrabold">
+          <div className="mt-4 text-2xl font-extrabold tracking-tight" dir="ltr">
             {totalCost > 0 ? `₪${totalCost.toLocaleString()}` : "—"}
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">עלות מאושרת</div>
+          <div className="mt-0.5 text-xs font-medium text-muted-foreground">עלות מאושרת</div>
         </div>
-        <div
-          className={`rounded-2xl border p-4 ${
-            exceptionCount > 0
-              ? "border-orange-500/30 bg-orange-500/5"
-              : "border-border/60 bg-card"
-          }`}
-        >
+        <div className={`kpi-card p-5 ${exceptionCount > 0 ? "kpi-card-warning" : ""}`}>
           <div
-            className={`grid h-9 w-9 place-items-center rounded-xl ${
-              exceptionCount > 0 ? "bg-orange-500/15 text-orange-600" : "bg-primary/10 text-primary"
-            }`}
+            className={`kpi-icon ${exceptionCount > 0 ? "kpi-icon-warning" : "kpi-icon-primary"}`}
           >
             <AlertTriangle className="h-4 w-4" />
           </div>
-          <div className="mt-3 text-2xl font-extrabold">{exceptionCount}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">חריגות</div>
+          <div className="mt-4 text-2xl font-extrabold tracking-tight">{exceptionCount}</div>
+          <div className="mt-0.5 text-xs font-medium text-muted-foreground">חריגות</div>
         </div>
       </div>
 
       {/* Auto-approval info banner */}
       {autoCount > 0 && (
-        <div className="mb-5 flex items-center gap-3 rounded-2xl border border-slate-400/30 bg-slate-500/8 px-5 py-3 animate-fade-up delay-100">
-          <Zap className="h-4 w-4 shrink-0 text-slate-500" />
-          <p className="text-sm text-slate-600">
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/20 px-5 py-3 animate-fade-up delay-100">
+          <Zap className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <p className="text-sm text-foreground">
             <span className="font-bold">{autoCount} חשבונות</span> בחודש זה אושרו אוטומטית על ידי
             המערכת (מנהל האתר לא אישר בזמן).
           </p>
@@ -151,7 +170,7 @@ function Page() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="h-9 rounded-xl border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
+            className="h-10 rounded-xl border border-border bg-card px-3 text-sm focus:border-primary focus:outline-none"
           >
             {monthOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -162,15 +181,27 @@ function Page() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-border/60 bg-card p-12 text-sm text-muted-foreground">
-            <Loader2 className="ms-2 h-4 w-4 animate-spin" /> טוען חשבונות…
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton-row animate-pulse bg-muted/40" />
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <div>
+              <p className="font-semibold text-destructive">לא הצלחנו לטעון את החשבונות</p>
+              <p className="mt-1 text-muted-foreground">נסה לרענן את הדף, או לבחור חודש אחר.</p>
+            </div>
           </div>
         ) : accounts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
-            <FileCheck className="mx-auto h-10 w-10 text-muted-foreground/40" />
-            <p className="mt-4 font-semibold">אין חשבונות לחודש זה</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              חשבונות יומיים יופיעו כאשר הקבלן יסגור ימי עבודה מאושרים.
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <FileCheck className="h-7 w-7 text-primary" />
+            </div>
+            <p className="text-sm font-bold text-foreground">אין חשבונות לחודש זה</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              חשבונות יומיים יופיעו כאן ברגע שהקבלן יסגור ימי עבודה מאושרים.
             </p>
           </div>
         ) : (
@@ -203,15 +234,15 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
             <span
               className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
                 isAuto
-                  ? "border-slate-400/40 bg-slate-500/10 text-slate-500"
-                  : "border-emerald-500/40 bg-emerald-500/10 text-emerald-700"
+                  ? "border-border bg-muted/40 text-muted-foreground"
+                  : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600"
               }`}
             >
               {isAuto ? <Zap className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
               {isAuto ? "אושר אוטומטית" : "אושר ידנית"}
             </span>
             {account.has_exception && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-600">
                 <AlertTriangle className="h-3 w-3" />
                 חריגה
               </span>
@@ -227,12 +258,15 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
             <span>{formatDateHebrew(account.work_date)}</span>
             {account.workers_actual != null && (
               <span>
-                <span className="font-semibold text-foreground">{account.workers_actual}</span>
-                {account.workers_expected ? `/${account.workers_expected}` : ""} עובדים
+                <span className="font-semibold text-foreground" dir="ltr">
+                  {account.workers_actual}
+                  {account.workers_expected ? `/${account.workers_expected}` : ""}
+                </span>{" "}
+                עובדים
               </span>
             )}
             {account.start_time && account.end_time && (
-              <span>
+              <span dir="ltr">
                 {new Date(account.start_time).toLocaleTimeString("he-IL", {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -245,18 +279,18 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
               </span>
             )}
             {account.total_hours != null && (
-              <span>{Number(account.total_hours).toFixed(2)} שעות</span>
+              <span dir="ltr">{Number(account.total_hours).toFixed(2)} שעות</span>
             )}
             {account.total_worker_hours != null && (
-              <span className="text-xs">
+              <span className="text-xs" dir="ltr">
                 ({Number(account.total_worker_hours).toFixed(1)} שעות-עובד)
               </span>
             )}
             {account.hourly_rate != null && (
-              <span>₪{Number(account.hourly_rate).toLocaleString()}/שעה</span>
+              <span dir="ltr">₪{Number(account.hourly_rate).toLocaleString()}/שעה</span>
             )}
             {account.total_cost != null && Number(account.total_cost) > 0 && (
-              <span className="font-bold text-emerald-600">
+              <span className="font-bold text-emerald-600" dir="ltr">
                 ₪{Number(account.total_cost).toLocaleString()}
               </span>
             )}
@@ -273,7 +307,7 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
 
           {/* Exception note */}
           {account.has_exception && account.exception_reason && (
-            <div className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs text-orange-700">
+            <div className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs text-orange-600">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               חריגה: {account.exception_reason}
             </div>
@@ -284,7 +318,7 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
         <div className="shrink-0 text-right">
           <div className="rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5 text-xs text-muted-foreground">
             נוצר
-            <div className="text-[10px]">
+            <div className="text-xs" dir="ltr">
               {new Date(account.generated_at).toLocaleDateString("he-IL")}
             </div>
           </div>

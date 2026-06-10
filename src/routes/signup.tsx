@@ -248,17 +248,15 @@ function SignupPage() {
     navigate({ to: "/dashboard" });
   };
 
-  const pickFile = (
-    setFile: (f: File | null) => void,
-    setErr: (m: string | null) => void,
-  ) => (f: File | null) => {
-    if (f && f.size > MAX_FILE_BYTES) {
-      setErr("הקובץ גדול מ-5MB");
-      return;
-    }
-    setErr(null);
-    setFile(f);
-  };
+  const pickFile =
+    (setFile: (f: File | null) => void, setErr: (m: string | null) => void) => (f: File | null) => {
+      if (f && f.size > MAX_FILE_BYTES) {
+        setErr("הקובץ גדול מ-5MB");
+        return;
+      }
+      setErr(null);
+      setFile(f);
+    };
 
   return (
     <div className="flex min-h-screen bg-background" dir="rtl">
@@ -311,7 +309,7 @@ function SignupPage() {
               הרשמה עם Google
             </Button>
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground/60">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="h-px flex-1 bg-border/60" /> או{" "}
               <span className="h-px flex-1 bg-border/60" />
             </div>
@@ -467,8 +465,9 @@ function SignupPage() {
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-primary"
                   />
                   <span className="text-xs leading-relaxed text-muted-foreground">
-                    אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת הפלטפורמה
-                    (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס לפי המוסכם.
+                    אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת
+                    הפלטפורמה (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס
+                    לפי המוסכם.
                   </span>
                 </label>
                 {agreedError && <FieldError message={agreedError} />}
@@ -498,7 +497,7 @@ function SignupPage() {
           </div>
 
           <div className="mt-8 border-t border-border/40 pt-6 pb-2">
-            <p className="text-center text-xs text-muted-foreground/50">
+            <p className="text-center text-xs text-muted-foreground">
               © BuildForce {new Date().getFullYear()} · כל הזכויות שמורות
             </p>
           </div>
@@ -524,9 +523,7 @@ function SignupPage() {
             <Gavel className="h-8 w-8 text-primary-foreground" />
           </div>
           <div className="text-2xl font-extrabold tracking-tight">BuildForce Prime</div>
-          <div className="mt-2 text-sm text-muted-foreground">
-            שוק כוח האדם המוביל לענף הבנייה
-          </div>
+          <div className="mt-2 text-sm text-muted-foreground">שוק כוח האדם המוביל לענף הבנייה</div>
 
           <div className="mt-8 space-y-3 text-right">
             {[
@@ -575,13 +572,15 @@ function RoleCard({
     >
       <div
         className={`mb-2.5 inline-flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-          active ? "bg-gradient-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+          active
+            ? "bg-gradient-primary text-primary-foreground"
+            : "bg-secondary text-muted-foreground"
         }`}
       >
         <Icon className="h-4 w-4" />
       </div>
       <div className="text-sm font-bold">{title}</div>
-      <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>
+      <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>
     </button>
   );
 }
@@ -621,14 +620,16 @@ function Field({
         {required && <span className="ms-1 text-destructive">*</span>}
       </Label>
       <div className="relative">
-        <Icon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+        <Icon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           id={id}
           type={type}
           aria-invalid={error ? true : undefined}
           {...registration}
           className={`h-10 pr-10 bg-card/50 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30 ${
-            error ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""
+            error
+              ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
+              : ""
           }`}
           placeholder={placeholder}
         />

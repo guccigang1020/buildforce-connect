@@ -184,7 +184,9 @@ function Hero() {
               </div>
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-medium text-muted-foreground">בקשה #BF-2847</div>
+                  <div className="text-xs font-medium text-muted-foreground">
+                    בקשה <span dir="ltr">#BF-2847</span>
+                  </div>
                   <h3 className="mt-1 text-lg font-bold">7 קבלני טפסנות · תל אביב</h3>
                   <p className="mt-1 text-sm text-muted-foreground">3 חודשים · התחלה 1 ביוני</p>
                 </div>
@@ -193,22 +195,30 @@ function Hero() {
                 </div>
               </div>
 
-              <div className="mt-5 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700">
+              <div className="mt-5 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-400">
                 <span className="inline-flex items-center gap-1.5">
                   <TrendingDown className="h-3.5 w-3.5" /> המחיר ירד ב-7% מאז הפרסום
                 </span>
-                <span className="text-emerald-700/80">חיסכון: ₪14/שעה</span>
+                <span dir="ltr" className="text-emerald-400/90">
+                  חיסכון: ₪14/שעה
+                </span>
               </div>
 
               <div className="mt-6 space-y-3">
                 <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <span>הצעות שהתקבלו · 4</span>
-                  <span className="inline-flex items-center gap-1 normal-case text-emerald-600">
+                  <span className="inline-flex items-center gap-1 normal-case text-emerald-400">
                     <Trophy className="h-3 w-3" /> מובילה
                   </span>
                 </div>
                 {[
-                  { name: "ספק מאומת · BF-3947", price: "₪185", rating: 4.9, badge: true, best: true },
+                  {
+                    name: "ספק מאומת · BF-3947",
+                    price: "₪185",
+                    rating: 4.9,
+                    badge: true,
+                    best: true,
+                  },
                   { name: "ספק מאומת · BF-5210", price: "₪192", rating: 4.8, badge: true },
                   { name: "ספק מאומת · BF-1864", price: "₪198", rating: 4.7, badge: false },
                 ].map((c, i) => (
@@ -222,7 +232,9 @@ function Hero() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 text-sm font-semibold">
-                          <span className="truncate">{c.name}</span>
+                          <span className="truncate" dir="ltr">
+                            {c.name}
+                          </span>
                           {c.badge && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
                         </div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -231,13 +243,13 @@ function Hero() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="text-left">
+                      <div className="text-left" dir="ltr">
                         <div
-                          className={`text-base font-extrabold ${c.best ? "text-emerald-600" : ""}`}
+                          className={`text-base font-extrabold ${c.best ? "text-emerald-400" : ""}`}
                         >
                           {c.price}
                         </div>
-                        <div className="text-[10px] text-muted-foreground">לשעה / עובד</div>
+                        <div className="text-xs text-muted-foreground">לשעה / עובד</div>
                       </div>
                       <span
                         title="הזהות נחשפת רק אחרי בחירת זוכה"
@@ -254,9 +266,7 @@ function Hero() {
                 asChild
                 className="mt-5 w-full bg-gradient-primary text-primary-foreground hover:opacity-95"
               >
-                <Link to="/signup">
-                  פתח חשבון וקבל הצעות
-                </Link>
+                <Link to="/signup">פתח חשבון וקבל הצעות</Link>
               </Button>
             </div>
           </div>
@@ -286,7 +296,12 @@ function LiveStatsBar() {
               <s.icon className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-lg font-extrabold leading-none text-foreground md:text-xl">{s.value}</div>
+              <div
+                dir="ltr"
+                className="text-end text-lg font-extrabold leading-none text-foreground md:text-xl"
+              >
+                {s.value}
+              </div>
               <div className="mt-0.5 text-xs text-muted-foreground">{s.label}</div>
             </div>
           </div>
@@ -320,10 +335,7 @@ function CompetitionAdvantage() {
               desc: "מחיר, דירוג, ניסיון, זמינות — אתה מחליט לפי מה שחשוב לך. בלי לחץ, בלי טלפונים.",
             },
           ].map((it) => (
-            <div
-              key={it.title}
-              className="enterprise-card hover-lift rounded-2xl p-6"
-            >
+            <div key={it.title} className="enterprise-card hover-lift rounded-2xl p-6">
               <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
                 <it.icon className="h-6 w-6" />
               </div>
@@ -438,7 +450,12 @@ function Categories() {
     { icon: Wrench, name: "ברזלנים", count: 2800, desc: "כיפוף, קשירה, רשתות, מוטות מאמץ." },
     { icon: Layers, name: "רצפים", count: 1950, desc: "קרמיקה, גרניט פורצלן, אבן טבעית." },
     { icon: PaintRoller, name: "טייחים", count: 1500, desc: "טיח פנים, חוץ, שכבות יסוד וגמר." },
-    { icon: Building2, name: "עובדי גמר", count: 2100, desc: "גבס, צבע, מסגרות פנים, עבודות עדינות." },
+    {
+      icon: Building2,
+      name: "עובדי גמר",
+      count: 2100,
+      desc: "גבס, צבע, מסגרות פנים, עבודות עדינות.",
+    },
   ];
   const total = cats.reduce((s, c) => s + c.count, 0);
 
@@ -472,7 +489,7 @@ function Categories() {
                 className="group flex items-center gap-4 px-6 py-5 transition-colors hover:bg-primary/3 first:rounded-t-2xl last:rounded-b-2xl"
               >
                 {/* Rank number */}
-                <div className="w-6 shrink-0 text-center text-sm font-bold text-muted-foreground/50">
+                <div className="w-6 shrink-0 text-center text-sm font-bold text-muted-foreground">
                   {i + 1}
                 </div>
                 {/* Icon */}
@@ -495,7 +512,9 @@ function Categories() {
                 </div>
                 {/* Worker count */}
                 <div className="shrink-0 text-right">
-                  <div className="text-lg font-extrabold text-primary">{c.count.toLocaleString()}+</div>
+                  <div className="text-lg font-extrabold text-primary">
+                    {c.count.toLocaleString()}+
+                  </div>
                   <div className="text-[11px] text-muted-foreground">עובדים</div>
                 </div>
               </div>
@@ -566,7 +585,9 @@ function WhyTrust() {
                 <div className="mt-0.5 text-xs text-muted-foreground">רישוי ביטוח ובטיחות</div>
               </div>
               <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-5">
-                <div className="text-4xl font-black text-emerald-600 md:text-5xl">&lt;24h</div>
+                <div className="text-4xl font-black text-emerald-400 md:text-5xl" dir="ltr">
+                  &lt;24h
+                </div>
                 <div className="mt-1.5 text-sm font-semibold text-foreground">עד הצעה ראשונה</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">ממוצע בפלטפורמה</div>
               </div>
@@ -595,7 +616,9 @@ function WhyTrust() {
                 </div>
                 <div>
                   <div className="font-bold">{it.title}</div>
-                  <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{it.desc}</div>
+                  <div className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {it.desc}
+                  </div>
                 </div>
               </div>
             ))}
@@ -620,12 +643,14 @@ function SavingsShowcase() {
         <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-5">
           {/* Big number */}
           <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/12 via-emerald-500/5 to-transparent p-8 lg:col-span-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-700">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-400">
               <TrendingDown className="h-3.5 w-3.5" /> חיסכון חודשי לדוגמה
             </div>
-            <div className="mt-4 text-6xl font-black tracking-tight text-emerald-600 md:text-7xl">
-              ₪18,000
-              <span className="mr-2 align-middle text-2xl font-bold text-emerald-600/70">/ חודש</span>
+            <div className="mt-4 text-6xl font-black tracking-tight text-emerald-400 md:text-7xl">
+              <span dir="ltr">₪18,000</span>
+              <span className="mr-2 align-middle text-2xl font-bold text-emerald-400/90">
+                / חודש
+              </span>
             </div>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
               לעומת ההצעה היקרה ביותר שקיבלת. כל ₪ של פער, כפול כל שעת עבודה — חוזר אליך.
@@ -635,7 +660,9 @@ function SavingsShowcase() {
               <span className="text-muted-foreground">×</span>
               <span className="font-bold">6 ₪ פער/שעה</span>
               <span className="text-muted-foreground">=</span>
-              <span className="font-extrabold text-emerald-600">₪18,000</span>
+              <span className="font-extrabold text-emerald-400" dir="ltr">
+                ₪18,000
+              </span>
             </div>
           </div>
 
@@ -1024,7 +1051,7 @@ function SideCard({
   const ring =
     color === "primary"
       ? "ring-primary/30 bg-primary/10 text-primary"
-      : "ring-emerald-500/30 bg-emerald-500/10 text-emerald-600";
+      : "ring-emerald-500/30 bg-emerald-500/10 text-emerald-400";
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
       <div className="flex items-center gap-3">

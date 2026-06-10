@@ -43,11 +43,24 @@ export const Route = createFileRoute("/requests/$id")({
   component: RequestPage,
 });
 
+const OFFER_STATUS_LABELS: Record<string, string> = {
+  submitted: "ממתינה לבחירה",
+  awarded: "זכתה",
+  rejected: "לא נבחרה",
+  withdrawn: "בוטלה",
+};
+
 function competitionLevel(count: number): { label: string; color: string } {
-  if (count === 0) return { label: "שקטה", color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20" };
-  if (count < 3) return { label: "מתחילה", color: "bg-amber-500/10 text-amber-700 border-amber-500/20" };
-  if (count < 6) return { label: "פעילה", color: "bg-orange-500/10 text-orange-700 border-orange-500/20" };
-  return { label: "חמה מאוד 🔥", color: "bg-destructive/10 text-destructive border-destructive/20" };
+  if (count === 0)
+    return { label: "שקטה", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
+  if (count < 3)
+    return { label: "מתחילה", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" };
+  if (count < 6)
+    return { label: "פעילה", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" };
+  return {
+    label: "חמה מאוד 🔥",
+    color: "bg-destructive/10 text-destructive border-destructive/20",
+  };
 }
 
 function RequestPage() {
@@ -112,7 +125,9 @@ function RequestPage() {
           <div className="enterprise-card p-6">
             <div className="h-5 w-40 rounded bg-muted" />
             <div className="mt-4 space-y-2">
-              {[...Array(3)].map((_, i) => <div key={i} className="h-12 rounded-xl bg-muted" />)}
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-12 rounded-xl bg-muted" />
+              ))}
             </div>
           </div>
           <div className="enterprise-card p-6">
@@ -132,7 +147,7 @@ function RequestPage() {
           </div>
           <h2 className="text-xl font-bold">המכרז לא נמצא</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "ייתכן שהוסר או שאין לך הרשאה."}
+            ייתכן שהמכרז הוסר, הקישור שגוי, או שאין לך הרשאה לצפות בו.
           </p>
           <Button asChild variant="outline" className="mt-6">
             <Link to="/dashboard">חזרה</Link>
@@ -163,7 +178,9 @@ function RequestPage() {
 
   // Deadline urgency
   const deadlineHours = (req as { deadline_at?: string }).deadline_at
-    ? Math.round((new Date((req as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000)
+    ? Math.round(
+        (new Date((req as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000,
+      )
     : null;
   const deadlineUrgent = deadlineHours !== null && deadlineHours < 24;
 
@@ -180,7 +197,7 @@ function RequestPage() {
                     variant={isOpen ? "default" : "secondary"}
                     className={
                       isOpen
-                        ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-700"
+                        ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
                         : ""
                     }
                   >
@@ -194,7 +211,9 @@ function RequestPage() {
                   </Badge>
                   {/* Competition signal */}
                   {isOpen && offersCount > 0 && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-bold ${compLevel.color}`}>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-bold ${compLevel.color}`}
+                    >
                       <Flame className="h-3 w-3" />
                       {offersCount} תאגידים כבר הגישו · {compLevel.label}
                     </span>
@@ -207,7 +226,9 @@ function RequestPage() {
 
                 {/* Deadline urgency */}
                 {deadlineHours !== null && deadlineHours > 0 && (
-                  <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineUrgent ? "border-destructive/40 bg-destructive/10 text-destructive animate-pulse" : "border-amber-500/30 bg-amber-500/10 text-amber-700"}`}>
+                  <div
+                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineUrgent ? "border-destructive/40 bg-destructive/10 text-destructive animate-pulse" : "border-amber-500/30 bg-amber-500/10 text-amber-400"}`}
+                  >
                     <Clock className="h-3 w-3" />
                     {deadlineUrgent
                       ? `נסגר בעוד ${deadlineHours} שעות — מהר!`
@@ -242,7 +263,10 @@ function RequestPage() {
               { icon: Award, label: "זכייה לפי הצעה הטובה ביותר" },
               { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
             ].map(({ icon: Icon, label }) => (
-              <div key={label} className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
+              <div
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary"
+              >
                 <Icon className="h-3.5 w-3.5" /> {label}
               </div>
             ))}
@@ -279,7 +303,7 @@ function RequestPage() {
             </p>
           )}
           {(req as { deadline_at?: string }).deadline_at && !deadlineUrgent && (
-            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-700">
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-400">
               <Clock className="h-3 w-3" /> סגירת המכרז:{" "}
               {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
             </div>
@@ -305,7 +329,9 @@ function RequestPage() {
         </div>
 
         {/* Submit offer */}
-        {isCorporation && isOpen && !myOffer && <SubmitOfferCard requestId={req.id} totalWorkers={totalWorkers} />}
+        {isCorporation && isOpen && !myOffer && (
+          <SubmitOfferCard requestId={req.id} totalWorkers={totalWorkers} />
+        )}
 
         {/* My offer panel */}
         {myOffer && (
@@ -316,7 +342,7 @@ function RequestPage() {
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
               <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
                 <Coins className="h-4 w-4 text-primary" />
-                <span className="font-bold">
+                <span className="font-bold" dir="ltr">
                   ₪{Number(myOffer.price_per_hour).toLocaleString()}/שעה
                 </span>
               </div>
@@ -326,7 +352,7 @@ function RequestPage() {
               </div>
               <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
                 <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                <span>סטטוס: {myOffer.status}</span>
+                <span>סטטוס: {OFFER_STATUS_LABELS[myOffer.status] ?? myOffer.status}</span>
               </div>
             </div>
             <Button asChild variant="outline" size="sm" className="mt-4">
@@ -351,7 +377,9 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
   const submitFn = useServerFn(submitOffer);
   const [submitting, setSubmitting] = useState(false);
   const [pricePerHour, setPricePerHour] = useState("");
-  const [availableWorkers, setAvailableWorkers] = useState(String(totalWorkers > 0 ? totalWorkers : ""));
+  const [availableWorkers, setAvailableWorkers] = useState(
+    String(totalWorkers > 0 ? totalWorkers : ""),
+  );
   const [startDate, setStartDate] = useState("");
   const [responseTimeHours, setResponseTimeHours] = useState("24");
   const [warrantyDays, setWarrantyDays] = useState("30");
@@ -494,11 +522,7 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
       </div>
 
       <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 px-4 py-3">
-        <Checkbox
-          id="ins"
-          checked={insurance}
-          onCheckedChange={(v) => setInsurance(v === true)}
-        />
+        <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
         <span className="text-sm">
           <span className="font-semibold">כלול ביטוח מלא</span>
           <span className="text-muted-foreground"> — מגביר אמינות ההצעה</span>

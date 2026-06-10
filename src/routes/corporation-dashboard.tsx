@@ -22,7 +22,6 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
-import { WorkforceInventorySection } from "@/components/corporation/workforce-inventory-section";
 import { useAuth } from "@/hooks/use-auth";
 import { listMyOffers } from "@/lib/job-offers.functions";
 import { getCorporationAttendanceStats } from "@/lib/analytics.functions";
@@ -128,9 +127,7 @@ function CorporationDashboard() {
   }, [offers]);
 
   const priceIntelligence = useMemo(() => {
-    const decidedOffers = offers.filter(
-      (o) => o.status === "awarded" || o.status === "rejected",
-    );
+    const decidedOffers = offers.filter((o) => o.status === "awarded" || o.status === "rejected");
     if (decidedOffers.length === 0) return null;
 
     const bands = PRICE_BANDS.map((band) => {
@@ -209,10 +206,8 @@ function CorporationDashboard() {
                   <span className="info-chip">
                     <Building2 className="h-3 w-3" /> תאגיד כוח אדם
                   </span>
-                  {profile?.city && (
-                    <span className="info-chip">{profile.city}</span>
-                  )}
-                  <span className="info-chip">
+                  {profile?.city && <span className="info-chip">{profile.city}</span>}
+                  <span className="info-chip" dir="ltr">
                     {isLoading ? "…" : `${stats.totalActiveWorkers} עובדים פעילים`}
                   </span>
                 </div>
@@ -224,20 +219,20 @@ function CorporationDashboard() {
 
       {/* ── Status alerts ── */}
       {!isCorporation && (
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100 status-bar-pending">
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100 status-bar-pending">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין להפעלת התפקיד.</span>
         </div>
       )}
       {isCorporation && !isApproved && (
-        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100 status-bar-pending">
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm animate-fade-up delay-100 status-bar-pending">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.</span>
         </div>
       )}
 
       {/* ── KPI strip ── */}
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-200">
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-200">
         <CorpKPI
           icon={Briefcase}
           label="הצעות פתוחות"
@@ -257,7 +252,7 @@ function CorporationDashboard() {
           <WinRateRing rate={isLoading ? 0 : stats.winRate} />
           <div>
             <div className="text-xs font-medium text-muted-foreground">שיעור הצלחה</div>
-            <div className="mt-0.5 text-2xl font-extrabold">
+            <div className="mt-0.5 text-2xl font-extrabold" dir="ltr">
               {isLoading ? "…" : `${stats.winRate}%`}
             </div>
             <div className="mt-0.5 text-[11px] text-muted-foreground">
@@ -281,19 +276,25 @@ function CorporationDashboard() {
 
       {/* ── Revenue breakdown bar ── */}
       {stats.totalActiveWorkers > 0 && (
-        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
           <div className="section-header-icon shrink-0">
             <BarChart3 className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <span className="text-xs font-bold text-foreground">חישוב עמלה:</span>
-            <span className="info-chip">₪{PLATFORM_FEE_PER_HOUR}/שעה</span>
+            <span className="info-chip" dir="ltr">
+              ₪{PLATFORM_FEE_PER_HOUR}/שעה
+            </span>
             <span className="text-xs text-muted-foreground">×</span>
-            <span className="info-chip">{HOURS_PER_MONTH} שעות/חודש</span>
+            <span className="info-chip" dir="ltr">
+              {HOURS_PER_MONTH} שעות/חודש
+            </span>
             <span className="text-xs text-muted-foreground">×</span>
-            <span className="info-chip">{stats.totalActiveWorkers} עובדים</span>
+            <span className="info-chip" dir="ltr">
+              {stats.totalActiveWorkers} עובדים
+            </span>
             <span className="text-xs text-muted-foreground">=</span>
-            <span className="text-sm font-extrabold text-primary">
+            <span className="text-sm font-extrabold text-primary" dir="ltr">
               ₪{stats.monthlyFee.toLocaleString()}/חודש
             </span>
           </div>
@@ -302,7 +303,7 @@ function CorporationDashboard() {
 
       {/* ── Intelligence panels ── */}
       {(attStats || priceIntelligence) && (
-        <div className="mb-5 grid gap-4 md:grid-cols-2 animate-fade-up delay-200">
+        <div className="mb-6 grid gap-4 md:grid-cols-2 animate-fade-up delay-200">
           {!attendanceLoading && attStats && attStats.monthly.total > 0 && (
             <AttendanceQualityPanel stats={attStats} />
           )}
@@ -313,9 +314,8 @@ function CorporationDashboard() {
       )}
 
       {/* ── Sub-sections ── */}
-      <OpenTendersSection />
+      <OpenTendersSection isApproved={Boolean(isApproved)} />
       <MyOffersSection />
-      {isCorporation && <WorkforceInventorySection />}
     </AppShell>
   );
 }
@@ -349,7 +349,7 @@ function AttendanceQualityPanel({ stats }: { stats: CorpAttendanceStats }) {
                   : "bg-destructive/15 text-destructive"
             }`}
           >
-            {approvalRate}% אושרו
+            <span dir="ltr">{approvalRate}%</span> אושרו
           </span>
         </div>
       </div>
@@ -380,18 +380,18 @@ function AttendanceQualityPanel({ stats }: { stats: CorpAttendanceStats }) {
           {monthly.totalCost > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] text-muted-foreground">עלות ח״א:</span>
-              <span className="text-xs font-extrabold">
+              <span className="text-xs font-extrabold" dir="ltr">
                 ₪{Math.round(monthly.totalCost).toLocaleString()}
               </span>
             </div>
           )}
           {monthly.pending > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
               <Clock className="h-3 w-3" /> {monthly.pending} ממתינים
             </span>
           )}
           {monthly.rejected > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+            <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">
               <XCircle className="h-3 w-3" /> {monthly.rejected} נדחו
             </span>
           )}
@@ -423,7 +423,8 @@ function PriceIntelligencePanel({
         <span className="text-sm font-bold">ניתוח תמחור</span>
         {bestBand?.rate != null && (
           <span className="ms-auto status-chip-approved">
-            <TrendingUp className="h-3 w-3" /> {bestBand.label} — {bestBand.rate}% זכיות
+            <TrendingUp className="h-3 w-3" />
+            <span dir="ltr">{bestBand.label}</span> — <span dir="ltr">{bestBand.rate}%</span> זכיות
           </span>
         )}
       </div>
@@ -431,7 +432,7 @@ function PriceIntelligencePanel({
       <div className="divide-y divide-border/40 px-4 py-1">
         {bands.map((band) => (
           <div key={band.label} className="flex items-center gap-3 py-3">
-            <div className="w-20 shrink-0 text-xs font-semibold text-foreground/80">
+            <div className="w-20 shrink-0 text-xs font-semibold text-foreground/80" dir="ltr">
               {band.label}
             </div>
             <div className="flex flex-1 items-center gap-2">
@@ -449,11 +450,12 @@ function PriceIntelligencePanel({
                       ? "text-amber-600"
                       : "text-destructive"
                 }`}
+                dir="ltr"
               >
                 {band.rate != null ? `${band.rate}%` : "—"}
               </span>
             </div>
-            <div className="w-14 shrink-0 text-right text-[11px] text-muted-foreground">
+            <div className="w-14 shrink-0 text-right text-[11px] text-muted-foreground" dir="ltr">
               {band.wins}/{band.total}
             </div>
           </div>
@@ -466,14 +468,18 @@ function PriceIntelligencePanel({
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
               <span className="text-[11px] text-muted-foreground">ממוצע בזכיות:</span>
-              <span className="text-xs font-extrabold text-emerald-600">₪{avgWinPrice}/שעה</span>
+              <span className="text-xs font-extrabold text-emerald-600" dir="ltr">
+                ₪{avgWinPrice}/שעה
+              </span>
             </div>
           )}
           {avgLossPrice != null && avgWinPrice != null && (
             <div className="flex items-center gap-1.5">
               <XCircle className="h-3 w-3 text-muted-foreground" />
               <span className="text-[11px] text-muted-foreground">ממוצע בהפסדים:</span>
-              <span className="text-xs font-semibold">₪{avgLossPrice}/שעה</span>
+              <span className="text-xs font-semibold" dir="ltr">
+                ₪{avgLossPrice}/שעה
+              </span>
             </div>
           )}
         </div>
@@ -505,13 +511,16 @@ function QualityStat({
               ? "text-amber-600"
               : "text-foreground"
         }`}
+        dir="ltr"
       >
         {value}
       </div>
-      {sub && <div className="mt-0.5 text-[10px] font-semibold text-muted-foreground">{sub}</div>}
+      {sub && <div className="mt-0.5 text-xs font-semibold text-muted-foreground">{sub}</div>}
       <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
       {trend && (
-        <span className={trend.positive ? "trend-up" : "trend-down"}>{trend.label}</span>
+        <span className={`mt-1.5 ${trend.positive ? "trend-up" : "trend-down"}`} dir="ltr">
+          {trend.label}
+        </span>
       )}
     </div>
   );
@@ -546,7 +555,9 @@ function WinRateRing({ rate }: { rate: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-extrabold leading-none">{rate}%</span>
+        <span className="text-sm font-extrabold leading-none" dir="ltr">
+          {rate}%
+        </span>
       </div>
     </div>
   );
@@ -584,9 +595,11 @@ function CorpKPI({
       <div className={iconCls}>
         <Icon className="h-5 w-5" />
       </div>
-      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
+      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl" dir="ltr">
+        {value}
+      </div>
       <div className="mt-0.5 text-xs font-medium text-muted-foreground">{label}</div>
-      {sub && <div className="mt-1 text-[11px] text-muted-foreground/70">{sub}</div>}
+      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }

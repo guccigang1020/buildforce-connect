@@ -59,20 +59,28 @@ function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
-      <main className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12" dir="rtl">
-        <div className="w-full">
+      <main
+        className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12"
+        dir="rtl"
+      >
+        <div className="w-full animate-fade-up">
           <div className="text-center">
             <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
               <ShieldCheck className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="mt-4 text-3xl font-extrabold">בחר סיסמה חדשה</h1>
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight">בחר סיסמה חדשה</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              בחר/י סיסמה חדשה וחזקה לחשבון שלך
+            </p>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm shadow-elegant">
+          <div className="mt-8 rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm shadow-elegant md:p-8">
             {!ready ? (
-              <p className="text-center text-sm text-muted-foreground">מאמת את הקישור…</p>
+              <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> מאמת את הקישור…
+              </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <PasswordField
                   id="password"
                   label="סיסמה חדשה"
@@ -87,12 +95,12 @@ function ResetPasswordPage() {
                 />
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
+                  className="w-full h-11 bg-gradient-primary text-primary-foreground font-bold shadow-elegant hover:opacity-95 transition-opacity"
                   disabled={submitting}
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" /> מעדכן…
+                      <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מעדכן…
                     </>
                   ) : (
                     "עדכן סיסמה"
@@ -121,7 +129,9 @@ function PasswordField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className="text-sm font-semibold">
+        {label}
+      </Label>
       <div className="relative">
         <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -130,7 +140,8 @@ function PasswordField({
           required
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pr-10"
+          className="h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
+          placeholder="••••••••"
         />
       </div>
     </div>

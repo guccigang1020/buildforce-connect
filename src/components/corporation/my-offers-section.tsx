@@ -115,14 +115,24 @@ export function MyOffersSection() {
           ))}
         </div>
       ) : error ? (
-        <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-5 text-sm text-destructive">
-          שגיאה בטעינת הצעות: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
+        <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-sm">
+          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <div>
+            <p className="font-semibold text-destructive">לא הצלחנו לטעון את ההצעות שלך</p>
+            <p className="mt-1 text-muted-foreground">
+              נסה לרענן את הדף, או לחזור אליו מאוחר יותר.
+            </p>
+          </div>
         </div>
       ) : offers.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 py-12 text-center">
-          <Send className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
-          <p className="text-sm font-semibold text-muted-foreground">טרם הגשת הצעות</p>
-          <p className="mt-1 text-xs text-muted-foreground">הצעות שתגיש יופיעו כאן.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <Send className="h-7 w-7 text-primary" />
+          </div>
+          <p className="text-sm font-bold text-foreground">טרם הגשת הצעות</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            הצעות מחיר שתגיש למכרזים פתוחים יופיעו כאן ויתעדכנו עד לזכייה.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -144,7 +154,7 @@ export function MyOffersSection() {
                       <span className={meta.chipClass}>
                         <Icon className="h-3 w-3" /> {meta.label}
                       </span>
-                      <span className="font-mono text-[11px] text-muted-foreground">
+                      <span className="font-mono text-[11px] text-muted-foreground" dir="ltr">
                         מכרז {maskedRequestId(o.request_id)}
                       </span>
                     </div>
@@ -176,6 +186,7 @@ export function MyOffersSection() {
                   <div className="text-left">
                     <div
                       className={`text-xl font-extrabold ${isAwarded ? "text-primary" : "text-foreground"}`}
+                      dir="ltr"
                     >
                       ₪{Number(o.price_per_hour)}/שעה
                     </div>
@@ -193,7 +204,7 @@ export function MyOffersSection() {
                     </div>
                   )}
                   <div className="flex flex-wrap gap-2 ms-auto">
-                    <Button asChild variant="ghost" size="sm">
+                    <Button asChild variant="ghost" size="sm" className="h-10">
                       <Link to="/requests/$id" params={{ id: o.request_id }}>
                         <Eye className="ml-1 h-4 w-4" /> צפייה במכרז
                       </Link>
@@ -202,6 +213,7 @@ export function MyOffersSection() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="h-10"
                         onClick={() => handleWithdraw(o.id)}
                         disabled={withdrawingId === o.id}
                       >

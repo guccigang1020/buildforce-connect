@@ -121,11 +121,16 @@ function DashboardPage() {
   const fetchStats = useServerFn(getContractorDashboardStats);
 
   // Route by role: unauthenticated -> login; a corporation (manpower supplier)
-  // belongs on its own dashboard, not the contractor view.
+  // belongs on its own dashboard, not the contractor view; an account whose
+  // only role is admin belongs in the admin console, not the contractor view.
   useEffect(() => {
     if (loading) return;
     if (!session) {
       void navigate({ to: "/login", replace: true });
+      return;
+    }
+    if (hasRole("admin") && !hasRole("contractor") && !hasRole("corporation")) {
+      void navigate({ to: "/admin", replace: true });
       return;
     }
     if (hasRole("corporation") && !hasRole("contractor")) {
@@ -171,7 +176,15 @@ function DashboardPage() {
       return best == null || r.min_price < best ? r.min_price : best;
     }, null);
     const convRate = requests.length > 0 ? Math.round((awarded / requests.length) * 100) : 0;
-    return { open, awarded, totalOffers, total: requests.length, openWithOffers, bestPrice, convRate };
+    return {
+      open,
+      awarded,
+      totalOffers,
+      total: requests.length,
+      openWithOffers,
+      bestPrice,
+      convRate,
+    };
   }, [requests]);
 
   const filterCounts = useMemo(
@@ -185,8 +198,7 @@ function DashboardPage() {
     [requests],
   );
 
-  const firstName =
-    profile?.full_name?.split(" ")[0] ?? profile?.company_name?.split(" ")[0] ?? "";
+  const firstName = profile?.full_name?.split(" ")[0] ?? profile?.company_name?.split(" ")[0] ?? "";
   const greeting = getGreeting();
   const formattedDate = new Date().toLocaleDateString("he-IL", {
     weekday: "long",
@@ -287,9 +299,7 @@ function DashboardPage() {
       </div>
 
       {/* ── Workforce Intelligence Panel ── */}
-      {wsLoading && (
-        <div className="mb-4 skeleton-kpi animate-pulse bg-muted/40" />
-      )}
+      {wsLoading && <div className="mb-4 skeleton-kpi animate-pulse bg-muted/40" />}
       {showWsPanel && wsStats && <WorkforceIntelligencePanel stats={wsStats} />}
 
       {/* ── Insights chips ── */}
@@ -361,8 +371,20 @@ function DashboardPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
-            שגיאה בטעינת בקשות: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
+          <div className="empty-state">
+            <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-2xl border border-destructive/20 bg-destructive/10">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="text-xl font-bold">שגיאה בטעינת הבקשות</h3>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+              לא הצלחנו לטעון את הבקשות שלך כרגע. בדוק את החיבור לאינטרנט ונסה שוב.
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-6 bg-gradient-primary text-primary-foreground shadow-elegant"
+            >
+              נסה שוב
+            </Button>
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState hasAny={requests.length > 0} />
@@ -419,14 +441,18 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
       <div className="grid md:grid-cols-2 md:divide-x md:divide-x-reverse md:divide-border/40">
         {/* Project health */}
         <div className="p-5">
-          <div className="mb-3.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground/80">
+          <div className="mb-3.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
             <HardHat className="h-3.5 w-3.5" /> פרויקטים פעילים
           </div>
           <div className="grid grid-cols-3 gap-4">
             <ProjectStat
               label="פרויקטים"
               value={String(stats.activeProjects)}
-              sub={stats.totalProjects > stats.activeProjects ? `מתוך ${stats.totalProjects}` : undefined}
+              sub={
+                stats.totalProjects > stats.activeProjects
+                  ? `מתוך ${stats.totalProjects}`
+                  : undefined
+              }
               variant={stats.activeProjects > 0 ? "primary" : "default"}
             />
             <ProjectStat
@@ -434,17 +460,14 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
               value={String(stats.expectedWorkers)}
               variant={stats.expectedWorkers > 0 ? "primary" : "default"}
             />
-            <ProjectStat
-              label="צוותות"
-              value={String(stats.totalTeams)}
-            />
+            <ProjectStat label="צוותות" value={String(stats.totalTeams)} />
           </div>
         </div>
 
         {/* Attendance quality */}
         <div className="border-t border-border/40 p-5 md:border-t-0">
           <div className="mb-3.5 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground/80">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
               <CheckCircle2 className="h-3.5 w-3.5" /> נוכחות — {monthName}
             </div>
             {approvalRate != null && (
@@ -545,7 +568,7 @@ function ProjectStat({
       >
         {value}
       </div>
-      {sub && <div className="mt-0.5 text-[10px] text-muted-foreground">{sub}</div>}
+      {sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>}
       <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
     </div>
   );
@@ -576,9 +599,7 @@ function AttendanceStat({
         {value}
       </div>
       <div className="mt-1 text-[11px] text-muted-foreground">{label}</div>
-      {trend && (
-        <span className={trend.positive ? "trend-up" : "trend-down"}>{trend.label}</span>
-      )}
+      {trend && <span className={trend.positive ? "trend-up" : "trend-down"}>{trend.label}</span>}
     </div>
   );
 }
@@ -617,7 +638,7 @@ function KPICard({
           <Icon className="h-5 w-5" />
         </div>
         {variant === "live" && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
             <span className="live-dot" />
             חי
           </span>
@@ -625,7 +646,7 @@ function KPICard({
       </div>
       <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</div>
       <div className="mt-0.5 text-xs font-medium text-muted-foreground">{label}</div>
-      {sub && <div className="mt-1 text-[11px] text-muted-foreground/70">{sub}</div>}
+      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -652,7 +673,7 @@ function RequestCard({ request: r }: { request: MyRequest }) {
               {maskedRequestId(r.id)}
             </span>
             {r.deadline_at && r.status === "open" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600">
                 <Clock className="h-3 w-3" /> סגירה{" "}
                 {new Date(r.deadline_at).toLocaleDateString("he-IL")}
               </span>
@@ -689,7 +710,7 @@ function RequestCard({ request: r }: { request: MyRequest }) {
           {/* Competition bar */}
           {r.status === "open" && r.offers_count > 0 && (
             <div className="mt-3 max-w-xs">
-              <div className="mb-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+              <div className="mb-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>עוצמת תחרות</span>
                 <span className="font-bold text-primary">{r.offers_count} הצעות</span>
               </div>
@@ -709,14 +730,14 @@ function RequestCard({ request: r }: { request: MyRequest }) {
             <div className="text-2xl font-extrabold leading-none text-primary">
               {r.offers_count}
             </div>
-            <div className="mt-0.5 text-[10px] text-muted-foreground">
+            <div className="mt-0.5 text-[11px] text-muted-foreground">
               {r.offers_count === 1 ? "הצעה" : "הצעות"}
             </div>
           </div>
           {r.min_price != null && (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-center">
               <div className="text-xs font-extrabold text-emerald-600">₪{r.min_price}</div>
-              <div className="text-[9px] text-muted-foreground">מינ׳/שעה</div>
+              <div className="text-[11px] text-muted-foreground">מינ׳/שעה</div>
             </div>
           )}
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">

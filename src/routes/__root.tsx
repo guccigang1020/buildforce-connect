@@ -110,6 +110,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cg fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 13l5-5 4 4-5 5z'/%3E%3Cpath d='M16.5 12.5l3 3'/%3E%3Cpath d='M11 21h9'/%3E%3C/g%3E%3C/svg%3E",
+      },
+      {
         rel: "stylesheet",
         href: appCss,
       },

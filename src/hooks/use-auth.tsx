@@ -10,7 +10,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "contractor" | "corporation" | "admin" | "team_leader" | "labor_supplier";
+export type AppRole = "contractor" | "corporation" | "admin" | "team_leader";
 
 export type Profile = {
   id: string;

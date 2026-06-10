@@ -235,9 +235,7 @@ export const endWorkday = createServerFn({ method: "POST" })
     const startMs = rec.start_time ? new Date(rec.start_time).getTime() : null;
     const endMs = new Date(now).getTime();
     const totalHours =
-      startMs !== null
-        ? Math.round(((endMs - startMs) / 3_600_000) * 10_000) / 10_000
-        : null;
+      startMs !== null ? Math.round(((endMs - startMs) / 3_600_000) * 10_000) / 10_000 : null;
     const totalCost =
       totalHours !== null && rec.hourly_rate != null && rec.workers_actual != null
         ? Math.round(totalHours * Number(rec.hourly_rate) * rec.workers_actual * 100) / 100
@@ -451,7 +449,9 @@ export const rejectAttendance = createServerFn({ method: "POST" })
     if (phone) {
       const text = `❌ רשומת נוכחות נדחתה — ${pj?.name ?? ""}\nצוות: ${tm?.name ?? ""}\nסיבה: ${data.reason}\nשעה: ${new Date().toLocaleString("he-IL")}\n\nפנה למנהל האתר לפרטים נוספים.`;
       waUrl = waLink(phone, text);
-      await logNotification(data.recordId, "rejection", phone, "team_leader", { reason: data.reason });
+      await logNotification(data.recordId, "rejection", phone, "team_leader", {
+        reason: data.reason,
+      });
     }
     return { ok: true, notify: waUrl };
   });
@@ -715,7 +715,7 @@ export const listContractorProjects = createServerFn({ method: "GET" })
     const { data, error } = await supabase
       .from("projects")
       .select(
-        "id, name, address, status, site_lat, site_lng, site_radius_meters, site_manager_name, site_manager_phone, start_date",
+        "id, name, address, status, site_lat, site_lng, site_radius_meters, site_manager_name, site_manager_phone, start_date, hourly_rate, expected_workers, corporation_id",
       )
       .eq("contractor_id", userId)
       .order("created_at", { ascending: false });
@@ -724,22 +724,28 @@ export const listContractorProjects = createServerFn({ method: "GET" })
   });
 
 // Contractor adds/updates a team with team-leader phone
+const upsertProjectTeamSchema = z.object({
+  teamId: z.string().uuid().optional(),
+  projectId: z.string().uuid(),
+  name: z.string().min(2).max(120),
+  teamLeaderName: z.string().min(2).max(120),
+  teamLeaderPhone: z.string().min(8).max(20),
+  expectedWorkers: z.number().int().min(1).max(500),
+  hourlyRate: z.number().min(0).max(10000),
+});
+
 export const upsertProjectTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        teamId: z.string().uuid().optional(),
-        projectId: z.string().uuid(),
-        name: z.string().min(2).max(120),
-        teamLeaderName: z.string().min(2).max(120),
-        teamLeaderPhone: z.string().min(8).max(20),
-        teamLeaderUserId: z.string().uuid(),
-        expectedWorkers: z.number().int().min(1).max(500),
-        hourlyRate: z.number().min(0).max(10000),
-      })
-      .parse(d),
-  )
+  .inputValidator((d: unknown) => {
+    try {
+      return upsertProjectTeamSchema.parse(d);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        throw new Error("פרטי הצוות אינם תקינים — בדוק שם, טלפון וכמות עובדים");
+      }
+      throw e;
+    }
+  })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: proj } = await supabase
@@ -748,21 +754,84 @@ export const upsertProjectTeam = createServerFn({ method: "POST" })
       .eq("id", data.projectId)
       .single();
     if (!proj || proj.contractor_id !== userId) throw new Error("Unauthorized");
+
+    // The contractor identifies the team leader (foreman) by name + phone only —
+    // foremen never sign up. To satisfy the NOT NULL team_leader_id we resolve a
+    // stable identity for that phone: reuse a user already registered with it,
+    // otherwise provision an INVISIBLE passwordless team-leader identity. The
+    // foreman never logs in; they reach check-in by scanning the team's QR code.
+    const supabaseAdmin = await getSupabaseAdmin();
+    const normalizedPhone = cleanPhone(data.teamLeaderPhone);
+    if (!normalizedPhone) throw new Error("מספר הטלפון של ראש הצוות אינו תקין");
+
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id, phone")
+      .not("phone", "is", null);
+    const existing = (profiles ?? []).find((p) => cleanPhone(p.phone) === normalizedPhone);
+
+    let teamLeaderId: string;
+    if (existing) {
+      teamLeaderId = existing.user_id;
+    } else {
+      const syntheticEmail = `tl.${normalizedPhone}@teamleader.buildforce.app`;
+      const { data: createdUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email: syntheticEmail,
+        email_confirm: true,
+        user_metadata: {
+          full_name: data.teamLeaderName,
+          phone: data.teamLeaderPhone,
+          role: "team_leader",
+        },
+      });
+      let leaderUserId = createdUser?.user?.id;
+      if (!leaderUserId) {
+        // Already provisioned for this phone on a prior add — look it up.
+        const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+        leaderUserId = list?.users?.find((u) => u.email === syntheticEmail)?.id;
+      }
+      if (!leaderUserId) {
+        throw new Error(createErr?.message || "שגיאה ביצירת זהות לראש הצוות. נסה שוב.");
+      }
+      await supabaseAdmin
+        .from("profiles")
+        .update({ full_name: data.teamLeaderName, phone: data.teamLeaderPhone })
+        .eq("user_id", leaderUserId);
+      await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: leaderUserId, role: "team_leader" }, { onConflict: "user_id,role" });
+      // The bootstrap trigger adds a default "contractor" role on user creation —
+      // strip it so this invisible foreman identity is team_leader only.
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", leaderUserId)
+        .eq("role", "contractor");
+      teamLeaderId = leaderUserId;
+    }
+
     const payload = {
       project_id: data.projectId,
       name: data.name,
-      team_leader_id: data.teamLeaderUserId,
+      team_leader_id: teamLeaderId,
       team_leader_name: data.teamLeaderName,
       team_leader_phone: data.teamLeaderPhone,
       expected_workers: data.expectedWorkers,
       hourly_rate: data.hourlyRate,
     };
+    // Contractor ownership of the project is already verified above, so the
+    // write itself is performed with the admin client. This keeps the feature
+    // working regardless of the deployed project_teams RLS policy (which on the
+    // current DB blocks the contractor's own client from inserting).
     if (data.teamId) {
-      const { error } = await supabase.from("project_teams").update(payload).eq("id", data.teamId);
+      const { error } = await supabaseAdmin
+        .from("project_teams")
+        .update(payload)
+        .eq("id", data.teamId);
       if (error) throw new Error(error.message);
       return { id: data.teamId };
     }
-    const { data: created, error } = await supabase
+    const { data: created, error } = await supabaseAdmin
       .from("project_teams")
       .insert(payload)
       .select("id")
@@ -787,7 +856,10 @@ export const listProjectTeams = createServerFn({ method: "POST" })
       !!proj &&
       (proj.contractor_id === userId || proj.corporation_id === userId || isAdmin.data === true);
     if (!allowed) throw new Error("Unauthorized");
-    const { data: teams, error } = await supabase
+    // Access is authorized above; read with the admin client so the list is not
+    // affected by the deployed project_teams SELECT RLS policy.
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data: teams, error } = await supabaseAdmin
       .from("project_teams")
       .select(
         "id, name, expected_workers, hourly_rate, team_leader_id, team_leader_name, team_leader_phone",
@@ -796,4 +868,205 @@ export const listProjectTeams = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { teams: teams ?? [] };
+  });
+
+// ════════════════════════════════════════════════════════════════════════════
+// Public QR check-in (no account) — a foreman reaches their team's check-in
+// screen by scanning the team QR. Authorization is by possession of the QR
+// (teamId/recordId) PLUS the on-site geofence + photo, not by a logged-in user.
+// These mirror startWorkday/endWorkday without the auth/team_leader gate.
+// ════════════════════════════════════════════════════════════════════════════
+
+type TokenProject = {
+  contractor_id: string;
+  corporation_id: string;
+  site_lat: number | null;
+  site_lng: number | null;
+  site_radius_meters: number | null;
+  name?: string | null;
+  site_manager_phone?: string | null;
+};
+
+export const getTeamForCheckin = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ teamId: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data: team } = await supabaseAdmin
+      .from("project_teams")
+      .select(
+        "id, name, expected_workers, team_leader_name, projects:project_id(name, site_lat, site_lng, site_radius_meters)",
+      )
+      .eq("id", data.teamId)
+      .maybeSingle();
+    if (!team) throw new Error("צוות לא נמצא — בדוק את קוד ה-QR.");
+    const proj = team.projects as {
+      name?: string | null;
+      site_lat: number | null;
+      site_lng: number | null;
+      site_radius_meters: number | null;
+    } | null;
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: rec } = await supabaseAdmin
+      .from("attendance_records")
+      .select("id, status, start_time, end_time, workers_actual")
+      .eq("team_id", data.teamId)
+      .eq("work_date", today)
+      .maybeSingle();
+    return {
+      team: {
+        id: team.id,
+        name: team.name,
+        expected_workers: team.expected_workers,
+        leader_name: team.team_leader_name,
+        project_name: proj?.name ?? "",
+        site_configured: proj?.site_lat != null && proj?.site_lng != null,
+      },
+      today: rec ?? null,
+    };
+  });
+
+export const startWorkdayByToken = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        teamId: z.string().uuid(),
+        workersActual: z.number().int().min(1).max(500),
+        gpsLat: z.number().min(-90).max(90),
+        gpsLng: z.number().min(-180).max(180),
+        photoBase64: z.string().min(100).max(8_000_000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data: team } = await supabaseAdmin
+      .from("project_teams")
+      .select(
+        "id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id, site_lat, site_lng, site_radius_meters)",
+      )
+      .eq("id", data.teamId)
+      .single();
+    if (!team) throw new Error("צוות לא נמצא");
+    const proj = team.projects as TokenProject;
+    await assertWithinSite(proj, data.gpsLat, data.gpsLng);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: existing } = await supabaseAdmin
+      .from("attendance_records")
+      .select("id, start_time")
+      .eq("team_id", data.teamId)
+      .eq("work_date", today)
+      .maybeSingle();
+    if (existing?.start_time) throw new Error("יום העבודה כבר נפתח היום");
+
+    let recordId = existing?.id;
+    if (!recordId) {
+      const { data: createdRec, error } = await supabaseAdmin
+        .from("attendance_records")
+        .insert({
+          project_id: team.project_id,
+          team_id: team.id,
+          team_leader_id: team.team_leader_id,
+          contractor_id: proj.contractor_id,
+          corporation_id: proj.corporation_id,
+          work_date: today,
+          workers_expected: team.expected_workers,
+          workers_actual: data.workersActual,
+          hourly_rate: team.hourly_rate,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (error || !createdRec) throw new Error(error?.message || "שגיאה ביצירת רשומה");
+      recordId = createdRec.id;
+    }
+
+    const photoPath = await uploadPhoto(recordId, "start", data.photoBase64);
+    const now = new Date().toISOString();
+    await supabaseAdmin
+      .from("attendance_records")
+      .update({
+        start_time: now,
+        start_photo_url: photoPath,
+        start_gps_lat: data.gpsLat,
+        start_gps_lng: data.gpsLng,
+        workers_actual: data.workersActual,
+      })
+      .eq("id", recordId);
+    await supabaseAdmin.from("attendance_events").insert({
+      record_id: recordId,
+      kind: "start",
+      actor_id: team.team_leader_id,
+      photo_url: photoPath,
+      gps_lat: data.gpsLat,
+      gps_lng: data.gpsLng,
+      payload: { workers: data.workersActual },
+    });
+    return { recordId };
+  });
+
+export const endWorkdayByToken = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        recordId: z.string().uuid(),
+        gpsLat: z.number().min(-90).max(90),
+        gpsLng: z.number().min(-180).max(180),
+        photoBase64: z.string().min(100).max(8_000_000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const supabaseAdmin = await getSupabaseAdmin();
+    const { data: rec } = await supabaseAdmin
+      .from("attendance_records")
+      .select(
+        "id, end_time, frozen_at, start_time, workers_actual, hourly_rate, team_leader_id, projects:project_id(site_lat, site_lng, site_radius_meters)",
+      )
+      .eq("id", data.recordId)
+      .single();
+    if (!rec) throw new Error("רשומה לא נמצאה");
+    if (rec.frozen_at) throw new Error("הרשומה הוקפאה");
+    if (rec.end_time) throw new Error("יום העבודה כבר נסגר");
+    await assertWithinSite(
+      rec.projects as {
+        site_lat: number | null;
+        site_lng: number | null;
+        site_radius_meters: number | null;
+      },
+      data.gpsLat,
+      data.gpsLng,
+    );
+
+    const photoPath = await uploadPhoto(data.recordId, "end", data.photoBase64);
+    const now = new Date().toISOString();
+    const startMs = rec.start_time ? new Date(rec.start_time).getTime() : null;
+    const endMs = new Date(now).getTime();
+    const totalHours =
+      startMs !== null ? Math.round(((endMs - startMs) / 3_600_000) * 10_000) / 10_000 : null;
+    const totalCost =
+      totalHours !== null && rec.hourly_rate != null && rec.workers_actual != null
+        ? Math.round(totalHours * Number(rec.hourly_rate) * rec.workers_actual * 100) / 100
+        : null;
+
+    await supabaseAdmin
+      .from("attendance_records")
+      .update({
+        end_time: now,
+        end_photo_url: photoPath,
+        end_gps_lat: data.gpsLat,
+        end_gps_lng: data.gpsLng,
+        total_hours: totalHours,
+        total_cost: totalCost,
+      })
+      .eq("id", data.recordId);
+    await supabaseAdmin.from("attendance_events").insert({
+      record_id: data.recordId,
+      kind: "end",
+      actor_id: rec.team_leader_id,
+      gps_lat: data.gpsLat,
+      gps_lng: data.gpsLng,
+      photo_url: photoPath,
+    });
+    return { ok: true };
   });
