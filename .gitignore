@@ -38,3 +38,6 @@ dist-ssr
 
 # Playwright MCP browser artifacts
 .playwright-mcp/
+
+# Local Playwright screenshots (test evidence)
+/*.png
