@@ -1,28 +1,18 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  MapPin,
-  Calendar,
-  Users,
   Briefcase,
   CheckCircle2,
   Trophy,
-  Clock,
-  ShieldCheck,
   Coins,
   X,
   Lock,
   AlertTriangle,
   Loader2,
-  Medal,
   TrendingDown,
-  Star,
-  Gavel,
-  BarChart2,
-  Zap,
   Award,
   Phone,
   Mail,
@@ -44,28 +34,14 @@ export const Route = createFileRoute("/my-requests/$id")({
   component: MyRequestPage,
 });
 
-const STATUS_META: Record<string, { label: string; chipClass: string; dotClass: string }> = {
-  open: {
-    label: "פתוחה למכרז",
-    chipClass: "status-chip-live",
-    dotClass: "bg-status-live",
-  },
-  awarded: {
-    label: "נבחר זוכה",
-    chipClass: "status-chip-approved",
-    dotClass: "bg-status-approved",
-  },
-  closed: {
-    label: "סגורה",
-    chipClass: "status-chip-muted",
-    dotClass: "bg-muted-foreground",
-  },
-  cancelled: {
-    label: "בוטלה",
-    chipClass: "status-chip-rejected",
-    dotClass: "bg-destructive",
-  },
+const STATUS_META: Record<string, { label: string; chipClass: string }> = {
+  open: { label: "פתוחה למכרז", chipClass: "status-chip-live" },
+  awarded: { label: "נבחר זוכה", chipClass: "status-chip-approved" },
+  closed: { label: "סגורה", chipClass: "status-chip-muted" },
+  cancelled: { label: "בוטלה", chipClass: "status-chip-rejected" },
 };
+
+const HOURS_PER_WORKER_MONTH = 176; // ~22 work days × 8h
 
 function MyRequestPage() {
   const { id } = Route.useParams();
@@ -124,44 +100,10 @@ function MyRequestPage() {
     return (
       <AppShell title="בקשה">
         <div className="space-y-5 animate-pulse">
-          {/* Header skeleton */}
-          <div className="enterprise-card overflow-hidden">
-            <div className="p-6 md:p-8">
-              <div className="h-6 w-28 rounded-full bg-muted" />
-              <div className="mt-4 h-9 w-56 rounded-lg bg-muted" />
-              <div className="mt-2 h-4 w-36 rounded bg-muted" />
-            </div>
-            <div className="grid grid-cols-4 divide-x divide-x-reverse divide-border/40 border-t border-border/40">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="p-4">
-                  <div className="h-3 w-12 rounded bg-muted" />
-                  <div className="mt-2 h-5 w-16 rounded bg-muted" />
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Intel panel skeleton */}
-          <div className="enterprise-card p-5">
-            <div className="h-5 w-40 rounded bg-muted mb-4" />
-            <div className="grid grid-cols-3 gap-3">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-muted" />
-              ))}
-            </div>
-          </div>
-          {/* Offer card skeletons */}
+          <div className="h-20 rounded-lg bg-muted" />
+          <div className="h-32 rounded-lg bg-muted" />
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="enterprise-card p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="h-11 w-11 rounded-full bg-muted" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 w-32 rounded bg-muted" />
-                  <div className="h-3 w-24 rounded bg-muted" />
-                </div>
-                <div className="h-8 w-20 rounded bg-muted" />
-              </div>
-              <div className="h-2 w-full rounded-full bg-muted mt-3" />
-            </div>
+            <div key={i} className="h-14 rounded-lg bg-muted" />
           ))}
         </div>
       </AppShell>
@@ -172,17 +114,14 @@ function MyRequestPage() {
     return (
       <AppShell title="בקשה">
         <div className="enterprise-card p-10 text-center">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-destructive/10">
+          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-lg bg-destructive/10">
             <AlertTriangle className="h-7 w-7 text-destructive" />
           </div>
-          <h2 className="text-xl font-bold">הבקשה לא נמצאה</h2>
+          <h2 className="text-xl font-semibold">הבקשה לא נמצאה</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             ייתכן שהבקשה נמחקה, הקישור שגוי, או שאין לך הרשאה לצפות בה.
           </p>
-          <Button
-            asChild
-            className="mt-6 bg-gradient-primary text-primary-foreground shadow-elegant"
-          >
+          <Button asChild className="mt-6" variant="outline">
             <Link to="/dashboard">חזרה ללוח הבקרה</Link>
           </Button>
         </div>
@@ -198,19 +137,13 @@ function MyRequestPage() {
   );
   const winningOffer = offers.find((o) => o.status === "awarded");
 
-  // Competitive intelligence
   const prices = sortedOffers.map((o) => Number(o.price_per_hour));
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
   const avgPrice =
     prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
-  const priceSpread = maxPrice - minPrice;
 
-  // ── Savings Engine (מנוע החיסכון) — the core differentiator from the business
-  // plan: translate the reverse auction into one number — how much the contractor
-  // saves vs. the most EXPENSIVE offer, per-hour and per-month.
-  const HOURS_PER_WORKER_MONTH = 176; // ~22 work days × 8h
-  // Once awarded we measure against the winning price; while open, the best (lowest) offer.
+  // Savings Engine — core differentiator: translate auction into one ₪ number
   const chosenPrice = winningOffer ? Number(winningOffer.price_per_hour) : minPrice;
   const savingsPerHour = maxPrice > chosenPrice ? maxPrice - chosenPrice : 0;
   const monthlySavings =
@@ -223,13 +156,6 @@ function MyRequestPage() {
           3600000,
       )
     : null;
-
-  // Value score per offer
-  const getValueScore = (price: number, workers: number, insurance: boolean) => {
-    if (!minPrice) return 0;
-    const raw = (100 / (price / minPrice)) * (workers / 10 + 1) * (insurance ? 1.1 : 1);
-    return Math.min(100, Math.round(raw));
-  };
 
   const closeAction =
     isOwner && request.status === "open" ? (
@@ -266,198 +192,155 @@ function MyRequestPage() {
     ) : undefined;
 
   return (
-    <AppShell title={`בקשה ${maskedRequestId(request.id)}`} action={closeAction}>
+    <AppShell title={`בקשה ${maskedRequestId(request.id)}`}>
       <div className="space-y-6">
-        {/* Request header */}
-        <div className="enterprise-card overflow-hidden animate-fade-up">
-          <div className="border-b border-border/40 bg-gradient-to-l from-primary/5 to-transparent p-6 md:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <span className={statusMeta.chipClass}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
-                  {statusMeta.label}
-                </span>
-                <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:text-3xl">
-                  בקשת כוח אדם
+        {/* ── Page header (pattern 1) ── */}
+        <div className="border-b border-border pb-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground" dir="ltr">
+                  {maskedRequestId(request.id)}
                 </h2>
-                {request.status === "open" && deadlineHours !== null && deadlineHours > 0 && (
-                  <div
-                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineHours < 24 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-amber-500/30 bg-amber-500/10 text-amber-600"}`}
-                  >
-                    <Clock className="h-3 w-3" />{" "}
-                    {deadlineHours < 24
-                      ? `נסגר בעוד ${deadlineHours} שעות!`
-                      : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
-                  </div>
-                )}
+                <span className={statusMeta.chipClass}>{statusMeta.label}</span>
               </div>
-              {offers.length > 0 && (
-                <div className="rounded-2xl border border-primary/20 bg-primary/5 px-5 py-3 text-center">
-                  <div className="text-3xl font-extrabold text-primary">{offers.length}</div>
-                  <div className="text-xs text-muted-foreground">הצעות</div>
-                </div>
-              )}
+              <p className="mt-1 text-sm text-muted-foreground">
+                {request.location} · התחלה{" "}
+                <span dir="ltr">{request.start_date}</span> · {request.duration} · {totalWorkers}{" "}
+                עובדים
+                {deadlineHours !== null &&
+                  deadlineHours > 0 &&
+                  request.status === "open" && (
+                    <span
+                      className={`mr-2 font-medium ${
+                        deadlineHours < 24 ? "text-destructive" : "text-amber-600"
+                      }`}
+                    >
+                      ·{" "}
+                      {deadlineHours < 24
+                        ? `נסגר בעוד ${deadlineHours}ש׳`
+                        : `${Math.round(deadlineHours / 24)} ימים לסגירה`}
+                    </span>
+                  )}
+              </p>
             </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/40 border-t border-border/40 md:grid-cols-4">
-            {[
-              { icon: MapPin, label: "מיקום", value: request.location },
-              { icon: Calendar, label: "התחלה", value: request.start_date },
-              { icon: Clock, label: "משך", value: request.duration },
-              { icon: Users, label: "עובדים", value: String(totalWorkers) },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="p-4">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Icon className="h-3 w-3" /> {label}
-                </div>
-                <div className="mt-1 text-sm font-bold">{value}</div>
-              </div>
-            ))}
+            {closeAction}
           </div>
         </div>
 
-        {/* Items */}
+        {/* ── Items ── */}
         {items.length > 0 && (
-          <div className="enterprise-card p-6 animate-fade-up delay-100">
-            <div className="mb-4 flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
-                <Briefcase className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="font-bold">פרטי הבקשה</h3>
-            </div>
+          <div className="enterprise-card p-5">
+            <h3 className="mb-3 border-b border-border pb-3 text-sm font-semibold">
+              <Briefcase className="mr-1.5 inline h-3.5 w-3.5 text-muted-foreground" />
+              פרטי הבקשה
+            </h3>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
               {items.map((it) => (
                 <div
                   key={it.id}
-                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 p-3"
+                  className="flex items-center gap-3 rounded-lg border border-border/60 bg-secondary/30 p-3"
                 >
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-sm font-extrabold text-primary">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-sm font-semibold text-primary tabular-nums">
                     {it.count}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold">{it.role}</div>
+                    <div className="text-sm font-medium">{it.role}</div>
                     <div className="text-xs text-muted-foreground">{it.nationality}</div>
                   </div>
                 </div>
               ))}
             </div>
             {request.description && (
-              <p className="mt-4 whitespace-pre-line rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
+              <p className="mt-4 whitespace-pre-line rounded-lg bg-muted/40 p-4 text-sm text-muted-foreground">
                 {request.description}
               </p>
             )}
           </div>
         )}
 
-        {/* Savings Engine — the core differentiator (business plan §6) */}
+        {/* ── Savings Engine ── */}
         {sortedOffers.length > 0 && (
-          <div className="enterprise-card overflow-hidden animate-fade-up delay-100">
-            <div className="flex items-center gap-2 border-b border-border/40 px-5 py-4 md:px-6">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
-                <BarChart2 className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="font-bold">מנוע החיסכון</h3>
-              <span className="text-xs text-muted-foreground">
-                {offers.length} הצעות · ממוצע {avgPrice} ₪/שעה
-              </span>
+          <div className="enterprise-card overflow-hidden">
+            <div className="border-b border-border px-5 py-4">
+              <h3 className="text-sm font-semibold">
+                מנוע החיסכון
+                <span className="mr-2 font-normal text-xs text-muted-foreground">
+                  {offers.length} הצעות · ממוצע{" "}
+                  <span dir="ltr">{avgPrice} ₪/שעה</span>
+                </span>
+              </h3>
             </div>
 
-            {/* Hero savings number — the emotional centerpiece */}
+            {/* Hero savings number — intentionally orange and large (business plan) */}
             {monthlySavings > 0 && (
-              <div className="relative overflow-hidden border-b border-border/40 bg-savings-soft px-5 py-7 md:px-8 md:py-9">
-                <div className="pointer-events-none absolute -top-16 -end-16 h-56 w-56 rounded-full bg-[oklch(0.63_0.19_41_/_0.08)] blur-3xl" />
-                <div className="relative flex flex-wrap items-end justify-between gap-6">
-                  <div>
-                    <span className="savings-badge uppercase tracking-wider">
-                      <TrendingDown className="h-3.5 w-3.5" />
-                      {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
-                    </span>
-                    <div className="mt-3 text-5xl font-black leading-none tracking-tight text-savings md:text-6xl">
-                      <span dir="ltr">₪{monthlySavings.toLocaleString()}</span>
-                      <span className="mr-2 align-middle text-lg font-bold text-savings/80">
-                        / חודש
-                      </span>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-border/60 bg-card/70 px-4 py-3 text-sm">
-                    <div className="text-muted-foreground">
-                      לעומת ההצעה היקרה ביותר (
-                      <b className="text-foreground" dir="ltr">
-                        {maxPrice} ₪
-                      </b>
-                      )
-                    </div>
-                    <div className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-                      <span dir="ltr">{savingsPerHour} ₪</span> לשעה ×{" "}
-                      <span dir="ltr">{totalWorkers}</span> עובדים ×{" "}
-                      <span dir="ltr">176</span> שעות בחודש
-                    </div>
-                  </div>
+              <div className="border-b border-border bg-savings-soft px-5 py-6 md:px-8">
+                <span className="savings-badge uppercase tracking-wider">
+                  <TrendingDown className="h-3.5 w-3.5" />
+                  {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
+                </span>
+                <div className="mt-3 text-5xl font-black leading-none tracking-tight text-savings md:text-6xl">
+                  <span dir="ltr">₪{monthlySavings.toLocaleString()}</span>
+                  <span className="mr-2 align-middle text-lg font-bold text-savings/80">
+                    / חודש
+                  </span>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground" dir="ltr">
+                  {savingsPerHour} ₪/שעה × {totalWorkers} עובדים × {HOURS_PER_WORKER_MONTH} שעות
+                </p>
               </div>
             )}
 
-            <div className="p-5 md:p-6">
+            {/* Price range stats */}
+            <div className="p-5">
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl border border-savings/20 bg-savings-soft p-3 text-center">
-                  <div className="mb-1 text-xs text-muted-foreground">מינימום</div>
-                  <div className="text-lg font-extrabold text-savings">{minPrice} ₪</div>
+                <div className="rounded-lg border border-border p-3 text-center">
+                  <div className="text-xs text-muted-foreground">מינימום</div>
+                  <div
+                    className="mt-1 text-base font-semibold tabular-nums text-savings"
+                    dir="ltr"
+                  >
+                    ₪{minPrice}
+                  </div>
                 </div>
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
-                  <div className="mb-1 text-xs text-muted-foreground">ממוצע</div>
-                  <div className="text-lg font-extrabold text-primary">{avgPrice} ₪</div>
+                <div className="rounded-lg border border-border p-3 text-center">
+                  <div className="text-xs text-muted-foreground">ממוצע</div>
+                  <div className="mt-1 text-base font-semibold tabular-nums" dir="ltr">
+                    ₪{avgPrice}
+                  </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-secondary/30 p-3 text-center">
-                  <div className="mb-1 text-xs text-muted-foreground">מקסימום</div>
-                  <div className="text-lg font-extrabold">{maxPrice} ₪</div>
+                <div className="rounded-lg border border-border p-3 text-center">
+                  <div className="text-xs text-muted-foreground">מקסימום</div>
+                  <div className="mt-1 text-base font-semibold tabular-nums" dir="ltr">
+                    ₪{maxPrice}
+                  </div>
                 </div>
               </div>
-              {priceSpread > 0 && (
-                <div className="mt-4">
-                  <div className="mb-1.5 flex flex-wrap justify-between gap-1 text-[11px] text-muted-foreground">
-                    <span>
-                      פיזור מחירים ({minPrice} – {maxPrice} ₪)
-                    </span>
-                    <span className="inline-flex items-center gap-1 font-semibold text-primary">
-                      <TrendingDown className="h-3 w-3" /> חסכון פוטנציאלי: {maxPrice - minPrice}{" "}
-                      ₪/שעה
-                    </span>
-                  </div>
-                  <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-l from-destructive/30 to-emerald-500/30" />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
 
-        {/* Offers section */}
-        <div className="animate-fade-up delay-200">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
-                <Gavel className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold">הצעות שהתקבלו</h3>
-              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-bold">
-                {offers.length}
-              </span>
-            </div>
+        {/* ── Offers section ── */}
+        <div>
+          <h3 className="mb-3 border-b border-border pb-3 text-sm font-semibold">
+            הצעות שהתקבלו
+            <span className="mr-1.5 font-normal text-muted-foreground">({offers.length})</span>
             {minPrice > 0 && (
-              <span className="savings-badge">
-                <TrendingDown className="h-3.5 w-3.5" /> מינימום:{" "}
-                <span dir="ltr">{minPrice} ₪/שעה</span>
+              <span className="mr-2">
+                <span className="savings-badge">
+                  <TrendingDown className="h-3 w-3" /> מינ׳{" "}
+                  <span dir="ltr">{minPrice} ₪/שעה</span>
+                </span>
               </span>
             )}
-          </div>
+          </h3>
 
           {offers.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon mx-auto">
                 <Coins className="h-8 w-8 text-primary" />
               </div>
-              <h4 className="text-lg font-bold">ממתינים להצעות</h4>
+              <h4 className="text-base font-semibold">ממתינים להצעות</h4>
               <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
                 {request.status === "open"
                   ? "תאגידים מאומתים יקבלו את הבקשה במייל ויגישו הצעות בקרוב."
@@ -465,104 +348,71 @@ function MyRequestPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {sortedOffers.map((o, idx) => {
-                const isWinner = o.status === "awarded";
-                const isRejected = o.status === "rejected" || o.status === "withdrawn";
-                const priceNum = Number(o.price_per_hour);
-                const savedVsMax = maxPrice > priceNum ? maxPrice - priceNum : 0;
-                const reveal = o as {
-                  corp_name?: string;
-                  corp_phone?: string;
-                  corp_email?: string;
-                };
-                const workersNum = Number(o.available_workers);
-                const valueScore = getValueScore(priceNum, workersNum, o.insurance ?? false);
-                const pricePosition =
-                  priceSpread > 0 ? Math.round(((priceNum - minPrice) / priceSpread) * 100) : 0;
-                const isConfirming = confirmingAwardId === o.id;
+            <div className="overflow-hidden rounded-lg border border-border">
+              {/* Desktop table (≥768px) */}
+              <table className="hidden w-full md:table">
+                <thead>
+                  <tr className="premium-table-header">
+                    <th className="px-4 py-3 text-right">#</th>
+                    <th className="px-4 py-3 text-right">ספק</th>
+                    <th className="px-4 py-3 text-right">מחיר לשעה</th>
+                    <th className="px-4 py-3 text-right">עובדים</th>
+                    <th className="px-4 py-3 text-right">התחלה</th>
+                    <th className="px-4 py-3 text-right">חיסכון</th>
+                    <th className="px-4 py-3 text-right">סטטוס</th>
+                    <th className="px-4 py-3 text-right">פעולה</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedOffers.map((o, idx) => {
+                    const isWinner = o.status === "awarded";
+                    const isRejected =
+                      o.status === "rejected" || o.status === "withdrawn";
+                    const priceNum = Number(o.price_per_hour);
+                    const savedVsMax = maxPrice > priceNum ? maxPrice - priceNum : 0;
+                    const reveal = o as {
+                      corp_name?: string;
+                      corp_phone?: string;
+                      corp_email?: string;
+                    };
+                    const isConfirming = confirmingAwardId === o.id;
 
-                return (
-                  <div
-                    key={o.id}
-                    className={`enterprise-card overflow-hidden transition-all ${
-                      isWinner
-                        ? "border-emerald-500/40 bg-emerald-500/5 shadow-success"
-                        : isRejected
-                          ? "opacity-50"
-                          : idx === 0
-                            ? "border-savings/30"
-                            : ""
-                    }`}
-                  >
-                    <div className="p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        {/* Identity */}
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-extrabold ${
-                              isWinner
-                                ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
-                                : idx === 0 && !isRejected
-                                  ? "bg-savings-soft text-savings"
-                                  : "bg-secondary text-foreground"
-                            }`}
-                          >
-                            {isWinner ? (
-                              <Trophy className="h-5 w-5" />
-                            ) : idx === 0 && !isRejected ? (
-                              <Medal className="h-5 w-5" />
-                            ) : (
-                              `#${idx + 1}`
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-bold">
-                                {isWinner && reveal.corp_name ? reveal.corp_name : "תאגיד אנונימי"}
-                              </span>
-                              {savedVsMax > 0 && !isRejected && (
-                                <span className="savings-badge">
-                                  <TrendingDown className="h-2.5 w-2.5" /> זול ב-{savedVsMax} ₪/שעה מהיקרה
-                                </span>
-                              )}
-                              {idx === 0 && !isRejected && request.status === "open" && (
-                                <span className="savings-badge">
-                                  <Star className="h-2.5 w-2.5" /> הצעה זולה ביותר
-                                </span>
-                              )}
-                              {isWinner && (
-                                <span className="status-chip-approved">
-                                  <Trophy className="h-2.5 w-2.5" /> זוכה
-                                </span>
-                              )}
-                              {o.status === "withdrawn" && (
-                                <span className="status-chip-muted">בוטלה</span>
-                              )}
-                              {o.status === "rejected" && (
-                                <span className="status-chip-rejected">לא נבחרה</span>
-                              )}
+                    return (
+                      <Fragment key={o.id}>
+                        <tr
+                          className={`premium-table-row ${
+                            isWinner
+                              ? "bg-emerald-50 dark:bg-emerald-950/20"
+                              : ""
+                          } ${isRejected ? "opacity-50" : ""}`}
+                        >
+                          {/* Rank */}
+                          <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground" dir="ltr">
+                            #{idx + 1}
+                          </td>
+
+                          {/* Supplier */}
+                          <td className="px-4 py-3">
+                            <div className="text-sm font-medium">
+                              {isWinner && reveal.corp_name
+                                ? reveal.corp_name
+                                : "תאגיד אנונימי"}
                             </div>
-                            <div className="mt-0.5 text-xs text-muted-foreground">
+                            <div className="text-xs text-muted-foreground">
                               {isOwner && request.status === "open" ? (
                                 <span className="inline-flex items-center gap-1">
-                                  <Lock className="h-3 w-3" /> הזהות נחשפת אחרי בחירה
+                                  <Lock className="h-3 w-3" /> נחשף אחרי בחירה
                                 </span>
                               ) : (
-                                <span>
-                                  התקבלה {new Date(o.created_at).toLocaleDateString("he-IL")}
-                                </span>
+                                new Date(o.created_at).toLocaleDateString("he-IL")
                               )}
                             </div>
-                          </div>
-                        </div>
+                          </td>
 
-                        {/* Price + Workers + Value Score */}
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <div className="text-[11px] text-muted-foreground">מחיר לשעה</div>
-                            <div
-                              className={`text-2xl font-extrabold tracking-tight ${
+                          {/* Price */}
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-base font-semibold tabular-nums ${
                                 isWinner
                                   ? "text-primary"
                                   : idx === 0
@@ -572,201 +422,333 @@ function MyRequestPage() {
                               dir="ltr"
                             >
                               {o.price_per_hour} ₪
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[11px] text-muted-foreground">עובדים</div>
-                            <div className="text-xl font-bold">{o.available_workers}</div>
-                          </div>
-                          {sortedOffers.length > 1 && (
-                            <div className="text-center">
-                              <div className="text-[11px] text-muted-foreground">ניקוד ערך</div>
-                              <div
-                                className={`text-lg font-extrabold ${valueScore >= 80 ? "text-emerald-600" : valueScore >= 60 ? "text-amber-600" : "text-muted-foreground"}`}
-                              >
-                                {valueScore}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Price spread bar */}
-                      {sortedOffers.length > 1 && priceSpread > 0 && (
-                        <div className="mt-3">
-                          <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span className="inline-flex items-center gap-1">
-                              <Zap className="h-3 w-3" /> מיקום במחיר
                             </span>
-                            <span>{pricePosition}% מהמקסימום</span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                              className={`h-full rounded-full transition-all ${pricePosition <= 30 ? "bg-emerald-500" : pricePosition <= 60 ? "bg-amber-500" : "bg-destructive/60"}`}
-                              style={{ width: `${Math.max(4, pricePosition)}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
+                          </td>
 
-                      {/* Details */}
-                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" /> {o.start_date}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" /> תגובה תוך {o.response_time_hours}ש'
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <ShieldCheck className="h-3.5 w-3.5" /> אחריות {o.warranty_days} ימים
-                        </span>
-                        {o.insurance && (
-                          <span className="inline-flex items-center gap-1 text-emerald-600">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> ביטוח
-                          </span>
-                        )}
-                      </div>
+                          {/* Workers */}
+                          <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
+                            {o.available_workers}
+                          </td>
 
-                      {/* Requirements warning */}
-                      {(o.requires_personal_guarantee || o.requires_security_check) && (
-                        <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500">
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            תנאי התאגיד לזכייה
-                          </div>
-                          <ul className="mt-1.5 space-y-0.5 text-xs text-amber-700">
-                            {o.requires_personal_guarantee && <li>• ערבות אישית מהקבלן</li>}
-                            {o.requires_security_check && <li>• צ׳ק לביטחון מהקבלן</li>}
-                          </ul>
-                        </div>
-                      )}
+                          {/* Start date */}
+                          <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
+                            {o.start_date}
+                          </td>
 
-                      {/* Note */}
-                      {o.note && (
-                        <p className="mt-3 rounded-xl bg-muted/40 p-3 text-sm text-muted-foreground">
-                          {o.note}
-                        </p>
-                      )}
+                          {/* Savings */}
+                          <td className="px-4 py-3">
+                            {savedVsMax > 0 && !isRejected ? (
+                              <span className="savings-badge">
+                                <TrendingDown className="h-3 w-3" /> זול ב-
+                                <span dir="ltr">{savedVsMax} ₪</span>
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </td>
 
-                      {/* Award action — inline confirmation */}
-                      {isOwner && request.status === "open" && o.status === "submitted" && (
-                        <div className="mt-4 border-t border-border/40 pt-4">
-                          {isConfirming ? (
-                            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-                              <div className="flex items-center gap-2 mb-3">
-                                <Award className="h-5 w-5 text-primary" />
-                                <span className="font-bold text-sm">אישור סופי — בחירת זוכה</span>
-                              </div>
-                              <div className="mb-4 space-y-1.5 text-xs text-muted-foreground">
-                                <div className="flex flex-wrap items-center gap-1">
-                                  <span className="font-semibold text-foreground">עלות חודשית מוערכת:</span>
-                                  <span dir="ltr" className="font-extrabold text-primary">
-                                    ₪{Math.round(priceNum * totalWorkers * HOURS_PER_WORKER_MONTH).toLocaleString()}
-                                  </span>
-                                  <span>
-                                    ({totalWorkers} עובדים ×{" "}
-                                    <span dir="ltr">₪{priceNum}/שעה</span> × 176 ש׳)
+                          {/* Status */}
+                          <td className="px-4 py-3">
+                            {isWinner ? (
+                              <span className="status-chip-approved">
+                                <Trophy className="h-3 w-3" /> זוכה
+                              </span>
+                            ) : o.status === "withdrawn" ? (
+                              <span className="status-chip-muted">בוטלה</span>
+                            ) : o.status === "rejected" ? (
+                              <span className="status-chip-rejected">לא נבחרה</span>
+                            ) : (
+                              <span className="status-chip-live">פעילה</span>
+                            )}
+                          </td>
+
+                          {/* Action */}
+                          <td className="px-4 py-3">
+                            {isOwner &&
+                              request.status === "open" &&
+                              o.status === "submitted" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={actingId !== null}
+                                  onClick={() =>
+                                    setConfirmingAwardId(isConfirming ? null : o.id)
+                                  }
+                                  className="h-7 gap-1 px-3 text-xs"
+                                >
+                                  {actingId === o.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Trophy className="h-3 w-3" /> בחר כזוכה
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                          </td>
+                        </tr>
+
+                        {/* Award confirm — expanded row */}
+                        {isConfirming && (
+                          <tr>
+                            <td colSpan={8} className="px-4 pb-4 pt-0">
+                              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                                <div className="mb-3 flex items-center gap-2">
+                                  <Award className="h-5 w-5 text-primary" />
+                                  <span className="text-sm font-semibold">
+                                    אישור סופי — בחירת זוכה
                                   </span>
                                 </div>
-                                <div>זהות התאגיד ופרטי הקשר שלו יחשפו בפניך מיד לאחר האישור.</div>
-                                <div>כל שאר ההצעות יסומנו כ״לא נבחרו״ ותישלח להן הודעה.</div>
-                                <div className="font-semibold text-foreground">הפעולה סופית — אין אפשרות לביטול.</div>
+                                <div className="mb-4 space-y-1.5 text-xs text-muted-foreground">
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    <span className="font-semibold text-foreground">
+                                      עלות חודשית מוערכת:
+                                    </span>
+                                    <span
+                                      dir="ltr"
+                                      className="font-extrabold text-primary"
+                                    >
+                                      ₪
+                                      {Math.round(
+                                        priceNum *
+                                          totalWorkers *
+                                          HOURS_PER_WORKER_MONTH,
+                                      ).toLocaleString()}
+                                    </span>
+                                    <span>
+                                      ({totalWorkers} עובדים × <span dir="ltr">₪{priceNum}</span>{" "}
+                                      לשעה × 176 שעות)
+                                    </span>
+                                  </div>
+                                  <div>
+                                    זהות התאגיד ופרטי הקשר שלו יחשפו בפניך מיד לאחר
+                                    האישור.
+                                  </div>
+                                  <div>
+                                    כל שאר ההצעות יסומנו כ״לא נבחרו״ ותישלח להן הודעה.
+                                  </div>
+                                  <div className="font-semibold text-foreground">
+                                    הפעולה סופית — אין אפשרות לביטול.
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setConfirmingAwardId(null)}
+                                    className="gap-1.5"
+                                  >
+                                    <X className="h-4 w-4" /> ביטול
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    disabled={actingId === o.id}
+                                    onClick={() => handleAward(o.id)}
+                                    className="gap-1.5"
+                                  >
+                                    {actingId === o.id ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                                        בוחר…
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trophy className="h-4 w-4" /> אישור סופי
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex gap-2 justify-end">
+                            </td>
+                          </tr>
+                        )}
+
+                        {/* Requirements warning */}
+                        {(o.requires_personal_guarantee || o.requires_security_check) &&
+                          !isRejected && (
+                            <tr>
+                              <td colSpan={8} className="px-4 pb-3 pt-0">
+                                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+                                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+                                    <AlertTriangle className="h-3.5 w-3.5" /> תנאי התאגיד
+                                    לזכייה
+                                  </div>
+                                  <ul className="mt-1.5 space-y-0.5 text-xs text-amber-700">
+                                    {o.requires_personal_guarantee && (
+                                      <li>• ערבות אישית מהקבלן</li>
+                                    )}
+                                    {o.requires_security_check && (
+                                      <li>• צ׳ק לביטחון מהקבלן</li>
+                                    )}
+                                  </ul>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+
+                        {/* Note */}
+                        {o.note && (
+                          <tr>
+                            <td colSpan={8} className="px-4 pb-3 pt-0">
+                              <p className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
+                                {o.note}
+                              </p>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {/* Mobile compact rows (<768px) */}
+              <div className="divide-y divide-border md:hidden">
+                {sortedOffers.map((o, idx) => {
+                  const isWinner = o.status === "awarded";
+                  const isRejected =
+                    o.status === "rejected" || o.status === "withdrawn";
+                  const priceNum = Number(o.price_per_hour);
+                  const reveal = o as { corp_name?: string };
+                  const isConfirming = confirmingAwardId === o.id;
+
+                  return (
+                    <div
+                      key={o.id}
+                      className={`px-4 py-3 ${
+                        isWinner ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                      } ${isRejected ? "opacity-50" : ""}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-medium tabular-nums text-muted-foreground" dir="ltr">
+                              #{idx + 1}
+                            </span>
+                            <span className="text-sm font-medium">
+                              {isWinner && reveal.corp_name
+                                ? reveal.corp_name
+                                : "תאגיד אנונימי"}
+                            </span>
+                            {isWinner && (
+                              <span className="status-chip-approved">
+                                <Trophy className="h-3 w-3" /> זוכה
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {o.available_workers} עובדים · התחלה{" "}
+                            <span dir="ltr">{o.start_date}</span>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <span
+                            className={`text-base font-semibold tabular-nums ${
+                              idx === 0 && !isRejected ? "text-savings" : ""
+                            }`}
+                            dir="ltr"
+                          >
+                            {o.price_per_hour} ₪
+                          </span>
+                          <div className="text-[11px] text-muted-foreground">לשעה</div>
+                        </div>
+                      </div>
+                      {/* Mobile award button */}
+                      {isOwner && request.status === "open" && o.status === "submitted" && (
+                        <div className="mt-2">
+                          {isConfirming ? (
+                            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                              <p className="mb-2 text-xs font-semibold text-foreground">
+                                בחירת זוכה — פעולה סופית ובלתי הפיכה
+                              </p>
+                              <div className="flex gap-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => setConfirmingAwardId(null)}
-                                  className="gap-1.5"
+                                  className="h-7 px-2 text-xs"
                                 >
-                                  <X className="h-4 w-4" /> ביטול
+                                  ביטול
                                 </Button>
                                 <Button
                                   size="sm"
                                   disabled={actingId === o.id}
                                   onClick={() => handleAward(o.id)}
-                                  className="bg-gradient-primary text-primary-foreground shadow-elegant gap-1.5"
+                                  className="h-7 gap-1 px-3 text-xs"
                                 >
                                   {actingId === o.id ? (
-                                    <>
-                                      <Loader2 className="h-4 w-4 animate-spin" /> בוחר…
-                                    </>
+                                    <Loader2 className="h-3 w-3 animate-spin" />
                                   ) : (
                                     <>
-                                      <Trophy className="h-4 w-4" /> אישור סופי
+                                      <Trophy className="h-3 w-3" /> אישור
                                     </>
                                   )}
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <div className="flex justify-end">
-                              <Button
-                                onClick={() => setConfirmingAwardId(o.id)}
-                                disabled={actingId !== null}
-                                className="bg-gradient-primary text-primary-foreground shadow-elegant gap-1.5"
-                              >
-                                <Trophy className="h-4 w-4" /> בחר כזוכה
-                              </Button>
-                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={actingId !== null}
+                              onClick={() => setConfirmingAwardId(o.id)}
+                              className="h-7 gap-1 px-3 text-xs"
+                            >
+                              <Trophy className="h-3 w-3" /> בחר כזוכה
+                            </Button>
                           )}
                         </div>
                       )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Win panel */}
+        {/* ── Win panel ── */}
         {winningOffer && isOwner && (
-          <div className="enterprise-card border-emerald-500/40 bg-emerald-500/5 p-6 animate-fade-up delay-300">
-            <div className="flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-success shadow-success">
-                <Coins className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-lg font-bold">הזכייה הושלמה</h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  פרטי הקשר נחשפו לשני הצדדים. אנא צרו קשר תוך 48 שעות.
-                </p>
-                {(() => {
-                  const w = winningOffer as {
-                    corp_name?: string;
-                    corp_phone?: string;
-                    corp_email?: string;
-                  };
-                  return w.corp_name ? (
-                    <div className="mt-3 rounded-xl border border-primary/20 bg-card/70 p-4">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                        התאגיד הזוכה
-                      </div>
-                      <div className="mt-1 text-base font-extrabold">{w.corp_name}</div>
-                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                        {w.corp_phone && (
-                          <a
-                            href={`tel:${w.corp_phone}`}
-                            className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
-                            dir="ltr"
-                          >
-                            <Phone className="h-3.5 w-3.5" /> {w.corp_phone}
-                          </a>
-                        )}
-                        {w.corp_email && (
-                          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                            <Mail className="h-3.5 w-3.5" /> {w.corp_email}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-                <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-700">
-                  כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
+          <div className="enterprise-card border-emerald-500/30 bg-emerald-500/5 p-5">
+            <h4 className="mb-3 flex items-center gap-2 border-b border-border pb-3 text-sm font-semibold">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" /> הזכייה הושלמה
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              פרטי הקשר נחשפו לשני הצדדים. אנא צרו קשר תוך 48 שעות.
+            </p>
+            {(() => {
+              const w = winningOffer as {
+                corp_name?: string;
+                corp_phone?: string;
+                corp_email?: string;
+              };
+              return w.corp_name ? (
+                <div className="mt-3 rounded-lg border border-border bg-card p-4">
+                  <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    התאגיד הזוכה
+                  </div>
+                  <div className="mt-1 text-base font-semibold">{w.corp_name}</div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                    {w.corp_phone && (
+                      <a
+                        href={`tel:${w.corp_phone}`}
+                        className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                        dir="ltr"
+                      >
+                        <Phone className="h-3.5 w-3.5" /> {w.corp_phone}
+                      </a>
+                    )}
+                    {w.corp_email && (
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5" /> {w.corp_email}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : null;
+            })()}
+            <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-700">
+              כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
             </div>
           </div>
         )}

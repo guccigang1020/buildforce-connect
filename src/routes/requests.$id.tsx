@@ -5,22 +5,18 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  MapPin,
-  Calendar,
   Clock,
   Users,
-  Briefcase,
   Send,
   Loader2,
   ShieldCheck,
   Coins,
   AlertTriangle,
   CheckCircle2,
-  Flame,
   Lock,
   Eye,
-  Award,
   TrendingUp,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +64,6 @@ function RequestPage() {
   const { user, hasRole, loading } = useAuth();
   const fetchData = useServerFn(getJobRequestWithOffers);
 
-  // Route guard — redirect unauthenticated users to login
   useEffect(() => {
     if (loading) return;
     if (!user) navigate({ to: "/login", replace: true });
@@ -100,32 +95,9 @@ function RequestPage() {
     return (
       <AppShell title="מכרז">
         <div className="space-y-4 animate-pulse">
-          <div className="enterprise-card overflow-hidden">
-            <div className="p-6 md:p-8">
-              <div className="h-6 w-24 rounded-full bg-muted" />
-              <div className="mt-4 h-8 w-48 rounded-lg bg-muted" />
-              <div className="mt-2 h-4 w-32 rounded bg-muted" />
-            </div>
-            <div className="grid grid-cols-4 border-t border-border/40">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="p-4">
-                  <div className="h-3 w-12 rounded bg-muted" />
-                  <div className="mt-2 h-5 w-16 rounded bg-muted" />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="enterprise-card p-6">
-            <div className="h-5 w-40 rounded bg-muted" />
-            <div className="mt-4 space-y-2">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-12 rounded-xl bg-muted" />
-              ))}
-            </div>
-          </div>
-          <div className="enterprise-card p-6">
-            <div className="h-8 w-full rounded-xl bg-muted" />
-          </div>
+          <div className="h-20 rounded-lg bg-muted/40" />
+          <div className="h-48 rounded-lg bg-muted/40" />
+          <div className="h-64 rounded-lg bg-muted/40" />
         </div>
       </AppShell>
     );
@@ -135,10 +107,10 @@ function RequestPage() {
     return (
       <AppShell title="מכרז">
         <div className="enterprise-card p-10 text-center animate-fade-up">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-destructive/10">
+          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-lg bg-destructive/10">
             <AlertTriangle className="h-7 w-7 text-destructive" />
           </div>
-          <h2 className="text-xl font-bold">המכרז לא נמצא</h2>
+          <h2 className="text-xl font-semibold">המכרז לא נמצא</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             ייתכן שהמכרז הוסר, הקישור שגוי, או שאין לך הרשאה לצפות בו.
           </p>
@@ -169,7 +141,6 @@ function RequestPage() {
   const isOpen = req.status === "open";
   const compLevel = competitionLevel(offersCount);
 
-  // Deadline urgency
   const deadlineHours = (req as { deadline_at?: string }).deadline_at
     ? Math.round(
         (new Date((req as { deadline_at: string }).deadline_at).getTime() - Date.now()) / 3600000,
@@ -177,187 +148,249 @@ function RequestPage() {
     : null;
   const deadlineUrgent = deadlineHours !== null && deadlineHours < 24;
 
+  const statusChipClass = isOpen
+    ? "status-chip-live"
+    : req.status === "awarded"
+      ? "status-chip-approved"
+      : "status-chip-muted";
+
+  const statusLabel = isOpen
+    ? "פתוח להצעות"
+    : req.status === "awarded"
+      ? "נבחר זוכה"
+      : req.status === "closed"
+        ? "סגור"
+        : "בוטל";
+
   return (
     <AppShell title={`מכרז ${maskedRequestId(req.id)}`}>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="enterprise-card overflow-hidden animate-fade-up">
-          <div className="border-b border-border/40 bg-gradient-to-l from-primary/5 to-transparent p-6 md:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span
-                    className={
-                      isOpen
-                        ? "status-chip-live"
-                        : req.status === "awarded"
-                          ? "status-chip-approved"
-                          : "status-chip-muted"
-                    }
-                  >
-                    {isOpen
-                      ? "פתוח להצעות"
-                      : req.status === "awarded"
-                        ? "נבחר זוכה"
-                        : req.status === "closed"
-                          ? "סגור"
-                          : "בוטל"}
-                  </span>
-                  {/* Competition signal */}
-                  {isOpen && offersCount > 0 && (
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-bold ${compLevel.color}`}
-                    >
-                      <Flame className="h-3 w-3" />
-                      {offersCount} תאגידים כבר הגישו · {compLevel.label}
-                    </span>
-                  )}
-                </div>
-                <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-                  {req.location}
+        {/* ── Pattern 1 page header ── */}
+        <div className="border-b border-border pb-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-semibold text-foreground" dir="ltr">
+                  {maskedRequestId(req.id)}
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">מכרז כוח אדם</p>
-
-                {/* Deadline urgency */}
-                {deadlineHours !== null && deadlineHours > 0 && (
-                  <div
-                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineUrgent ? "border-destructive/40 bg-destructive/10 text-destructive animate-pulse" : "border-amber-500/30 bg-amber-500/10 text-amber-600"}`}
+                <span className={statusChipClass}>{statusLabel}</span>
+                {isOpen && offersCount > 0 && (
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold ${compLevel.color}`}
                   >
-                    <Clock className="h-3 w-3" />
-                    {deadlineUrgent
-                      ? `נסגר בעוד ${deadlineHours} שעות — מהר!`
-                      : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
-                  </div>
+                    <Flame className="h-3 w-3" />
+                    {offersCount} הצעות · {compLevel.label}
+                  </span>
                 )}
               </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                מכרז כוח אדם · {req.location}
+                {deadlineHours !== null && deadlineHours > 0 && (
+                  <>
+                    {" · "}
+                    <span
+                      className={`font-semibold ${deadlineUrgent ? "text-destructive" : "text-amber-600"}`}
+                    >
+                      <Clock className="inline h-3 w-3 me-0.5 align-[-1px]" />
+                      {deadlineUrgent
+                        ? `נסגר בעוד ${deadlineHours} שעות`
+                        : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
+                    </span>
+                  </>
+                )}
+              </p>
             </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-x-reverse divide-border/40 border-t border-border/40 md:grid-cols-4">
-            {[
-              { icon: MapPin, label: "מיקום", value: req.location },
-              { icon: Calendar, label: "התחלה", value: req.start_date },
-              { icon: Clock, label: "משך", value: req.duration },
-              { icon: Briefcase, label: "התחייבות", value: `${req.commitment_months} חודשים` },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="p-4">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Icon className="h-3 w-3" /> {label}
-                </div>
-                <div className="mt-1 text-sm font-bold">{value}</div>
-              </div>
-            ))}
           </div>
         </div>
 
-        {/* Trust signals */}
-        {isOpen && isCorporation && !myOffer && (
-          <div className="flex flex-wrap gap-2 animate-fade-up delay-100">
-            {[
-              { icon: Lock, label: "אנונימיות מלאה" },
-              { icon: Award, label: "זכייה לפי הצעה הטובה ביותר" },
-              { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
-            ].map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary"
-              >
-                <Icon className="h-3.5 w-3.5" /> {label}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* ── Details + requirements in one card ── */}
+        <div className="enterprise-card p-5 animate-fade-up">
+          <h3 className="text-sm font-semibold border-b border-border pb-3 mb-4">פרטי המכרז</h3>
 
-        {/* Workforce requirements */}
-        <div className="enterprise-card p-5 md:p-6 animate-fade-up delay-100">
-          <div className="mb-4 flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/15">
-              <Users className="h-4 w-4 text-primary" />
+          {/* Two-column definition list */}
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm sm:grid-cols-4">
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                מיקום
+              </dt>
+              <dd className="mt-0.5 font-medium">{req.location}</dd>
             </div>
-            <h3 className="font-bold">דרישות כוח אדם</h3>
-            <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-bold">
-              {totalWorkers} עובדים
-            </span>
-          </div>
-          <div className="space-y-2">
-            {items.map((it) => (
-              <div
-                key={it.id}
-                className="flex items-center justify-between rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-sm"
-              >
-                <span className="font-semibold">{it.role}</span>
-                <span className="text-xs text-muted-foreground">
-                  {it.nationality} · {it.count} עובדים
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                תאריך התחלה
+              </dt>
+              <dd className="mt-0.5 font-medium tabular-nums" dir="ltr">
+                {req.start_date}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                משך
+              </dt>
+              <dd className="mt-0.5 font-medium">{req.duration}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                התחייבות
+              </dt>
+              <dd className="mt-0.5 font-medium">
+                {req.commitment_months} חודשים
+              </dd>
+            </div>
+          </dl>
+
+          {/* Workforce items */}
+          {items.length > 0 && (
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  דרישות כוח אדם
+                </h4>
+                <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs font-medium tabular-nums">
+                  <Users className="inline h-3 w-3 me-0.5 align-[-1px]" />
+                  {totalWorkers}
                 </span>
               </div>
-            ))}
-          </div>
+              <div className="overflow-hidden rounded-lg border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="premium-table-header">
+                      <th className="px-3 py-2 text-start">תפקיד</th>
+                      <th className="px-3 py-2 text-start">לאום</th>
+                      <th className="px-3 py-2 text-end">עובדים</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((it) => (
+                      <tr key={it.id} className="premium-table-row">
+                        <td className="px-3 py-2.5 font-medium">{it.role}</td>
+                        <td className="px-3 py-2.5 text-muted-foreground">{it.nationality}</td>
+                        <td className="px-3 py-2.5 text-end tabular-nums" dir="ltr">
+                          {it.count}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {req.description && (
-            <p className="mt-4 whitespace-pre-line rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">
+            <p className="mt-4 text-sm text-muted-foreground whitespace-pre-line border-t border-border pt-4">
               {req.description}
             </p>
           )}
+
           {(req as { deadline_at?: string }).deadline_at && !deadlineUrgent && (
-            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-600">
-              <Clock className="h-3 w-3" /> סגירת המכרז:{" "}
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              <Clock className="inline h-3 w-3 me-0.5 align-[-1px]" /> סגירת המכרז:{" "}
               {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
-            </div>
+            </p>
           )}
         </div>
 
-        {/* Offer status */}
-        <div className="enterprise-card p-5 animate-fade-up delay-200">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-muted/50">
-              <Coins className="h-4 w-4 text-muted-foreground" />
+        {/* ── Sealed-bid notice ── */}
+        <div className="enterprise-card p-5 animate-fade-up delay-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold">סטטוס הצעות</h3>
+              <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs font-medium tabular-nums">
+                {offersCount}
+              </span>
             </div>
-            <h3 className="font-bold">סטטוס הצעות</h3>
-            <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-bold">
-              {offersCount}
-            </span>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
             {offersCount === 0
               ? "עדיין לא הוגשו הצעות."
               : "פרטי ההצעות חסויים — רק מזמין המכרז יכול לראותם."}
           </p>
+          {offersCount > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                { icon: Lock, label: "אנונימיות מלאה" },
+                { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
+              ].map(({ icon: Icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded border border-border bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                >
+                  <Icon className="h-3 w-3" /> {label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Submit offer */}
+        {/* ── Trust signals (for corporations that haven't bid) ── */}
+        {isOpen && isCorporation && !myOffer && (
+          <div className="flex flex-wrap gap-2 animate-fade-up delay-100">
+            {[
+              { icon: Lock, label: "אנונימיות מלאה" },
+              { icon: CheckCircle2, label: "זכייה לפי הצעה הטובה ביותר" },
+              { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
+            ].map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary"
+              >
+                <Icon className="h-3.5 w-3.5" /> {label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* ── Submit offer form ── */}
         {isCorporation && isOpen && !myOffer && (
           <SubmitOfferCard requestId={req.id} totalWorkers={totalWorkers} />
         )}
 
-        {/* My offer panel */}
+        {/* ── My offer panel ── */}
         {myOffer && (
-          <div className="enterprise-card border-primary/40 bg-gradient-to-l from-primary/5 to-transparent p-5 animate-fade-up delay-300">
-            <div className="flex items-center gap-2 font-bold">
-              <ShieldCheck className="h-5 w-5 text-primary" /> כבר הגשת הצעה למכרז זה
+          <div className="enterprise-card border-primary/30 p-5 animate-fade-up delay-200">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">כבר הגשת הצעה למכרז זה</span>
             </div>
-            <div className="mt-3 flex flex-wrap gap-3 text-sm">
-              <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
-                <Coins className="h-4 w-4 text-primary" />
-                <span className="font-bold">
+            <dl className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">מחיר</dt>
+                <dd className="mt-0.5 font-semibold tabular-nums">
                   <span dir="ltr">₪{Number(myOffer.price_per_hour).toLocaleString()}</span> לשעה
-                </span>
+                </dd>
               </div>
-              <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span>{myOffer.available_workers} עובדים</span>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">עובדים</dt>
+                <dd className="mt-0.5 font-semibold tabular-nums" dir="ltr">
+                  {myOffer.available_workers}
+                </dd>
               </div>
-              <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                <span>סטטוס: {OFFER_STATUS_LABELS[myOffer.status] ?? myOffer.status}</span>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">סטטוס</dt>
+                <dd className="mt-0.5">
+                  <span
+                    className={
+                      myOffer.status === "awarded"
+                        ? "status-chip-approved"
+                        : myOffer.status === "rejected"
+                          ? "status-chip-rejected"
+                          : "status-chip-pending"
+                    }
+                  >
+                    {OFFER_STATUS_LABELS[myOffer.status] ?? myOffer.status}
+                  </span>
+                </dd>
               </div>
-            </div>
+            </dl>
             <Button asChild variant="outline" size="sm" className="mt-4">
               <Link to="/corporation-dashboard">לניהול ההצעה</Link>
             </Button>
           </div>
         )}
 
-        {/* Not a corporation */}
+        {/* ── Not a corporation ── */}
         {!isCorporation && (
-          <div className="enterprise-card border-dashed p-6 text-center text-sm text-muted-foreground animate-fade-up delay-300">
+          <div className="enterprise-card border-dashed p-6 text-center text-sm text-muted-foreground animate-fade-up delay-200">
             רק תאגידי כוח אדם מאושרים יכולים להגיש הצעות במכרז זה.
           </div>
         )}
@@ -380,7 +413,6 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
   const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
 
-  // Inline validation errors
   const [priceError, setPriceError] = useState<string | null>(null);
   const [workersError, setWorkersError] = useState<string | null>(null);
   const [dateError, setDateError] = useState<string | null>(null);
@@ -460,16 +492,11 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
   return (
     <form
       onSubmit={handleSubmit}
-      className="enterprise-card border-primary/30 p-5 md:p-6 space-y-5 animate-fade-up delay-300"
+      className="enterprise-card border-primary/30 p-5 space-y-5 animate-fade-up delay-200"
     >
-      <div className="flex items-center gap-3">
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-primary shadow-elegant text-primary-foreground">
-          <Send className="h-5 w-5" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold">הגשת הצעה למכרז</h3>
-          <p className="text-xs text-muted-foreground">כל הפרטים חסויים עד להכרזת זוכה</p>
-        </div>
+      <div className="border-b border-border pb-3">
+        <h3 className="text-sm font-semibold">הגשת הצעה למכרז</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">כל הפרטים חסויים עד להכרזת זוכה</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -488,7 +515,10 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
             step="0.5"
             dir="ltr"
             value={pricePerHour}
-            onChange={(e) => { setPricePerHour(e.target.value); setPriceError(null); }}
+            onChange={(e) => {
+              setPricePerHour(e.target.value);
+              setPriceError(null);
+            }}
             required
             className={`h-11 ${priceError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             placeholder="₪ לשעה"
@@ -503,7 +533,10 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
             min="1"
             dir="ltr"
             value={availableWorkers}
-            onChange={(e) => { setAvailableWorkers(e.target.value); setWorkersError(null); }}
+            onChange={(e) => {
+              setAvailableWorkers(e.target.value);
+              setWorkersError(null);
+            }}
             required
             className={`h-11 ${workersError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             placeholder="כמה עובדים"
@@ -512,13 +545,15 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
         </div>
       </div>
 
-      {/* Real-time cost estimate */}
       {dailyCostEstimate > 0 && (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-            <TrendingUp className="h-4 w-4" />
-            עלות יומית משוערת: ₪{dailyCostEstimate.toLocaleString()}
-            <span className="text-muted-foreground font-normal mr-1">
+        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+            עלות יומית משוערת:{" "}
+            <span className="text-foreground font-semibold" dir="ltr">
+              ₪{dailyCostEstimate.toLocaleString()}
+            </span>
+            <span className="text-muted-foreground">
               ({price} ₪ × {workers} עובדים × 8 שעות)
             </span>
           </div>
@@ -533,7 +568,10 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
           min={todayISO}
           dir="ltr"
           value={startDate}
-          onChange={(e) => { setStartDate(e.target.value); setDateError(null); }}
+          onChange={(e) => {
+            setStartDate(e.target.value);
+            setDateError(null);
+          }}
           required
           className={`h-11 ${dateError ? "border-destructive focus-visible:ring-destructive" : ""}`}
         />
@@ -567,7 +605,7 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 px-4 py-3">
+      <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
         <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
         <span className="text-sm">
           <span className="font-semibold">כלול ביטוח מלא</span>
@@ -587,12 +625,7 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
         />
       </div>
 
-      <Button
-        type="submit"
-        disabled={submitting}
-        size="lg"
-        className="w-full bg-gradient-primary text-primary-foreground shadow-elegant"
-      >
+      <Button type="submit" disabled={submitting} size="lg" className="w-full">
         {submitting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" /> שולח…

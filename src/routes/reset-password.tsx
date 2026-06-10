@@ -1,14 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { Lock, Loader2, ShieldCheck } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SiteNav } from "@/components/site-nav";
-import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -57,61 +55,57 @@ function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main
-        className="mx-auto flex min-h-[calc(100vh-72px)] max-w-md items-center px-4 py-12"
-        dir="rtl"
-      >
-        <div className="w-full animate-fade-up">
-          <div className="text-center">
-            <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
-              <ShieldCheck className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight">בחר סיסמה חדשה</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              בחר/י סיסמה חדשה וחזקה לחשבון שלך
-            </p>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <div className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-card text-sm font-bold text-foreground">
+            B
           </div>
-
-          <div className="mt-8 rounded-3xl border border-border/60 bg-card/60 p-6 backdrop-blur-sm shadow-elegant md:p-8">
-            {!ready ? (
-              <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> מאמת את הקישור…
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <PasswordField
-                  id="password"
-                  label="סיסמה חדשה"
-                  value={password}
-                  onChange={setPassword}
-                />
-                <PasswordField
-                  id="confirm"
-                  label="אימות סיסמה"
-                  value={confirm}
-                  onChange={setConfirm}
-                />
-                <Button
-                  type="submit"
-                  className="w-full h-11 bg-gradient-primary text-primary-foreground font-bold shadow-elegant hover:opacity-95 transition-opacity"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מעדכן…
-                    </>
-                  ) : (
-                    "עדכן סיסמה"
-                  )}
-                </Button>
-              </form>
-            )}
-          </div>
+          <span className="text-sm font-semibold tracking-tight text-foreground">BuildForce</span>
         </div>
-      </main>
-      <SiteFooter />
+
+        <h1 className="mb-6 text-center text-xl font-semibold text-foreground">בחר סיסמה חדשה</h1>
+
+        {/* Form card */}
+        <div className="rounded-lg border border-border p-6">
+          {!ready ? (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> מאמת את הקישור…
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <PasswordField
+                id="password"
+                label="סיסמה חדשה"
+                value={password}
+                onChange={setPassword}
+              />
+              <PasswordField
+                id="confirm"
+                label="אימות סיסמה"
+                value={confirm}
+                onChange={setConfirm}
+              />
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מעדכן…
+                  </>
+                ) : (
+                  "עדכן סיסמה"
+                )}
+              </Button>
+            </form>
+          )}
+        </div>
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          <Link to="/login" className="font-medium text-primary hover:underline">
+            חזור להתחברות
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
@@ -129,7 +123,7 @@ function PasswordField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold">
+      <Label htmlFor={id} className="text-sm font-medium">
         {label}
       </Label>
       <div className="relative">
@@ -140,7 +134,7 @@ function PasswordField({
           required
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-11 pr-10 bg-card/60 border-border/70 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary/30"
+          className="h-10 pr-10"
           placeholder="••••••••"
         />
       </div>

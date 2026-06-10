@@ -13,10 +13,7 @@ import {
   Building2,
   HardHat,
   Activity,
-  Gavel,
-  Trophy,
   AlertCircle,
-  BarChart3,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -123,10 +120,7 @@ function AdminDashboard() {
   const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
   const auditLog = (data?.auditLog ?? []) as AuditEntry[];
   const activeAuctions = (data?.activeAuctions ?? 0) as number;
-  const completedDeals = (data?.completedDeals ?? 0) as number;
   const recentAwards = (data?.recentAwards ?? 0) as number;
-  const monthlyWorkforceValue = (data?.monthlyWorkforceValue ?? 0) as number;
-  const monthlyWorkerHours = (data?.monthlyWorkerHours ?? 0) as number;
   const totalCorporations = (data?.totalCorporations ?? 0) as number;
 
   useEffect(() => {
@@ -171,7 +165,7 @@ function AdminDashboard() {
       total: profiles.length,
       pending: profiles.filter((p) => p.verification_status === "pending").length,
       approved: profiles.filter((p) => p.verification_status === "approved").length,
-      rejected: profiles.filter((p) => p.verification_status === "rejected").length,
+      rejected: profiles.filter((p) => p.verification_status !== "approved" && p.verification_status !== "pending").length,
     }),
     [profiles],
   );
@@ -184,69 +178,74 @@ function AdminDashboard() {
     <AppShell
       title="מנהל מערכת"
       action={
-        <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
           <span className="font-semibold text-primary">אדמין</span>
-          <span className="text-muted-foreground">· {profile?.full_name ?? ""}</span>
+          {profile?.full_name && <span>· {profile.full_name}</span>}
         </div>
       }
     >
-      {/* KPI strip — row 1: marketplace health */}
-      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
-        <StatCard label="סה״כ משתמשים" value={stats.total} icon={<Users className="h-5 w-5" />} />
-        <StatCard
-          label="ממתינים לאישור"
-          value={stats.pending}
-          icon={<AlertCircle className="h-5 w-5" />}
-          highlight
-        />
-        <StatCard
-          label="מכרזים פעילים"
-          value={activeAuctions}
-          icon={<Gavel className="h-5 w-5" />}
-        />
-        <StatCard
-          label="עסקאות שנסגרו"
-          value={completedDeals}
-          icon={<Trophy className="h-5 w-5" />}
-        />
+      {/* Pattern 1 — page header */}
+      <div className="mb-6 flex items-start justify-between border-b border-border pb-5">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">לוח בקרה — מנהל מערכת</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {stats.pending > 0 ? `${stats.pending} ממתינים לאישור · ` : ""}
+            {stats.total} משתמשים רשומים
+          </p>
+        </div>
       </div>
 
-      {/* KPI strip — row 2: platform activity */}
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
-        <StatCard
-          label="זכיות — 30 יום אחרון"
-          value={recentAwards}
-          icon={<Activity className="h-5 w-5" />}
-          sub={completedDeals > 0 ? `מתוך ${completedDeals} סה״כ` : undefined}
-        />
-        <StatCard
-          label="תאגידי כוח אדם"
-          value={totalCorporations}
-          icon={<Building2 className="h-5 w-5" />}
-          sub={`${stats.approved} ספקים מאושרים`}
-        />
-        <StatCard
-          label="שעות עבודה החודש"
-          value={monthlyWorkerHours > 0 ? Math.round(monthlyWorkerHours).toLocaleString() : 0}
-          icon={<BarChart3 className="h-5 w-5" />}
-          sub={
-            monthlyWorkforceValue > 0
-              ? `₪${Math.round(monthlyWorkforceValue / 1000)}K ערך`
-              : undefined
-          }
-        />
-        <StatCard
-          label="מאושרים (%)"
-          value={stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}
-          icon={<HardHat className="h-5 w-5" />}
-          sub={`${stats.approved} מתוך ${stats.total}`}
-          suffix="%"
-        />
+      {/* Pattern 2 — stat row */}
+      <div className="mb-6 grid grid-cols-2 rounded-lg border border-border divide-x divide-x-reverse divide-border lg:grid-cols-5">
+        <div className="px-5 py-4">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            סה״כ משתמשים
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+            {stats.total}
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            תאגידים
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+            {totalCorporations}
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            ממתינים לאישור
+          </div>
+          <div
+            className={`mt-1 text-2xl font-semibold tabular-nums ${stats.pending > 0 ? "text-primary" : ""}`}
+            dir="ltr"
+          >
+            {stats.pending}
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            מכרזים פעילים
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+            {activeAuctions}
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            זכיות
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums text-emerald-600" dir="ltr">
+            {recentAwards}
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground">30 יום אחרון</div>
+        </div>
       </div>
 
       {/* Tab bar + search */}
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-up delay-100">
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-card/60 border border-border/60">
             <TabsTrigger value="pending">
@@ -292,7 +291,7 @@ function AdminDashboard() {
       ) : isLoading ? (
         <div className="space-y-3 animate-pulse">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-2xl border border-border/60 bg-card p-4">
+            <div key={i} className="rounded-lg border border-border bg-card p-4">
               <div className="h-5 w-40 rounded bg-muted" />
               <div className="mt-2 h-4 w-64 rounded bg-muted" />
             </div>
@@ -309,15 +308,32 @@ function AdminDashboard() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((p) => (
-            <UserRow
-              key={p.id}
-              profile={p}
-              roles={rolesByUser.get(p.user_id) ?? []}
-              onChange={refresh}
-            />
-          ))}
+        /* Pattern 3 — data table */
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full min-w-[700px] text-sm">
+            <thead>
+              <tr className="premium-table-header">
+                <th className="px-4 py-3 text-right font-medium">שם</th>
+                <th className="px-4 py-3 text-right font-medium">תפקיד</th>
+                <th className="px-4 py-3 text-right font-medium">עסק</th>
+                <th className="px-4 py-3 text-right font-medium">ח.פ</th>
+                <th className="px-4 py-3 text-right font-medium">עיר</th>
+                <th className="px-4 py-3 text-right font-medium">נרשם</th>
+                <th className="px-4 py-3 text-right font-medium">סטטוס</th>
+                <th className="px-4 py-3 text-right font-medium">פעולה</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => (
+                <UserTableRow
+                  key={p.id}
+                  profile={p}
+                  roles={rolesByUser.get(p.user_id) ?? []}
+                  onChange={refresh}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </AppShell>
@@ -329,7 +345,7 @@ function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading:
     return (
       <div className="space-y-3 animate-pulse">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-2xl border border-border/60 bg-card p-4">
+          <div key={i} className="rounded-lg border border-border bg-card p-4">
             <div className="h-4 w-32 rounded bg-muted" />
             <div className="mt-2 h-3 w-48 rounded bg-muted" />
           </div>
@@ -388,50 +404,7 @@ function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading:
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  highlight,
-  sub,
-  suffix,
-}: {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  highlight?: boolean;
-  sub?: string;
-  suffix?: string;
-}) {
-  const isHighlighted = highlight && Number(value) > 0;
-  return (
-    <div
-      className={`rounded-2xl border p-5 transition-all hover:shadow-card ${
-        isHighlighted
-          ? "border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5"
-          : "border-border/60 bg-card"
-      }`}
-    >
-      <div
-        className={`grid h-10 w-10 place-items-center rounded-xl ${
-          isHighlighted
-            ? "bg-gradient-primary text-primary-foreground shadow-elegant"
-            : "bg-primary/15 text-primary"
-        }`}
-      >
-        {icon}
-      </div>
-      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl" dir="ltr">
-        {value}
-        {suffix}
-      </div>
-      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
-      {sub && <div className="mt-1 text-[11px] text-muted-foreground">{sub}</div>}
-    </div>
-  );
-}
-
-function UserRow({
+function UserTableRow({
   profile,
   roles,
   onChange,
@@ -446,75 +419,44 @@ function UserRow({
   const isAdmin = roles.includes("admin");
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-border hover:bg-card/80">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-              {profile.full_name[0]}
-            </div>
-            <h3 className="text-base font-bold">{profile.full_name}</h3>
-            <StatusBadge status={profile.verification_status} />
-            {isAdmin && (
-              <Badge variant="outline" className="border-primary/50 text-primary">
-                אדמין
-              </Badge>
-            )}
-            {isCorporation && (
-              <Badge variant="secondary">
-                <Building2 className="me-1 h-3 w-3" /> תאגיד
-              </Badge>
-            )}
-            {isContractor && (
-              <Badge variant="secondary">
-                <HardHat className="me-1 h-3 w-3" /> קבלן/יזם
-              </Badge>
+    <>
+      <tr className="premium-table-row h-12">
+        <td className="px-4 py-2.5">
+          <span className="font-medium text-foreground">{profile.full_name}</span>
+        </td>
+        <td className="px-4 py-2.5">
+          <div className="flex flex-wrap gap-1">
+            {isAdmin && <span className="role-badge">אדמין</span>}
+            {isCorporation && <span className="role-badge">תאגיד</span>}
+            {isContractor && <span className="role-badge">קבלן</span>}
+            {roles.length === 0 && (
+              <span className="text-xs text-muted-foreground">—</span>
             )}
           </div>
-          <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
-            {profile.business_name && (
-              <span>
-                עסק: <span className="text-foreground">{profile.business_name}</span>
-              </span>
-            )}
-            {profile.business_id && (
-              <span>
-                ח.פ:{" "}
-                <span className="text-foreground" dir="ltr">
-                  {profile.business_id}
-                </span>
-              </span>
-            )}
-            {profile.contractor_license_number && (
-              <span>
-                רישיון:{" "}
-                <span className="text-foreground" dir="ltr">
-                  {profile.contractor_license_number}
-                </span>
-              </span>
-            )}
-            {profile.phone && (
-              <span>
-                טלפון:{" "}
-                <span className="text-foreground" dir="ltr">
-                  {profile.phone}
-                </span>
-              </span>
-            )}
-            {profile.city && (
-              <span>
-                עיר: <span className="text-foreground">{profile.city}</span>
-              </span>
-            )}
-            <span className="text-xs">
-              נרשם ב-{new Date(profile.created_at).toLocaleDateString("he-IL")}
-            </span>
-          </div>
-        </div>
-        <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
-          פתח לבדיקה
-        </Button>
-      </div>
+        </td>
+        <td className="px-4 py-2.5 text-sm text-muted-foreground">
+          {profile.business_name || "—"}
+        </td>
+        <td className="px-4 py-2.5">
+          <span className="font-mono text-xs tabular-nums" dir="ltr">
+            {profile.business_id || "—"}
+          </span>
+        </td>
+        <td className="px-4 py-2.5 text-sm text-muted-foreground">
+          {profile.city || "—"}
+        </td>
+        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-muted-foreground">
+          {new Date(profile.created_at).toLocaleDateString("he-IL")}
+        </td>
+        <td className="px-4 py-2.5">
+          <StatusBadge status={profile.verification_status} />
+        </td>
+        <td className="px-4 py-2.5">
+          <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
+            פתח לבדיקה
+          </Button>
+        </td>
+      </tr>
       {open && (
         <ReviewDialog
           profile={profile}
@@ -523,7 +465,7 @@ function UserRow({
           onChange={onChange}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -700,11 +642,7 @@ function ReviewDialog({
               </>
             )}
           </Button>
-          <Button
-            onClick={() => setStatus("approved")}
-            disabled={busy}
-            className="bg-gradient-primary text-primary-foreground"
-          >
+          <Button onClick={() => setStatus("approved")} disabled={busy}>
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (

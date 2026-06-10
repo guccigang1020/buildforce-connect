@@ -9,10 +9,6 @@ import {
   CheckCircle2,
   MapPin,
   Calendar,
-  Users,
-  Briefcase,
-  FileText,
-  Sparkles,
   ShieldCheck,
   Plus,
   Trash2,
@@ -230,20 +226,16 @@ function NewRequestPage() {
   if (submitted) {
     return (
       <AppShell title="בקשה חדשה">
-        <div className="flex flex-col items-center py-16 text-center animate-fade-up">
-          <div className="grid h-20 w-20 place-items-center rounded-full bg-gradient-primary shadow-glow">
-            <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
+        <div className="flex flex-col items-center py-16 text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-primary bg-primary/10">
+            <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold tracking-tight">הבקשה פורסמה בהצלחה</h2>
-          <p className="mt-3 max-w-md text-muted-foreground">
+          <h2 className="mt-6 text-xl font-semibold">הבקשה פורסמה בהצלחה</h2>
+          <p className="mt-3 max-w-md text-sm text-muted-foreground">
             תאגידים מאומתים יקבלו את הבקשה ויחלו לשלוח הצעות תוך שעות. נעדכן אותך במייל ובלוח הבקרה.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="bg-gradient-primary text-primary-foreground shadow-elegant"
-            >
+            <Button asChild size="lg">
               <Link to="/dashboard">לצפייה בלוח הבקרה</Link>
             </Button>
             <Button
@@ -272,94 +264,83 @@ function NewRequestPage() {
     );
   }
 
-  const cancelAction = (
-    <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-      <Link to="/dashboard">ביטול</Link>
-    </Button>
-  );
-
   return (
-    <AppShell title="בקשה חדשה" action={cancelAction}>
+    <AppShell title="בקשה חדשה">
       <div className="space-y-6">
-        {/* Page hero */}
-        <div className="animate-fade-up">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> 60 שניות לפרסום בקשה
+        {/* ── Page header (pattern 1) ── */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">בקשה חדשה</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              ארבעה שלבים מהירים. הבקשה תישלח לתאגידים מאומתים שמתאימים.
+            </p>
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-            ספר לנו מה אתה צריך,{" "}
-            <span className="text-gradient-primary">והתאגידים יבואו אליך.</span>
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            ארבעה שלבים מהירים. הבקשה תישלח רק לתאגידים מאומתים שמתאימים.
-          </p>
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+            <Link to="/dashboard">ביטול</Link>
+          </Button>
         </div>
 
-        {/* Stepper with completion indicators */}
-        <div className="enterprise-card p-4 md:p-5 animate-fade-up delay-100">
-          <div className="grid grid-cols-4 gap-2">
-            {STEPS.map((s) => {
+        {/* ── Step indicator (simplified: text steps + progress line) ── */}
+        <div className="enterprise-card p-4 md:p-5">
+          <div className="flex items-center">
+            {STEPS.map((s, i) => {
               const isCompleted = s.n < step && isStepComplete(s.n);
               const isCurrent = s.n === step;
-              const isFuture = s.n > step;
               return (
-                <div key={s.n} className="flex flex-col items-center gap-1.5">
-                  <div
-                    className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-all ${
-                      isCompleted
-                        ? "bg-emerald-500 text-primary-foreground shadow-sm"
-                        : isCurrent
-                          ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
-                          : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : s.n}
+                <div key={s.n} className="flex min-w-0 flex-1 items-center">
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span
+                      className={`text-xs font-semibold tabular-nums ${
+                        isCurrent
+                          ? "text-primary"
+                          : isCompleted
+                            ? "text-emerald-600"
+                            : "text-muted-foreground/50"
+                      }`}
+                    >
+                      {isCompleted ? "✓" : s.n}
+                    </span>
+                    <span
+                      className={`hidden text-xs sm:inline ${
+                        isCurrent ? "font-semibold text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {s.label}
+                    </span>
                   </div>
-                  <div
-                    className={`text-center text-[11px] font-medium md:text-xs ${
-                      isFuture
-                        ? "text-muted-foreground/80"
-                        : isCurrent
-                          ? "text-foreground font-semibold"
-                          : "text-muted-foreground"
-                    }`}
-                  >
-                    {s.label}
-                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div className="mx-2 h-px min-w-2 flex-1 bg-border" />
+                  )}
                 </div>
               );
             })}
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-gradient-primary transition-all duration-500"
+              className="h-full bg-primary transition-all duration-500"
               style={{ width: `${(step / STEPS.length) * 100}%` }}
             />
           </div>
         </div>
 
-        {/* Form + Preview */}
+        {/* ── Form + Preview ── */}
         <form onSubmit={onSubmit} className="grid gap-5 lg:grid-cols-3">
           {/* Form card */}
-          <div className="enterprise-card p-5 md:p-7 lg:col-span-2 animate-fade-up delay-200">
+          <div className="enterprise-card p-5 lg:col-span-2">
             {step === 1 && (
               <div className="space-y-5">
                 <StepHeader
-                  icon={Briefcase}
                   title="איזה צוות אתה צריך?"
                   subtitle="הוסף שורה לכל שילוב של תחום + לאום + כמות."
                 />
                 <div className="space-y-4">
                   {form.items.map((it, idx) => (
                     <div key={it.id}>
-                      {/* Numbered section header */}
                       <div className="mb-2 flex items-center gap-2">
-                        <div className="grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-[11px] font-extrabold text-primary">
-                          {idx + 1}
-                        </div>
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          פריט בקשה #{idx + 1}
+                        <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                          #{idx + 1}
                         </span>
+                        <span className="text-xs text-muted-foreground">פריט בקשה</span>
                       </div>
                       <ItemRow
                         idx={idx + 1}
@@ -373,15 +354,15 @@ function NewRequestPage() {
                   <button
                     type="button"
                     onClick={addItem}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
                   >
                     <Plus className="h-4 w-4" /> הוסף שורת בקשה נוספת
                   </button>
                 </div>
                 {totalWorkers > 0 && (
-                  <div className="rounded-xl bg-secondary/40 p-3 text-xs text-muted-foreground">
-                    סה״כ <span className="font-bold text-foreground">{totalWorkers}</span> עובדים על
-                    פני {form.items.length} שורות.
+                  <div className="rounded-lg bg-secondary/40 p-3 text-xs text-muted-foreground">
+                    סה״כ <span className="font-semibold text-foreground">{totalWorkers}</span>{" "}
+                    עובדים על פני {form.items.length} שורות.
                   </div>
                 )}
               </div>
@@ -389,19 +370,18 @@ function NewRequestPage() {
 
             {step === 2 && (
               <div className="space-y-5">
-                <StepHeader icon={MapPin} title="איפה ומתי?" subtitle="מיקום האתר ומועד התחלה." />
+                <StepHeader title="איפה ומתי?" subtitle="מיקום האתר ומועד התחלה." />
                 <div>
                   <Label className="mb-2 block">עיר / אזור</Label>
-                  {/* Scrollable pill grid */}
-                  <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto rounded-xl border border-border/40 bg-secondary/20 p-3">
+                  <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto rounded-lg border border-border/40 bg-secondary/20 p-3">
                     {CITIES.map((c) => (
                       <button
                         type="button"
                         key={c}
                         onClick={() => update("location", c)}
-                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition-all ${
+                        className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${
                           form.location === c
-                            ? "border-primary bg-gradient-primary text-primary-foreground shadow-glow-sm"
+                            ? "border-primary bg-primary text-primary-foreground"
                             : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                         }`}
                       >
@@ -436,9 +416,9 @@ function NewRequestPage() {
                         type="button"
                         key={month}
                         onClick={() => update("commitmentMonths", month)}
-                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition-all ${
+                        className={`rounded-full border px-4 py-2 text-xs font-medium transition-all ${
                           form.commitmentMonths === month
-                            ? "border-primary bg-gradient-primary text-primary-foreground shadow-glow-sm"
+                            ? "border-primary bg-primary text-primary-foreground"
                             : "border-border bg-secondary/40 text-muted-foreground hover:border-primary/40"
                         }`}
                       >
@@ -455,11 +435,7 @@ function NewRequestPage() {
 
             {step === 3 && (
               <div className="space-y-5">
-                <StepHeader
-                  icon={FileText}
-                  title="פרטים נוספים"
-                  subtitle="פרטי הפרויקט (אופציונלי)."
-                />
+                <StepHeader title="פרטים נוספים" subtitle="פרטי הפרויקט (אופציונלי)." />
                 <div>
                   <Label htmlFor="desc" className="mb-2 block">
                     תיאור הפרויקט
@@ -482,7 +458,6 @@ function NewRequestPage() {
             {step === 4 && (
               <div className="space-y-5">
                 <StepHeader
-                  icon={Users}
                   title="איך נחזור אליך?"
                   subtitle="פרטי הקשר יוצגו רק לתאגידים שאישרת."
                 />
@@ -521,35 +496,35 @@ function NewRequestPage() {
                     )}
                   </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-secondary/40 p-4 text-sm text-muted-foreground">
+                <div className="rounded-lg border border-border/60 bg-secondary/40 p-4 text-sm text-muted-foreground">
                   <ShieldCheck className="mb-2 h-5 w-5 text-primary" />
                   הפרטים שלך מוגנים. נשלח אותם רק לתאגידים שתאשר באופן מפורש.
                 </div>
 
                 {/* Summary preview before non-circumvention */}
-                <div className="rounded-xl border border-border/60 bg-secondary/20 p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-bold">
+                <div className="rounded-lg border border-border/60 bg-secondary/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
                     <Zap className="h-4 w-4 text-primary" />
                     סיכום הבקשה לפני פרסום
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">מיקום</div>
-                      <div className="font-semibold">{form.location || "—"}</div>
+                      <div className="font-medium">{form.location || "—"}</div>
                     </div>
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">התחלה</div>
-                      <div className="font-semibold" dir="ltr">
+                      <div className="font-medium" dir="ltr">
                         {form.startDate || "—"}
                       </div>
                     </div>
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">עובדים</div>
-                      <div className="font-semibold">{totalWorkers}</div>
+                      <div className="font-medium">{totalWorkers}</div>
                     </div>
                     <div className="rounded-lg bg-card border border-border/40 p-2.5">
                       <div className="text-muted-foreground mb-0.5">התחייבות</div>
-                      <div className="font-semibold">
+                      <div className="font-medium">
                         {form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}
                       </div>
                     </div>
@@ -560,7 +535,7 @@ function NewRequestPage() {
                       .map((it) => (
                         <span
                           key={it.id}
-                          className="inline-block me-2 mb-1 rounded-full border border-border/50 bg-secondary/60 px-2 py-0.5"
+                          className="mb-1 me-2 inline-block rounded-full border border-border/50 bg-secondary/60 px-2 py-0.5"
                         >
                           {it.count}× {it.role}
                         </span>
@@ -568,7 +543,7 @@ function NewRequestPage() {
                   </div>
                 </div>
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
                   <input
                     type="checkbox"
                     checked={form.acceptTerms}
@@ -576,11 +551,11 @@ function NewRequestPage() {
                     className="mt-0.5 h-4 w-4 accent-primary"
                   />
                   <span className="text-muted-foreground">
-                    <span className="font-bold text-foreground">
+                    <span className="font-semibold text-foreground">
                       אני מתחייב לסעיף אי-עקיפה (Non-Circumvention):
                     </span>{" "}
-                    כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך הפלטפורמה
-                    למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק.
+                    כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך
+                    הפלטפורמה למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק.
                   </span>
                 </label>
               </div>
@@ -602,13 +577,13 @@ function NewRequestPage() {
                     type="button"
                     disabled={!canGoNext}
                     onClick={() => setStep(step + 1)}
-                    className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
+                    className="disabled:opacity-50"
                   >
                     הבא
                     <ArrowLeft className="mr-1 h-4 w-4" />
                   </Button>
                   {nextHint && (
-                    <p className="text-xs font-medium text-destructive text-end">{nextHint}</p>
+                    <p className="text-end text-xs font-medium text-destructive">{nextHint}</p>
                   )}
                 </div>
               ) : (
@@ -616,13 +591,13 @@ function NewRequestPage() {
                   <Button
                     type="submit"
                     disabled={!canGoNext || submitting}
-                    className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
+                    className="disabled:opacity-50"
                   >
                     {submitting ? "שולח..." : "פרסם בקשה"}
                     <CheckCircle2 className="mr-1 h-4 w-4" />
                   </Button>
                   {nextHint && (
-                    <p className="text-xs font-medium text-destructive text-end">{nextHint}</p>
+                    <p className="text-end text-xs font-medium text-destructive">{nextHint}</p>
                   )}
                 </div>
               )}
@@ -630,18 +605,18 @@ function NewRequestPage() {
           </div>
 
           {/* Live preview sidebar */}
-          <aside className="enterprise-card p-5 md:p-6 lg:sticky lg:top-4 lg:h-fit animate-fade-up delay-300">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <aside className="enterprise-card p-5 lg:sticky lg:top-4 lg:h-fit">
+            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               תצוגה מקדימה
             </div>
-            <h3 className="mt-2 text-lg font-bold">בקשה · {totalWorkers} עובדים</h3>
+            <h3 className="mt-2 text-base font-semibold">בקשה · {totalWorkers} עובדים</h3>
             <div className="mt-3 space-y-2">
               {form.items.map((it, i) => (
                 <div
                   key={it.id}
                   className="rounded-lg border border-border/60 bg-secondary/40 px-3 py-2 text-xs"
                 >
-                  <span className="font-bold text-foreground">{it.count || "?"} ×</span>{" "}
+                  <span className="font-semibold text-foreground">{it.count || "?"} ×</span>{" "}
                   {it.role || "—"} · <span className="text-primary">{it.nationality || "—"}</span>
                   {!it.role && !it.nationality && (
                     <span className="text-muted-foreground"> פריט {i + 1} ריק</span>
@@ -661,27 +636,27 @@ function NewRequestPage() {
 
             {/* Auto cost estimate */}
             {totalWorkers > 0 && (
-              <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-primary">
+              <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-primary">
                   <TrendingUp className="h-4 w-4" />
-                  הערכת עלות (מחיר שוק ₪{MARKET_RATE}/שעה)
+                  הערכת עלות (מחיר שוק <span dir="ltr">₪{MARKET_RATE}</span> לשעה)
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">עלות יומית משוערת</span>
-                  <span className="font-extrabold text-foreground" dir="ltr">
+                  <span className="font-semibold text-foreground" dir="ltr">
                     ₪{estDailyCost.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">עלות חודשית (×22 ימים)</span>
-                  <span className="font-extrabold text-primary" dir="ltr">
+                  <span className="font-semibold text-primary" dir="ltr">
                     ₪{estMonthlyCost.toLocaleString()}
                   </span>
                 </div>
               </div>
             )}
 
-            <div className="mt-5 rounded-xl bg-secondary/40 p-4 text-xs text-muted-foreground">
+            <div className="mt-5 rounded-lg bg-secondary/40 p-4 text-xs text-muted-foreground">
               <div className="font-semibold text-foreground">מה קורה אחרי הפרסום?</div>
               <ul className="mt-2 space-y-1.5">
                 <li>• הבקשה נשלחת לתאגידים מאומתים בלבד</li>
@@ -709,14 +684,14 @@ function ItemRow({
   removable: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
+    <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-xs font-bold text-muted-foreground">שורה {idx}</div>
+        <div className="text-xs font-medium text-muted-foreground">שורה {idx}</div>
         {removable && (
           <button
             type="button"
             onClick={onRemove}
-            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-destructive"
           >
             <Trash2 className="h-3 w-3" /> הסר
           </button>
@@ -772,21 +747,10 @@ function ItemRow({
   );
 }
 
-function StepHeader({
-  icon: Icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  subtitle: string;
-}) {
+function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div>
-      <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-primary shadow-elegant text-primary-foreground">
-        <Icon className="h-5 w-5" />
-      </div>
-      <h3 className="mt-4 text-xl font-extrabold">{title}</h3>
+    <div className="mb-5 border-b border-border pb-4">
+      <h3 className="text-sm font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
     </div>
   );
@@ -808,7 +772,7 @@ function PreviewRow({
       <span className="inline-flex items-center gap-2 text-muted-foreground">
         <Icon className="h-4 w-4" /> {label}
       </span>
-      <span className="font-semibold text-foreground" dir={ltr ? "ltr" : undefined}>
+      <span className="font-medium text-foreground" dir={ltr ? "ltr" : undefined}>
         {value}
       </span>
     </li>

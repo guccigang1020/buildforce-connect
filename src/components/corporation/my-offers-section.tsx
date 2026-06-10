@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Send, Trophy, XCircle, Ban, MapPin, Calendar, Loader2, Eye, Undo2 } from "lucide-react";
+import { Send, Trophy, XCircle, Ban, Loader2, Eye, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { listMyOffers, withdrawOffer } from "@/lib/job-offers.functions";
 import { maskedRequestId } from "@/lib/anonymize";
@@ -22,42 +22,20 @@ type MyOffer = {
 
 const STATUS_META: Record<
   string,
-  { label: string; icon: typeof Send; chipClass: string; barClass: string }
+  { label: string; chipClass: string }
 > = {
-  submitted: {
-    label: "נשלחה",
-    icon: Send,
-    chipClass: "status-chip-pending",
-    barClass: "status-bar-pending",
-  },
-  withdrawn: {
-    label: "נסוגה",
-    icon: Ban,
-    chipClass: "status-chip-muted",
-    barClass: "status-bar-none",
-  },
-  awarded: {
-    label: "נבחרה",
-    icon: Trophy,
-    chipClass: "status-chip-approved",
-    barClass: "status-bar-primary",
-  },
-  rejected: {
-    label: "נדחתה",
-    icon: XCircle,
-    chipClass: "status-chip-rejected",
-    barClass: "status-bar-rejected",
-  },
+  submitted: { label: "נשלחה", chipClass: "status-chip-pending" },
+  withdrawn: { label: "נסוגה", chipClass: "status-chip-muted" },
+  awarded:   { label: "נבחרה", chipClass: "status-chip-approved" },
+  rejected:  { label: "נדחתה", chipClass: "status-chip-rejected" },
 };
 
-function formatDateTime(iso: string) {
+function formatDate(iso: string) {
   try {
-    return new Date(iso).toLocaleString("he-IL", {
+    return new Date(iso).toLocaleDateString("he-IL", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   } catch {
     return iso;
@@ -91,141 +69,192 @@ export function MyOffersSection() {
   };
 
   return (
-    <div className="mt-10 scroll-mt-24" id="my-offers">
-      {/* Section header */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="section-header-icon">
-          <Send className="h-3.5 w-3.5 text-primary-foreground" />
-        </div>
-        <h2 className="text-base font-bold md:text-lg">
+    <div className="mt-8 scroll-mt-24 space-y-3" id="my-offers">
+      {/* Section title */}
+      <div className="border-b border-border pb-2.5">
+        <h3 className="text-sm font-semibold">
           ההצעות שלי
           {offers.length > 0 && (
-            <span className="ms-2 rounded-full border border-border/60 bg-muted/50 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+            <span className="ms-2 rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
               {offers.length}
             </span>
           )}
-        </h2>
+        </h3>
       </div>
 
       {isLoading ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+            <div key={i} className="h-12 animate-pulse rounded bg-muted/40" />
           ))}
         </div>
       ) : error ? (
-        <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 text-sm">
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-5 text-sm">
           <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div>
             <p className="font-semibold text-destructive">לא הצלחנו לטעון את ההצעות שלך</p>
-            <p className="mt-1 text-muted-foreground">
-              נסה לרענן את הדף, או לחזור אליו מאוחר יותר.
-            </p>
+            <p className="mt-1 text-muted-foreground">נסה לרענן את הדף, או לחזור אליו מאוחר יותר.</p>
           </div>
         </div>
       ) : offers.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">
-            <Send className="h-7 w-7 text-primary" />
-          </div>
-          <p className="text-sm font-bold text-foreground">טרם הגשת הצעות</p>
-          <p className="mt-1.5 text-sm text-muted-foreground">
+          <p className="text-sm font-semibold text-foreground">טרם הגשת הצעות</p>
+          <p className="mt-1 text-sm text-muted-foreground">
             הצעות מחיר שתגיש למכרזים פתוחים יופיעו כאן ויתעדכנו עד לזכייה.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {offers.map((o) => {
-            const meta = STATUS_META[o.status] ?? STATUS_META.submitted;
-            const Icon = meta.icon;
-            const isAwarded = o.status === "awarded";
-            return (
-              <div
-                key={o.id}
-                className={`rounded-2xl border p-4 transition-all md:p-5 ${
-                  isAwarded ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card"
-                } ${meta.barClass}`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    {/* Status chip + request ID */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={meta.chipClass}>
-                        <Icon className="h-3 w-3" /> {meta.label}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground" dir="ltr">
-                        מכרז {maskedRequestId(o.request_id)}
-                      </span>
-                    </div>
-
-                    {/* Location + date as info chips */}
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      {o.request?.location && (
-                        <span className="info-chip">
-                          <MapPin className="h-3 w-3" />
-                          {o.request.location}
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="premium-table-header">
+                  <th className="px-4 py-2.5 text-start">מכרז</th>
+                  <th className="px-4 py-2.5 text-start">מיקום</th>
+                  <th className="px-4 py-2.5 text-start">מחיר/שעה</th>
+                  <th className="px-4 py-2.5 text-start">עובדים</th>
+                  <th className="px-4 py-2.5 text-start">סטטוס</th>
+                  <th className="px-4 py-2.5 text-start">הוגש</th>
+                  <th className="px-4 py-2.5 text-end">פעולות</th>
+                </tr>
+              </thead>
+              <tbody>
+                {offers.map((o) => {
+                  const meta = STATUS_META[o.status] ?? STATUS_META.submitted;
+                  const isAwarded = o.status === "awarded";
+                  return (
+                    <tr key={o.id} className="premium-table-row">
+                      <td className="px-4 py-3">
+                        <Link
+                          to="/requests/$id"
+                          params={{ id: o.request_id }}
+                          className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          dir="ltr"
+                        >
+                          {maskedRequestId(o.request_id)}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {o.request?.location ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`tabular-nums font-semibold ${isAwarded ? "text-primary" : ""}`}
+                          dir="ltr"
+                        >
+                          ₪{Number(o.price_per_hour).toLocaleString()}
                         </span>
-                      )}
-                      {o.request?.start_date && (
-                        <span className="info-chip">
-                          <Calendar className="h-3 w-3" />
-                          {o.request.start_date}
-                        </span>
-                      )}
-                      {o.request?.duration && (
-                        <span className="info-chip">{o.request.duration}</span>
-                      )}
-                    </div>
-                    <div className="mt-1.5 text-[11px] text-muted-foreground">
-                      עודכן: {formatDateTime(o.updated_at)}
-                    </div>
-                  </div>
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-muted-foreground" dir="ltr">
+                        {o.available_workers}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={meta.chipClass}>{meta.label}</span>
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-xs text-muted-foreground" dir="ltr">
+                        {formatDate(o.created_at)}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button asChild variant="ghost" size="sm">
+                            <Link to="/requests/$id" params={{ id: o.request_id }}>
+                              <Eye className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                          {o.status === "submitted" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleWithdraw(o.id)}
+                              disabled={withdrawingId === o.id}
+                            >
+                              {withdrawingId === o.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Undo2 className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-                  {/* Price + workers */}
-                  <div className="text-left">
-                    <div
-                      className={`text-xl font-extrabold ${isAwarded ? "text-primary" : "text-foreground"}`}
-                      dir="ltr"
-                    >
-                      ₪{Number(o.price_per_hour)}/שעה
-                    </div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {o.available_workers} עובדים
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer actions */}
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
-                  {isAwarded && (
-                    <div className="text-xs font-semibold text-primary">
-                      זכית במכרז זה — בקרוב תקבל פרטי קשר של הקבלן
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2 ms-auto">
-                    <Button asChild variant="ghost" size="sm" className="h-10">
-                      <Link to="/requests/$id" params={{ id: o.request_id }}>
-                        <Eye className="ml-1 h-4 w-4" /> צפייה במכרז
-                      </Link>
-                    </Button>
-                    {o.status === "submitted" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-10"
-                        onClick={() => handleWithdraw(o.id)}
-                        disabled={withdrawingId === o.id}
+          {/* Mobile compact rows */}
+          <div className="md:hidden space-y-2">
+            {offers.map((o) => {
+              const meta = STATUS_META[o.status] ?? STATUS_META.submitted;
+              const isAwarded = o.status === "awarded";
+              return (
+                <div
+                  key={o.id}
+                  className={`rounded-lg border p-3 ${
+                    isAwarded ? "border-primary/30 bg-primary/5" : "border-border bg-card"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="font-mono text-[11px] text-muted-foreground shrink-0"
+                        dir="ltr"
                       >
-                        <Undo2 className="ml-1 h-4 w-4" />
-                        {withdrawingId === o.id ? "מושך…" : "משוך הצעה"}
-                      </Button>
-                    )}
+                        {maskedRequestId(o.request_id)}
+                      </span>
+                      {o.request?.location && (
+                        <span className="text-sm font-medium truncate">{o.request.location}</span>
+                      )}
+                    </div>
+                    <span className={meta.chipClass}>{meta.label}</span>
                   </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span
+                        className={`font-semibold ${isAwarded ? "text-primary" : "text-foreground"}`}
+                      >
+                        <span dir="ltr">₪{Number(o.price_per_hour).toLocaleString()}</span> לשעה
+                      </span>
+                      <span>
+                        <span dir="ltr">{o.available_workers}</span> עובדים
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button asChild variant="ghost" size="sm" className="h-8">
+                        <Link to="/requests/$id" params={{ id: o.request_id }}>
+                          <Eye className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                      {o.status === "submitted" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => handleWithdraw(o.id)}
+                          disabled={withdrawingId === o.id}
+                        >
+                          {withdrawingId === o.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Undo2 className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {isAwarded && (
+                    <p className="mt-2 text-[11px] font-semibold text-primary">
+                      זכית במכרז זה — בקרוב תקבל פרטי קשר של הקבלן
+                    </p>
+                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
