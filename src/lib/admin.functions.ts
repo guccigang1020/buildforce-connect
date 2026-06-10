@@ -2,41 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const BOOTSTRAP_ADMIN_EMAILS = ["chmv1243@gmail.com", "bbuildforceprime@gmail.com"];
-
-// One-time self-bootstrap for the designated admin account.
-// Uses service-role key to bypass RLS + the prevent_self_verification trigger.
-export const selfBootstrapAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Verify the requesting user is the designated admin email
-    const { data: authData, error: uErr } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (uErr || !authData?.user) throw new Error("User not found");
-    const email = (authData.user.email ?? "").toLowerCase();
-    if (!BOOTSTRAP_ADMIN_EMAILS.includes(email)) {
-      throw new Error("Forbidden: not a designated admin account");
-    }
-
-    // Insert admin role (service role bypasses the "admins only" RLS policy)
-    const { error: roleErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: userId, role: "admin" });
-    if (roleErr && !/duplicate|already exists/i.test(roleErr.message)) {
-      throw new Error(roleErr.message);
-    }
-
-    // Mark profile as approved (service role bypasses prevent_self_verification trigger)
-    const { error: profErr } = await supabaseAdmin
-      .from("profiles")
-      .update({ verification_status: "approved", is_verified: true })
-      .eq("user_id", userId);
-    if (profErr) throw new Error(profErr.message);
-
-    return { ok: true };
-  });
+// NOTE: Admin access is provisioned exclusively by `scripts/seed-admin.mjs`
+// (a dedicated admin-only account). There is intentionally NO in-app path to
+// gain or grant the admin role — roles are fixed at signup and never mixed.
 
 export const adminGetDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -79,52 +47,6 @@ export const adminSetVerificationStatus = createServerFn({ method: "POST" })
       entity_type: "profile",
       entity_id: data.profileId,
       metadata: { notes: data.notes ?? null },
-    });
-    if (auditError) throw new Error(auditError.message);
-
-    return { ok: true };
-  });
-
-export const adminToggleRole = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        targetUserId: z.string().uuid(),
-        role: z.enum(["corporation", "admin"]),
-        action: z.enum(["add", "remove"]),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    const [{ supabaseAdmin }, { assertAdmin }] = await Promise.all([
-      import("@/integrations/supabase/client.server"),
-      import("@/lib/admin.server"),
-    ]);
-    await assertAdmin(context.userId);
-    if (data.role === "admin" && data.action === "remove" && data.targetUserId === context.userId) {
-      throw new Error("לא ניתן להסיר הרשאת אדמין מעצמך");
-    }
-    if (data.action === "remove") {
-      const { error } = await supabaseAdmin
-        .from("user_roles")
-        .delete()
-        .eq("user_id", data.targetUserId)
-        .eq("role", data.role);
-      if (error) throw new Error(error.message);
-    } else {
-      const { error } = await supabaseAdmin
-        .from("user_roles")
-        .insert({ user_id: data.targetUserId, role: data.role });
-      if (error && !/duplicate/i.test(error.message)) throw new Error(error.message);
-    }
-
-    const { error: auditError } = await supabaseAdmin.from("audit_log").insert({
-      actor_id: context.userId,
-      action: `admin.role_${data.action}`,
-      entity_type: "user_role",
-      entity_id: data.targetUserId,
-      metadata: { role: data.role },
     });
     if (auditError) throw new Error(auditError.message);
 

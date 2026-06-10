@@ -61,7 +61,7 @@ function LoginPage() {
   const handleGoogle = async () => {
     setFormError(null);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: "https://buildforce-connect.lovable.app/dashboard",
+      redirect_uri: `${window.location.origin}/dashboard`,
     });
     if (result.error) {
       setFormError("התחברות עם Google נכשלה");

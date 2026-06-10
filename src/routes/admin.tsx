@@ -22,7 +22,6 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   adminGetDashboardData,
   adminSetVerificationStatus,
-  adminToggleRole,
   adminGetDocumentUrl,
 } from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
@@ -549,7 +548,6 @@ function ReviewDialog({
   const [busy, setBusy] = useState(false);
   const [docs, setDocs] = useState<{ label: string; url: string | null }[]>([]);
   const setStatusFn = useServerFn(adminSetVerificationStatus);
-  const toggleRoleFn = useServerFn(adminToggleRole);
   const getDocUrlFn = useServerFn(adminGetDocumentUrl);
 
   useEffect(() => {
@@ -603,19 +601,6 @@ function ReviewDialog({
     toast.success(status === "approved" ? "המשתמש אושר" : "המשתמש נדחה");
     onChange();
     onClose();
-  };
-
-  const toggleRole = async (role: "corporation" | "admin") => {
-    setBusy(true);
-    const action = roles.includes(role) ? "remove" : "add";
-    try {
-      await toggleRoleFn({ data: { targetUserId: profile.user_id, role, action } });
-      toast.success(action === "add" ? "נוסף תפקיד " + role : "הוסר תפקיד " + role);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "שגיאה");
-    }
-    setBusy(false);
-    onChange();
   };
 
   return (
@@ -676,24 +661,28 @@ function ReviewDialog({
           </section>
 
           <section>
-            <h4 className="mb-2 font-semibold text-foreground/80">תפקידים</h4>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant={roles.includes("corporation") ? "default" : "outline"}
-                onClick={() => toggleRole("corporation")}
-                disabled={busy}
-              >
-                {roles.includes("corporation") ? "הסר תאגיד" : "הפוך לתאגיד"}
-              </Button>
-              <Button
-                size="sm"
-                variant={roles.includes("admin") ? "default" : "outline"}
-                onClick={() => toggleRole("admin")}
-                disabled={busy}
-              >
-                {roles.includes("admin") ? "הסר אדמין" : "הפוך לאדמין"}
-              </Button>
+            <h4 className="mb-2 font-semibold text-foreground/80">תפקיד</h4>
+            <div className="flex flex-wrap items-center gap-2">
+              {roles.length > 0 ? (
+                roles.map((r) => (
+                  <span key={r} className="role-badge">
+                    {r === "contractor"
+                      ? "קבלן"
+                      : r === "corporation"
+                        ? "תאגיד"
+                        : r === "admin"
+                          ? "מנהל מערכת"
+                          : r === "team_leader"
+                            ? "ראש צוות"
+                            : r}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground">ללא תפקיד</span>
+              )}
+              <span className="text-xs text-muted-foreground">
+                · התפקיד נקבע בהרשמה ואינו ניתן לשינוי מכאן
+              </span>
             </div>
           </section>
         </div>
