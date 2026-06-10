@@ -180,7 +180,36 @@ P3-1 / OQ-3, now upgraded to high priority.
 
 ---
 
-## Current Status: 🟢 Demo-critical P0 + key UX done & validated on ido/refactor-v1. Next: landing-page value prop / full attendance demo.
+## Autonomous run on ido/refactor-v1 (2026-06-09/10) — business-plan alignment
+
+1. ✅ **Landing redesign** (4c99353): replaced the named-corp directory (mock
+   CORPORATIONS, which contradicted the anonymity moat) with a **Savings Engine
+   showcase** (₪18,000/mo example); masked hero bidders (BF-XXXX + lock); fixed a
+   broken CTA (fake request id → /signup); repointed nav. Validated live.
+2. ✅ **Dead/mock cleanup** (461923b): deleted auction-panel.tsx, auction-state.ts,
+   export-pdf.ts, selections-store.ts (all dead), the orphaned /corporations/$id
+   mock page, and mock-data.ts → replaced with catalog.ts (real pick-lists only).
+   `tsc --noEmit` = 0 errors.
+3. ✅ **Role-assignment dual-role bug** — RESOLVED (no code needed): verified the
+   newest signup (demo.corp.beta) has a clean single role. Was a symptom of the
+   profiles/user_roles RLS gap already fixed; bootstrap no longer fires spuriously.
+4. 🟡 **Attendance → daily account → invoice** — pipeline **verified wired**:
+   awarded requests become projects (2 shown); the contractor setup flow (GPS
+   geo-fence → site manager → teams) renders and accepts input; team-leader page +
+   `getGps`/`watermarkImage` capture code exist; daily-account pages render.
+   **Setup is gated on GPS site location (device geolocation) and check-in needs a
+   camera** — inherent device dependencies that can't be faithfully validated in a
+   headless browser. The live GPS+photo demo is a real-device task.
+
+Earlier same-session (committed): P0 Savings Engine + winner reveal (20de690),
+role routing + BF-XXXX ids (055d27a).
+
+Demo accounts (kazm dev DB): idor980 (contractor) / idor981, demo.corp.beta
+(corporations, Demo2026!). Open request d5798196 has a 2-bid spread.
+
+---
+
+## Current Status: 🟢 Business-plan alignment delivered on ido/refactor-v1 — savings engine, anonymity, clean landing, dead-code removed. Attendance check-in is a device demo.
 
 Implementation of Phase 1 is **gated** behind Phase 0 (see plan §4). Do **not**
 write fix migrations or production code until all four P0 items pass. Reason:
