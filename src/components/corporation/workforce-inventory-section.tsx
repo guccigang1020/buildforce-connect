@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ROLES, NATIONALITIES } from "@/lib/mock-data";
+import { ROLES, NATIONALITIES } from "@/lib/catalog";
 
 type Row = {
   id: string;

@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AppShell } from "@/components/app-shell";
-import { ROLES, CITIES, NATIONALITIES, type RequestItem } from "@/lib/mock-data";
+import { ROLES, CITIES, NATIONALITIES, type RequestItem } from "@/lib/catalog";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/new-request")({
