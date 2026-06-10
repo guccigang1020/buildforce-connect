@@ -204,15 +204,15 @@ function LoginPage() {
       </div>
 
       {/* Branding panel — LEFT in RTL (hidden on mobile) */}
-      <aside className="relative hidden w-[42%] shrink-0 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[oklch(0.13_0.03_260)] via-[oklch(0.12_0.03_255)] to-[oklch(0.10_0.02_265)] lg:flex">
+      <aside className="relative hidden w-[42%] shrink-0 flex-col items-center justify-center overflow-hidden bg-gradient-dark lg:flex">
         {/* Background decorations */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
           <div
             className="absolute inset-0 opacity-[0.025]"
             style={{
-              backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(white 1px, transparent 1px)",
               backgroundSize: "28px 28px",
             }}
           />
@@ -223,8 +223,8 @@ function LoginPage() {
           <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-primary shadow-elegant">
             <Shield className="h-8 w-8 text-primary-foreground" />
           </div>
-          <div className="text-3xl font-extrabold tracking-tight text-foreground">BuildForce</div>
-          <div className="mt-2 text-sm font-medium text-muted-foreground">
+          <div className="text-3xl font-extrabold tracking-tight text-white">BuildForce</div>
+          <div className="mt-2 text-sm font-medium text-white/70">
             פלטפורמת כוח האדם המובילה לענף הבנייה
           </div>
 
@@ -236,10 +236,10 @@ function LoginPage() {
             ].map((item) => (
               <div
                 key={item.text}
-                className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3 text-right"
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right"
               >
-                <item.icon className="h-4 w-4 shrink-0 text-primary" />
-                <span className="text-sm font-medium text-foreground/90">{item.text}</span>
+                <item.icon className="h-4 w-4 shrink-0 text-primary-glow" />
+                <span className="text-sm font-medium text-white/90">{item.text}</span>
               </div>
             ))}
           </div>
@@ -247,13 +247,13 @@ function LoginPage() {
           <div className="mt-8 border-t border-white/10 pt-6">
             <div className="flex justify-center gap-8">
               {[
-                { n: "12K+", l: "עובדים" },
-                { n: "47", l: "תאגידים" },
-                { n: "₪0", l: "לקבלן" },
+                { n: "< 24h", l: "עד הצעה ראשונה" },
+                { n: "₪0", l: "עלות לקבלן" },
+                { n: "100%", l: "מאובטח" },
               ].map((s) => (
                 <div key={s.l} className="text-center">
-                  <div className="text-xl font-extrabold text-primary">{s.n}</div>
-                  <div className="text-xs text-muted-foreground">{s.l}</div>
+                  <div className="text-xl font-extrabold text-white" dir="ltr">{s.n}</div>
+                  <div className="text-xs text-white/60">{s.l}</div>
                 </div>
               ))}
             </div>

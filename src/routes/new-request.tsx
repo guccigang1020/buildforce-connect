@@ -76,6 +76,37 @@ const newItem = (): RequestItem => ({
   count: 1,
 });
 
+/** Returns a Hebrew explanation of what is blocking the Next button, or null when valid. */
+function computeNextHint(
+  step: number,
+  form: FormState,
+  isPhoneValid: boolean,
+  isStartDateValid: boolean,
+): string | null {
+  if (step === 1) {
+    if (form.items.some((it) => !it.role)) return "יש לבחור תחום בכל שורה";
+    if (form.items.some((it) => !it.nationality)) return "יש לבחור לאום בכל שורה";
+    if (form.items.some((it) => !it.count || Number(it.count) <= 0))
+      return "יש להזין כמות עובדים תקינה בכל שורה";
+    return null;
+  }
+  if (step === 2) {
+    if (!form.location) return "יש לבחור עיר";
+    if (!form.startDate) return "יש להזין תאריך התחלה";
+    if (!isStartDateValid) return "תאריך ההתחלה לא יכול להיות בעבר";
+    if (!form.commitmentMonths) return "יש לבחור תקופת התקשרות";
+    return null;
+  }
+  if (step === 4) {
+    if (!form.contactName) return "יש להזין שם מלא";
+    if (!form.contactPhone) return "יש להזין מספר טלפון";
+    if (form.contactPhone && !isPhoneValid) return "מספר טלפון לא תקין";
+    if (!form.acceptTerms) return "יש לאשר את תנאי אי-העקיפה";
+    return null;
+  }
+  return null;
+}
+
 function NewRequestPage() {
   const navigate = useNavigate();
   const { session, loading, profile } = useAuth();
@@ -145,6 +176,11 @@ function NewRequestPage() {
     if (step === 4) return Boolean(form.contactName && isPhoneValid && form.acceptTerms);
     return false;
   };
+
+  const canGoNext = canNext();
+  const nextHint = !canGoNext
+    ? computeNextHint(step, form, isPhoneValid, isStartDateValid)
+    : null;
 
   const isStepComplete = (n: number) => {
     if (n === 1) return itemsValid && form.items.length > 0;
@@ -271,7 +307,7 @@ function NewRequestPage() {
                   <div
                     className={`grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-all ${
                       isCompleted
-                        ? "bg-emerald-500 text-white shadow-sm"
+                        ? "bg-emerald-500 text-primary-foreground shadow-sm"
                         : isCurrent
                           ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
                           : "bg-muted text-muted-foreground"
@@ -561,24 +597,34 @@ function NewRequestPage() {
                 {step === 1 ? "ביטול" : "הקודם"}
               </Button>
               {step < STEPS.length ? (
-                <Button
-                  type="button"
-                  disabled={!canNext()}
-                  onClick={() => setStep(step + 1)}
-                  className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
-                >
-                  הבא
-                  <ArrowLeft className="mr-1 h-4 w-4" />
-                </Button>
+                <div className="flex flex-col items-end gap-1.5">
+                  <Button
+                    type="button"
+                    disabled={!canGoNext}
+                    onClick={() => setStep(step + 1)}
+                    className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
+                  >
+                    הבא
+                    <ArrowLeft className="mr-1 h-4 w-4" />
+                  </Button>
+                  {nextHint && (
+                    <p className="text-xs font-medium text-destructive text-end">{nextHint}</p>
+                  )}
+                </div>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={!canNext() || submitting}
-                  className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
-                >
-                  {submitting ? "שולח..." : "פרסם בקשה"}
-                  <CheckCircle2 className="mr-1 h-4 w-4" />
-                </Button>
+                <div className="flex flex-col items-end gap-1.5">
+                  <Button
+                    type="submit"
+                    disabled={!canGoNext || submitting}
+                    className="bg-gradient-primary text-primary-foreground shadow-elegant disabled:opacity-50"
+                  >
+                    {submitting ? "שולח..." : "פרסם בקשה"}
+                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                  </Button>
+                  {nextHint && (
+                    <p className="text-xs font-medium text-destructive text-end">{nextHint}</p>
+                  )}
+                </div>
               )}
             </div>
           </div>

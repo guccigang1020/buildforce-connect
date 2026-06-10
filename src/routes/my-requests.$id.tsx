@@ -28,7 +28,6 @@ import {
   Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers, closeJobRequest } from "@/lib/job-requests.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -45,26 +44,26 @@ export const Route = createFileRoute("/my-requests/$id")({
   component: MyRequestPage,
 });
 
-const STATUS_META: Record<string, { label: string; color: string; dot: string }> = {
+const STATUS_META: Record<string, { label: string; chipClass: string; dotClass: string }> = {
   open: {
     label: "פתוחה למכרז",
-    color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    dot: "bg-emerald-500",
+    chipClass: "status-chip-live",
+    dotClass: "bg-status-live",
   },
   awarded: {
     label: "נבחר זוכה",
-    color: "bg-primary/15 text-primary border-primary/30",
-    dot: "bg-primary",
+    chipClass: "status-chip-approved",
+    dotClass: "bg-status-approved",
   },
   closed: {
     label: "סגורה",
-    color: "bg-muted text-muted-foreground border-border",
-    dot: "bg-muted-foreground",
+    chipClass: "status-chip-muted",
+    dotClass: "bg-muted-foreground",
   },
   cancelled: {
     label: "בוטלה",
-    color: "bg-destructive/15 text-destructive border-destructive/30",
-    dot: "bg-destructive",
+    chipClass: "status-chip-rejected",
+    dotClass: "bg-destructive",
   },
 };
 
@@ -100,10 +99,12 @@ function MyRequestPage() {
     try {
       await awardFn({ data: { offerId } });
       toast.success("הזוכה נבחר. נשלחו התראות לתאגידים.");
-      qc.invalidateQueries({ queryKey: ["job-request", id] });
+      // Keep actingId set on success: the award buttons stay locked until the
+      // refetched "awarded" state replaces them — prevents double-award clicks
+      // during the ~2-4s refetch window.
+      await qc.invalidateQueries({ queryKey: ["job-request", id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "שגיאה בבחירת זוכה");
-    } finally {
       setActingId(null);
     }
   };
@@ -272,18 +273,16 @@ function MyRequestPage() {
           <div className="border-b border-border/40 bg-gradient-to-l from-primary/5 to-transparent p-6 md:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold ${statusMeta.color}`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dot}`} />
+                <span className={statusMeta.chipClass}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
                   {statusMeta.label}
-                </div>
+                </span>
                 <h2 className="mt-3 text-2xl font-extrabold tracking-tight md:text-3xl">
                   בקשת כוח אדם
                 </h2>
-                {deadlineHours !== null && deadlineHours > 0 && (
+                {request.status === "open" && deadlineHours !== null && deadlineHours > 0 && (
                   <div
-                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineHours < 24 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-amber-500/30 bg-amber-500/10 text-amber-400"}`}
+                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineHours < 24 ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-amber-500/30 bg-amber-500/10 text-amber-600"}`}
                   >
                     <Clock className="h-3 w-3" />{" "}
                     {deadlineHours < 24
@@ -365,17 +364,17 @@ function MyRequestPage() {
 
             {/* Hero savings number — the emotional centerpiece */}
             {monthlySavings > 0 && (
-              <div className="relative overflow-hidden border-b border-emerald-500/20 bg-gradient-to-br from-emerald-500/14 via-emerald-500/5 to-transparent px-5 py-7 md:px-8 md:py-9">
-                <div className="pointer-events-none absolute -top-16 -end-16 h-56 w-56 rounded-full bg-emerald-500/10 blur-3xl" />
+              <div className="relative overflow-hidden border-b border-border/40 bg-savings-soft px-5 py-7 md:px-8 md:py-9">
+                <div className="pointer-events-none absolute -top-16 -end-16 h-56 w-56 rounded-full bg-[oklch(0.63_0.19_41_/_0.08)] blur-3xl" />
                 <div className="relative flex flex-wrap items-end justify-between gap-6">
                   <div>
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    <span className="savings-badge uppercase tracking-wider">
                       <TrendingDown className="h-3.5 w-3.5" />
                       {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
-                    </div>
-                    <div className="mt-3 text-5xl font-black leading-none tracking-tight text-emerald-400 md:text-6xl">
+                    </span>
+                    <div className="mt-3 text-5xl font-black leading-none tracking-tight text-savings md:text-6xl">
                       <span dir="ltr">₪{monthlySavings.toLocaleString()}</span>
-                      <span className="mr-2 align-middle text-lg font-bold text-emerald-400/80">
+                      <span className="mr-2 align-middle text-lg font-bold text-savings/80">
                         / חודש
                       </span>
                     </div>
@@ -388,11 +387,10 @@ function MyRequestPage() {
                       </b>
                       )
                     </div>
-                    <div
-                      className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground"
-                      dir="ltr"
-                    >
-                      {savingsPerHour} ₪/שעה × {totalWorkers} עובדים × 176 ש׳
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                      <span dir="ltr">{savingsPerHour} ₪</span> לשעה ×{" "}
+                      <span dir="ltr">{totalWorkers}</span> עובדים ×{" "}
+                      <span dir="ltr">176</span> שעות בחודש
                     </div>
                   </div>
                 </div>
@@ -401,9 +399,9 @@ function MyRequestPage() {
 
             <div className="p-5 md:p-6">
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                <div className="rounded-xl border border-savings/20 bg-savings-soft p-3 text-center">
                   <div className="mb-1 text-xs text-muted-foreground">מינימום</div>
-                  <div className="text-lg font-extrabold text-emerald-400">{minPrice} ₪</div>
+                  <div className="text-lg font-extrabold text-savings">{minPrice} ₪</div>
                 </div>
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
                   <div className="mb-1 text-xs text-muted-foreground">ממוצע</div>
@@ -447,10 +445,10 @@ function MyRequestPage() {
               </span>
             </div>
             {minPrice > 0 && (
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+              <span className="savings-badge">
                 <TrendingDown className="h-3.5 w-3.5" /> מינימום:{" "}
                 <span dir="ltr">{minPrice} ₪/שעה</span>
-              </div>
+              </span>
             )}
           </div>
 
@@ -489,11 +487,11 @@ function MyRequestPage() {
                     key={o.id}
                     className={`enterprise-card overflow-hidden transition-all ${
                       isWinner
-                        ? "border-primary/50 shadow-glow-sm"
+                        ? "border-emerald-500/40 bg-emerald-500/5 shadow-success"
                         : isRejected
                           ? "opacity-50"
                           : idx === 0
-                            ? "border-emerald-500/30"
+                            ? "border-savings/30"
                             : ""
                     }`}
                   >
@@ -506,7 +504,7 @@ function MyRequestPage() {
                               isWinner
                                 ? "bg-gradient-primary text-primary-foreground shadow-glow-sm"
                                 : idx === 0 && !isRejected
-                                  ? "bg-emerald-500/15 text-emerald-400"
+                                  ? "bg-savings-soft text-savings"
                                   : "bg-secondary text-foreground"
                             }`}
                           >
@@ -524,30 +522,25 @@ function MyRequestPage() {
                                 {isWinner && reveal.corp_name ? reveal.corp_name : "תאגיד אנונימי"}
                               </span>
                               {savedVsMax > 0 && !isRejected && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
-                                  <TrendingDown className="h-2.5 w-2.5" /> זול ב-{savedVsMax}₪/שעה
-                                  מהיקרה
+                                <span className="savings-badge">
+                                  <TrendingDown className="h-2.5 w-2.5" /> זול ב-{savedVsMax} ₪/שעה מהיקרה
                                 </span>
                               )}
                               {idx === 0 && !isRejected && request.status === "open" && (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+                                <span className="savings-badge">
                                   <Star className="h-2.5 w-2.5" /> הצעה זולה ביותר
                                 </span>
                               )}
                               {isWinner && (
-                                <Badge className="bg-primary text-primary-foreground text-[11px]">
-                                  זוכה
-                                </Badge>
+                                <span className="status-chip-approved">
+                                  <Trophy className="h-2.5 w-2.5" /> זוכה
+                                </span>
                               )}
                               {o.status === "withdrawn" && (
-                                <Badge variant="outline" className="text-[11px]">
-                                  בוטלה
-                                </Badge>
+                                <span className="status-chip-muted">בוטלה</span>
                               )}
                               {o.status === "rejected" && (
-                                <Badge variant="outline" className="text-[11px]">
-                                  לא נבחרה
-                                </Badge>
+                                <span className="status-chip-rejected">לא נבחרה</span>
                               )}
                             </div>
                             <div className="mt-0.5 text-xs text-muted-foreground">
@@ -573,7 +566,7 @@ function MyRequestPage() {
                                 isWinner
                                   ? "text-primary"
                                   : idx === 0
-                                    ? "text-emerald-400"
+                                    ? "text-savings"
                                     : "text-foreground"
                               }`}
                               dir="ltr"
@@ -589,7 +582,7 @@ function MyRequestPage() {
                             <div className="text-center">
                               <div className="text-[11px] text-muted-foreground">ניקוד ערך</div>
                               <div
-                                className={`text-lg font-extrabold ${valueScore >= 80 ? "text-emerald-400" : valueScore >= 60 ? "text-amber-500" : "text-muted-foreground"}`}
+                                className={`text-lg font-extrabold ${valueScore >= 80 ? "text-emerald-600" : valueScore >= 60 ? "text-amber-600" : "text-muted-foreground"}`}
                               >
                                 {valueScore}
                               </div>
@@ -641,7 +634,7 @@ function MyRequestPage() {
                             <AlertTriangle className="h-3.5 w-3.5" />
                             תנאי התאגיד לזכייה
                           </div>
-                          <ul className="mt-1.5 space-y-0.5 text-xs text-amber-200/80">
+                          <ul className="mt-1.5 space-y-0.5 text-xs text-amber-700">
                             {o.requires_personal_guarantee && <li>• ערבות אישית מהקבלן</li>}
                             {o.requires_security_check && <li>• צ׳ק לביטחון מהקבלן</li>}
                           </ul>
@@ -664,9 +657,21 @@ function MyRequestPage() {
                                 <Award className="h-5 w-5 text-primary" />
                                 <span className="font-bold text-sm">אישור סופי — בחירת זוכה</span>
                               </div>
-                              <p className="text-xs text-muted-foreground mb-4">
-                                לאחר הבחירה יישלחו הודעות לכל התאגידים. הפעולה היא סופית.
-                              </p>
+                              <div className="mb-4 space-y-1.5 text-xs text-muted-foreground">
+                                <div className="flex flex-wrap items-center gap-1">
+                                  <span className="font-semibold text-foreground">עלות חודשית מוערכת:</span>
+                                  <span dir="ltr" className="font-extrabold text-primary">
+                                    ₪{Math.round(priceNum * totalWorkers * HOURS_PER_WORKER_MONTH).toLocaleString()}
+                                  </span>
+                                  <span>
+                                    ({totalWorkers} עובדים ×{" "}
+                                    <span dir="ltr">₪{priceNum}/שעה</span> × 176 ש׳)
+                                  </span>
+                                </div>
+                                <div>זהות התאגיד ופרטי הקשר שלו יחשפו בפניך מיד לאחר האישור.</div>
+                                <div>כל שאר ההצעות יסומנו כ״לא נבחרו״ ותישלח להן הודעה.</div>
+                                <div className="font-semibold text-foreground">הפעולה סופית — אין אפשרות לביטול.</div>
+                              </div>
                               <div className="flex gap-2 justify-end">
                                 <Button
                                   variant="ghost"
@@ -717,9 +722,9 @@ function MyRequestPage() {
 
         {/* Win panel */}
         {winningOffer && isOwner && (
-          <div className="enterprise-card border-primary/40 bg-gradient-to-l from-primary/8 to-primary/3 p-6 animate-fade-up delay-300">
+          <div className="enterprise-card border-emerald-500/40 bg-emerald-500/5 p-6 animate-fade-up delay-300">
             <div className="flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-primary shadow-glow">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-success shadow-success">
                 <Coins className="h-6 w-6 text-primary-foreground" />
               </div>
               <div className="flex-1">
@@ -758,7 +763,7 @@ function MyRequestPage() {
                     </div>
                   ) : null;
                 })()}
-                <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-300">
+                <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-700">
                   כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
                 </div>
               </div>

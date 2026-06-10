@@ -33,8 +33,7 @@ const STATUS_META: Record<
   withdrawn: {
     label: "נסוגה",
     icon: Ban,
-    chipClass:
-      "inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-[11px] font-bold text-muted-foreground",
+    chipClass: "status-chip-muted",
     barClass: "status-bar-none",
   },
   awarded: {

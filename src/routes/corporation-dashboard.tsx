@@ -541,7 +541,7 @@ function WinRateRing({ rate }: { rate: number }) {
           r={radius}
           fill="none"
           strokeWidth="5"
-          style={{ stroke: "oklch(0.21 0.028 265)" }}
+          style={{ stroke: "var(--border-strong)" }}
         />
         <circle
           cx="30"
@@ -551,7 +551,7 @@ function WinRateRing({ rate }: { rate: number }) {
           strokeWidth="5"
           strokeLinecap="round"
           strokeDasharray={`${filled} ${empty}`}
-          style={{ stroke: "oklch(0.62 0.24 258)", transition: "stroke-dasharray 0.8s ease" }}
+          style={{ stroke: "var(--primary)", transition: "stroke-dasharray 0.8s ease" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">

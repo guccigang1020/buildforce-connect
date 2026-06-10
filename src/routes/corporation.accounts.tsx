@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { listCorporationDailyAccounts } from "@/lib/daily-accounts.functions";
 import { AppShell } from "@/components/app-shell";
-import { NextStageNotice } from "@/components/next-stage-notice";
+import { useAuth } from "@/hooks/use-auth";
 import {
   CheckCircle2,
   DollarSign,
@@ -13,6 +13,7 @@ import {
   Lock,
   FileCheck,
   Zap,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/corporation/accounts")({
@@ -67,6 +68,14 @@ function formatDateHebrew(iso: string): string {
 }
 
 function Page() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) navigate({ to: "/login", replace: true });
+  }, [loading, user, navigate]);
+
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   const listAccounts = useServerFn(listCorporationDailyAccounts);
@@ -79,26 +88,38 @@ function Page() {
     queryKey: ["corporation-daily-accounts", selectedMonth],
     queryFn: () => listAccounts({ data: { month: selectedMonth } }),
     retry: false,
+    enabled: !!user,
   });
 
   const accounts = (accountsData?.accounts ?? []) as DailyAccount[];
 
-  // The attendance → daily-account → invoice pipeline only has data once crews
-  // check in on-site (a real-device pilot step). Until then, show a clear
-  // "next stage" explainer instead of a zeroed/erroring screen.
+  if (loading || !user) {
+    return (
+      <AppShell title="חשבונות וחשבוניות">
+        <div className="grid place-items-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  // The attendance → daily-account → invoice pipeline only activates once
+  // crews check in on-site. Show a polished coming-soon card until then.
   if (!isLoading && (isError || accounts.length === 0)) {
     return (
       <AppShell title="חשבונות וחשבוניות">
-        <NextStageNotice
-          icon={FileCheck}
-          title="חשבונות וחשבוניות — השלב הבא"
-          description="כאן יופיעו החשבונות היומיים והחשבונית החודשית שלך — נבנים אוטומטית מנוכחות העובדים המאומתת באתר. החלק הזה נכנס לפעולה בפיילוט, ברגע שהצוותים מתחילים לדווח נוכחות."
-          steps={[
-            "ראש הצוות פותח וסוגר יום עבודה מהנייד — צילום + מיקום GPS",
-            "כל יום עבודה הופך לחשבון שקוף: שעות × תעריף מאושר",
-            "בסוף החודש מתקבלת חשבונית מוכנה ומגובה בראיות — ללא מחלוקות",
-          ]}
-        />
+        <div className="mx-auto max-w-md animate-fade-up">
+          <div className="coming-soon-card">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-primary/10">
+              <FileCheck className="h-6 w-6 text-primary" />
+            </div>
+            <span className="status-chip-muted">בקרוב</span>
+            <h2 className="mt-4 text-xl font-extrabold">חשבונות וחשבוניות</h2>
+            <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
+              חשבונית חודשית מגובה בנתוני נוכחות — נבנית אוטומטית מרגע שהצוותים מתחילים לדווח.
+            </p>
+          </div>
+        </div>
       </AppShell>
     );
   }
@@ -242,7 +263,7 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
               {isAuto ? "אושר אוטומטית" : "אושר ידנית"}
             </span>
             {account.has_exception && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-600">
+              <span className="status-chip-disputed">
                 <AlertTriangle className="h-3 w-3" />
                 חריגה
               </span>
@@ -307,7 +328,7 @@ function CorpAccountCard({ account }: { account: DailyAccount }) {
 
           {/* Exception note */}
           {account.has_exception && account.exception_reason && (
-            <div className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs text-orange-600">
+            <div className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-status-disputed">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               חריגה: {account.exception_reason}
             </div>

@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import {
   listContractorProjects,
@@ -59,11 +60,19 @@ export const Route = createFileRoute("/contractor/projects")({
 });
 
 function Page() {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
   const list = useServerFn(listContractorProjects);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["contractor-projects"],
     queryFn: () => list(),
+    enabled: !!session,
   });
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) void navigate({ to: "/login", replace: true });
+  }, [loading, session, navigate]);
   const projects: Project[] = data?.projects ?? [];
 
   // Compute summary stats

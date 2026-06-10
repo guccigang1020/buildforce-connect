@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import {
   generateDailyAccounts,
@@ -22,6 +23,7 @@ import {
   X,
   FileCheck,
   Zap,
+  Receipt,
 } from "lucide-react";
 
 export const Route = createFileRoute("/contractor/accounts")({
@@ -101,6 +103,9 @@ function Page() {
   const [closingDate, setClosingDate] = useState<string | null>(null);
   const [showCloseDialog, setShowCloseDialog] = useState<PendingDateGroup | null>(null);
 
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
   const generate = useServerFn(generateDailyAccounts);
   const getPending = useServerFn(getPendingClosureRecords);
   const listAccounts = useServerFn(listContractorDailyAccounts);
@@ -108,6 +113,7 @@ function Page() {
   const { data: pendingData, refetch: refetchPending } = useQuery({
     queryKey: ["contractor-pending-closure"],
     queryFn: () => getPending({ data: {} }),
+    enabled: !!session,
   });
 
   const {
@@ -117,8 +123,14 @@ function Page() {
   } = useQuery({
     queryKey: ["contractor-daily-accounts", selectedMonth],
     queryFn: () => listAccounts({ data: { month: selectedMonth } }),
+    enabled: !!session,
     retry: false,
   });
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) void navigate({ to: "/login", replace: true });
+  }, [loading, session, navigate]);
 
   const pendingRecords = (pendingData?.records ?? []) as unknown as PendingRecord[];
   const accounts = (accountsData?.accounts ?? []) as DailyAccount[];
@@ -234,7 +246,7 @@ function Page() {
                 className="flex flex-wrap items-center gap-4 rounded-2xl border border-amber-500/30 bg-amber-500/8 px-5 py-4 status-bar-pending"
               >
                 <div className="flex items-center gap-3">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-amber-400">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/15 text-status-pending">
                     <Clock className="h-4 w-4" />
                   </div>
                   <div>
@@ -245,12 +257,12 @@ function Page() {
                       <span>{group.count} רשומות מאושרות</span>
                       <span>{group.totalHours.toFixed(1)} שעות</span>
                       {group.totalCost > 0 && (
-                        <span className="font-semibold text-emerald-400">
+                        <span className="font-semibold text-status-approved">
                           ₪{group.totalCost.toLocaleString()}
                         </span>
                       )}
                       {group.autoCount > 0 && (
-                        <span className="text-slate-400">{group.autoCount} אושרו אוטומטית</span>
+                        <span className="text-muted-foreground">{group.autoCount} אושרו אוטומטית</span>
                       )}
                     </div>
                   </div>
@@ -314,6 +326,25 @@ function Page() {
         )}
       </section>
 
+      {/* Invoice coming soon */}
+      <section className="mt-8 animate-fade-up delay-300">
+        <div className="coming-soon-card">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+            <Receipt className="h-6 w-6" />
+          </div>
+          <div className="mt-3">
+            <span className="status-chip-muted">
+              <Clock className="h-3 w-3" />
+              בקרוב
+            </span>
+          </div>
+          <h3 className="mt-3 text-base font-bold text-foreground">חשבוניות חודשיות</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            בסוף כל חודש תיוצר חשבונית מרוכזת מהחשבונות היומיים הנעולים — מוכנה לשליחה לתאגיד כוח האדם.
+          </p>
+        </div>
+      </section>
+
       {/* Close day confirmation dialog */}
       {showCloseDialog && (
         <CloseDayDialog
@@ -342,12 +373,12 @@ function AccountCard({ account }: { account: DailyAccount }) {
                 {account.team_name ? ` · ${account.team_name}` : ""}
               </span>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
+            <span className="status-chip-approved">
               <CheckCircle2 className="h-3 w-3" />
               {isAuto ? "אושר אוטומטית" : "אושר ידנית"}
             </span>
             {account.has_exception && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-0.5 text-xs font-semibold text-orange-400">
+              <span className="status-chip-disputed">
                 <AlertTriangle className="h-3 w-3" />
                 חריגה
               </span>
@@ -389,7 +420,7 @@ function AccountCard({ account }: { account: DailyAccount }) {
               </span>
             )}
             {account.total_cost != null && Number(account.total_cost) > 0 && (
-              <span className="font-bold text-emerald-600">
+              <span className="font-bold text-status-approved">
                 ₪{Number(account.total_cost).toLocaleString()}
               </span>
             )}
@@ -472,7 +503,7 @@ function CloseDayDialog({
                     <span className="me-2">{Number(r.total_hours).toFixed(2)}ש</span>
                   )}
                   {r.total_cost != null && Number(r.total_cost) > 0 && (
-                    <span className="font-semibold text-emerald-600">
+                    <span className="font-semibold text-status-approved">
                       ₪{Number(r.total_cost).toLocaleString()}
                     </span>
                   )}
@@ -485,7 +516,7 @@ function CloseDayDialog({
             <div className="flex gap-4">
               <span>{group.totalHours.toFixed(1)} שעות</span>
               {group.totalCost > 0 && (
-                <span className="text-emerald-600">₪{group.totalCost.toLocaleString()}</span>
+                <span className="text-status-approved">₪{group.totalCost.toLocaleString()}</span>
               )}
             </div>
           </div>
@@ -493,19 +524,19 @@ function CloseDayDialog({
 
         {/* Auto-approval warning */}
         {group.autoCount > 0 && (
-          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-slate-400/30 bg-slate-500/8 p-3">
-            <Zap className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-            <div className="text-sm text-slate-300">
-              <span className="font-bold">{group.autoCount} רשומות</span> אושרו אוטומטית על ידי
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/30 p-3">
+            <Zap className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <div className="text-sm text-muted-foreground">
+              <span className="font-bold text-foreground">{group.autoCount} רשומות</span> אושרו אוטומטית על ידי
               המערכת (לא על ידי מנהל האתר).
             </div>
           </div>
         )}
 
         {/* Irreversibility warning */}
-        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/8 p-3">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-          <div className="text-sm text-amber-300">
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/30 p-3">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-status-pending" />
+          <div className="text-sm text-foreground">
             פעולה זו <span className="font-bold">בלתי הפיכה</span>. הרשומות יינעלו לעריכה. שינויים
             לאחר הנעילה מצריכים תהליך מחלוקת רשמי.
           </div>

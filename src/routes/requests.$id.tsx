@@ -27,7 +27,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers } from "@/lib/job-requests.functions";
 import { submitOffer } from "@/lib/job-offers.functions";
@@ -52,11 +51,11 @@ const OFFER_STATUS_LABELS: Record<string, string> = {
 
 function competitionLevel(count: number): { label: string; color: string } {
   if (count === 0)
-    return { label: "שקטה", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
+    return { label: "שקטה", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" };
   if (count < 3)
-    return { label: "מתחילה", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" };
+    return { label: "מתחילה", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" };
   if (count < 6)
-    return { label: "פעילה", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" };
+    return { label: "פעילה", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" };
   return {
     label: "חמה מאוד 🔥",
     color: "bg-destructive/10 text-destructive border-destructive/20",
@@ -66,13 +65,19 @@ function competitionLevel(count: number): { label: string; color: string } {
 function RequestPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, loading } = useAuth();
   const fetchData = useServerFn(getJobRequestWithOffers);
+
+  // Route guard — redirect unauthenticated users to login
+  useEffect(() => {
+    if (loading) return;
+    if (!user) navigate({ to: "/login", replace: true });
+  }, [loading, user, navigate]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-request", id],
     queryFn: () => fetchData({ data: { id } }),
-    enabled: Boolean(user),
+    enabled: !!user,
   });
 
   useEffect(() => {
@@ -81,23 +86,11 @@ function RequestPage() {
     }
   }, [data?.isOwner, id, navigate]);
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <AppShell title="מכרז">
-        <div className="enterprise-card mx-auto max-w-md p-10 text-center animate-fade-up">
-          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-primary/10">
-            <ShieldCheck className="h-7 w-7 text-primary" />
-          </div>
-          <h2 className="text-xl font-bold">נדרשת התחברות</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            יש להתחבר כדי לצפות במכרז ולהגיש הצעה.
-          </p>
-          <Button
-            asChild
-            className="mt-6 bg-gradient-primary text-primary-foreground shadow-elegant"
-          >
-            <Link to="/login">התחברות</Link>
-          </Button>
+        <div className="grid place-items-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </AppShell>
     );
@@ -193,12 +186,13 @@ function RequestPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <Badge
-                    variant={isOpen ? "default" : "secondary"}
+                  <span
                     className={
                       isOpen
-                        ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
-                        : ""
+                        ? "status-chip-live"
+                        : req.status === "awarded"
+                          ? "status-chip-approved"
+                          : "status-chip-muted"
                     }
                   >
                     {isOpen
@@ -208,7 +202,7 @@ function RequestPage() {
                         : req.status === "closed"
                           ? "סגור"
                           : "בוטל"}
-                  </Badge>
+                  </span>
                   {/* Competition signal */}
                   {isOpen && offersCount > 0 && (
                     <span
@@ -227,7 +221,7 @@ function RequestPage() {
                 {/* Deadline urgency */}
                 {deadlineHours !== null && deadlineHours > 0 && (
                   <div
-                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineUrgent ? "border-destructive/40 bg-destructive/10 text-destructive animate-pulse" : "border-amber-500/30 bg-amber-500/10 text-amber-400"}`}
+                    className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${deadlineUrgent ? "border-destructive/40 bg-destructive/10 text-destructive animate-pulse" : "border-amber-500/30 bg-amber-500/10 text-amber-600"}`}
                   >
                     <Clock className="h-3 w-3" />
                     {deadlineUrgent
@@ -303,7 +297,7 @@ function RequestPage() {
             </p>
           )}
           {(req as { deadline_at?: string }).deadline_at && !deadlineUrgent && (
-            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-400">
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-bold text-amber-600">
               <Clock className="h-3 w-3" /> סגירת המכרז:{" "}
               {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
             </div>
@@ -342,8 +336,8 @@ function RequestPage() {
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
               <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
                 <Coins className="h-4 w-4 text-primary" />
-                <span className="font-bold" dir="ltr">
-                  ₪{Number(myOffer.price_per_hour).toLocaleString()}/שעה
+                <span className="font-bold">
+                  <span dir="ltr">₪{Number(myOffer.price_per_hour).toLocaleString()}</span> לשעה
                 </span>
               </div>
               <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2">
@@ -386,18 +380,58 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
   const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
 
+  // Inline validation errors
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [workersError, setWorkersError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
+
   const price = Number(pricePerHour);
   const workers = Number(availableWorkers);
   const dailyCostEstimate = price > 0 && workers > 0 ? Math.round(price * workers * 8) : 0;
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!price || price <= 0) return toast.error("יש להזין מחיר תקין");
-    if (!workers || workers <= 0) return toast.error("יש להזין מספר עובדים");
-    if (!startDate.trim()) return toast.error("יש להזין תאריך התחלה");
+    setPriceError(null);
+    setWorkersError(null);
+    setDateError(null);
+
+    let hasErrors = false;
+
+    if (!price || price < 50) {
+      setPriceError("מחיר לשעה חייב להיות לפחות ₪50");
+      hasErrors = true;
+    } else if (price > 500) {
+      setPriceError("מחיר לשעה לא יכול לעלות על ₪500");
+      hasErrors = true;
+    }
+
+    if (!workers || workers < 1) {
+      setWorkersError("יש להזין לפחות עובד אחד");
+      hasErrors = true;
+    }
+
+    if (!startDate.trim()) {
+      setDateError("יש להזין תאריך התחלה");
+      hasErrors = true;
+    } else {
+      const parsed = new Date(startDate + "T00:00:00");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(parsed.getTime())) {
+        setDateError("תאריך לא תקין");
+        hasErrors = true;
+      } else if (parsed < today) {
+        setDateError("תאריך ההתחלה לא יכול להיות בעבר");
+        hasErrors = true;
+      }
+    }
+
+    if (hasErrors) return;
+
     setSubmitting(true);
     try {
-      await submitFn({
+      const result = await submitFn({
         data: {
           requestId,
           pricePerHour: price,
@@ -409,6 +443,10 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
           note: note.trim() || undefined,
         },
       });
+      if (result && typeof result === "object" && "error" in result) {
+        toast.error((result as { error: string }).error);
+        return;
+      }
       toast.success("ההצעה נשלחה בהצלחה");
       qc.invalidateQueries({ queryKey: ["public-request", requestId] });
       qc.invalidateQueries({ queryKey: ["my-job-offers"] });
@@ -439,20 +477,23 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
           <Label htmlFor="price">
             מחיר לשעה (₪) *
             <span className="block text-[11px] text-muted-foreground font-normal mt-0.5">
-              מחיר שוק: ~₪175/שעה
+              טווח: ₪50–₪500
             </span>
           </Label>
           <Input
             id="price"
             type="number"
-            min="1"
+            min="50"
+            max="500"
             step="0.5"
+            dir="ltr"
             value={pricePerHour}
-            onChange={(e) => setPricePerHour(e.target.value)}
+            onChange={(e) => { setPricePerHour(e.target.value); setPriceError(null); }}
             required
-            className="h-11"
+            className={`h-11 ${priceError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             placeholder="₪ לשעה"
           />
+          {priceError && <p className="text-xs text-destructive">{priceError}</p>}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="workers">עובדים זמינים *</Label>
@@ -460,12 +501,14 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
             id="workers"
             type="number"
             min="1"
+            dir="ltr"
             value={availableWorkers}
-            onChange={(e) => setAvailableWorkers(e.target.value)}
+            onChange={(e) => { setAvailableWorkers(e.target.value); setWorkersError(null); }}
             required
-            className="h-11"
+            className={`h-11 ${workersError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             placeholder="כמה עובדים"
           />
+          {workersError && <p className="text-xs text-destructive">{workersError}</p>}
         </div>
       </div>
 
@@ -486,12 +529,15 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
         <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
         <Input
           id="sd"
-          placeholder="למשל: 01/06/2026"
+          type="date"
+          min={todayISO}
+          dir="ltr"
           value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          onChange={(e) => { setStartDate(e.target.value); setDateError(null); }}
           required
-          className="h-11"
+          className={`h-11 ${dateError ? "border-destructive focus-visible:ring-destructive" : ""}`}
         />
+        {dateError && <p className="text-xs text-destructive">{dateError}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

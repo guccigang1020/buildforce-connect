@@ -183,13 +183,14 @@ function SubmitOfferDialog({
     const workers = Number(availableWorkers);
     const respTime = Number(responseTimeHours);
     const warranty = Number(warrantyDays);
-    if (!price || price <= 0) return toast.error("יש להזין מחיר תקין לשעה");
+    if (!price || price < 50) return toast.error("מחיר לשעה חייב להיות לפחות ₪50");
+    if (price > 500) return toast.error("מחיר לשעה לא יכול לעלות על ₪500");
     if (!workers || workers <= 0) return toast.error("יש להזין מספר עובדים זמינים");
     if (!startDate.trim()) return toast.error("יש להזין תאריך התחלה אפשרי");
 
     setSubmitting(true);
     try {
-      await submitFn({
+      const result = await submitFn({
         data: {
           requestId,
           pricePerHour: price,
@@ -203,6 +204,10 @@ function SubmitOfferDialog({
           requiresSecurityCheck,
         },
       });
+      if (result && typeof result === "object" && "error" in result) {
+        toast.error((result as { error: string }).error);
+        return;
+      }
       toast.success("ההצעה נשלחה בהצלחה ללקוח.");
       qc.invalidateQueries({ queryKey: ["open-job-requests"] });
       reset();

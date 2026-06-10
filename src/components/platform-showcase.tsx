@@ -3,9 +3,6 @@ import { Flame, ShieldCheck, Users, ArrowLeft, PlayCircle, TrendingDown, Eye } f
 import featureAuction from "@/assets/feature-auction.jpg";
 import featureWorkers from "@/assets/feature-workers.jpg";
 import featureChat from "@/assets/feature-secure-chat.jpg";
-import platformVideo from "@/assets/platform-hero.mp4.asset.json";
-
-const VIDEO_URL = (platformVideo as { url: string }).url;
 
 const FEATURES = [
   {
@@ -23,8 +20,8 @@ const FEATURES = [
       { icon: TrendingDown, text: "גרף ירידת מחיר אנימטיבי בזמן אמת", soon: false },
       { icon: Eye, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו", soon: false },
     ],
-    accent: "from-orange-500 to-amber-400",
-    glow: "shadow-[0_30px_120px_-20px_rgba(232,93,58,0.55)]",
+    accent: "from-primary to-primary-glow",
+    glow: "shadow-[0_30px_120px_-20px_rgba(29,78,216,0.35)]",
   },
   {
     eyebrow: "עובדים אמיתיים · ספקים מאומתים",
@@ -57,7 +54,7 @@ const FEATURES = [
 ];
 
 function ComingSoonPill() {
-  return <span className="status-chip-pending shrink-0">בקרוב</span>;
+  return <span className="status-chip-muted shrink-0">בקרוב</span>;
 }
 
 export function PlatformShowcase() {
@@ -71,7 +68,7 @@ export function PlatformShowcase() {
       }}
     >
       {/* Glow orbs */}
-      <div className="pointer-events-none absolute -left-32 top-40 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-32 top-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-32 bottom-40 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 md:px-6">
@@ -82,7 +79,7 @@ export function PlatformShowcase() {
           </div>
           <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
             איך BuildForce{" "}
-            <span className="bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
+            <span className="text-gradient-primary">
               משנה את המשחק
             </span>
           </h2>
@@ -91,23 +88,22 @@ export function PlatformShowcase() {
           </p>
         </div>
 
-        {/* Video hero strip */}
+        {/* Hero image strip */}
         <div className="relative mt-12 overflow-hidden rounded-3xl border border-border/60 shadow-elegant">
-          <video
-            src={VIDEO_URL}
+          <img
+            src={featureWorkers}
+            alt="פלטפורמה בפעולה"
             className="h-[260px] w-full object-cover md:h-[420px]"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster={featureWorkers}
+            loading="eager"
+            width={1280}
+            height={420}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary backdrop-blur">
               <span className="relative grid h-2 w-2 place-items-center">
-                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="absolute inset-0 animate-ping rounded-full bg-primary/70" />
+                <span className="h-2 w-2 rounded-full bg-primary" />
               </span>
               כל הצעה חדשה דוחפת את המחיר למטה
             </div>
@@ -164,7 +160,7 @@ export function PlatformShowcase() {
                       className="flex items-start gap-3 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur-sm"
                     >
                       <span
-                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-white shadow-elegant`}
+                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-primary-foreground shadow-elegant`}
                       >
                         <Icon className="h-4 w-4" />
                       </span>
@@ -184,7 +180,7 @@ export function PlatformShowcase() {
         <div className="mt-24 text-center">
           <Link
             to="/new-request"
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500 px-8 py-4 text-base font-extrabold text-white shadow-elegant transition-transform hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-primary px-8 py-4 text-base font-extrabold text-primary-foreground shadow-elegant transition-transform hover:scale-105"
           >
             פתח בקשה ותראה איך תאגידים נלחמים עליך
             <ArrowLeft className="h-5 w-5" />

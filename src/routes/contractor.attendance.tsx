@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import {
   listContractorAttendance,
@@ -159,6 +160,9 @@ function Page() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [showApproveAllDialog, setShowApproveAllDialog] = useState(false);
 
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
+
   const list = useServerFn(listContractorAttendance);
   const approve = useServerFn(approveAttendance);
   const approveAll = useServerFn(approveAllPending);
@@ -169,7 +173,13 @@ function Page() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["contractor-att", selectedDate],
     queryFn: () => list({ data: { date: selectedDate } }),
+    enabled: !!session,
   });
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) void navigate({ to: "/login", replace: true });
+  }, [loading, session, navigate]);
 
   const records = (data?.records ?? []) as unknown as AttendanceRecord[];
   const pending = records.filter(
@@ -430,7 +440,7 @@ function Page() {
 
                     {/* Exception note */}
                     {r.exception_reason && (
-                      <div className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs text-orange-400">
+                      <div className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-xs text-status-disputed">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                         חריגה: {EXCEPTION_REASON_LABELS[r.exception_reason] ?? r.exception_reason}
                         {r.exception_note ? ` — ${r.exception_note}` : ""}
@@ -656,16 +666,16 @@ function RecordDrawer({
 
               {/* Exception context */}
               {record.exception_reason && (
-                <div className="rounded-2xl border border-orange-400/30 bg-orange-500/5 p-4 space-y-1.5">
-                  <div className="flex items-center gap-2 text-sm font-bold text-orange-400">
+                <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-1.5">
+                  <div className="flex items-center gap-2 text-sm font-bold text-status-disputed">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
                     חריגה דווחה
                   </div>
-                  <div className="text-sm text-orange-400">
+                  <div className="text-sm text-status-disputed">
                     {EXCEPTION_REASON_LABELS[record.exception_reason] ?? record.exception_reason}
                   </div>
                   {record.exception_note && (
-                    <div className="text-sm text-orange-300/90">{record.exception_note}</div>
+                    <div className="text-sm text-muted-foreground">{record.exception_note}</div>
                   )}
                 </div>
               )}
@@ -837,13 +847,13 @@ function ApproveAllDialog({
         </div>
 
         {exceptionCount > 0 && (
-          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/8 p-4">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-border/60 bg-muted/30 p-4">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-pending" />
             <div className="text-sm">
-              <span className="font-bold text-amber-300">
+              <span className="font-bold text-foreground">
                 {exceptionCount} רשומות מכילות חריגות.
               </span>{" "}
-              <span className="text-amber-400">האישור הכולל יכלול אותן. בדוק לפני אישור.</span>
+              <span className="text-muted-foreground">האישור הכולל יכלול אותן. בדוק לפני אישור.</span>
             </div>
           </div>
         )}
@@ -954,7 +964,7 @@ function ReportExceptionInline({
       <Button
         size="sm"
         variant="outline"
-        className="gap-1.5 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+        className="gap-1.5 border-border/60 text-status-pending hover:bg-muted/40"
         onClick={() => setOpen(true)}
       >
         <AlertTriangle className="h-3.5 w-3.5" /> דווח חריגה
@@ -963,7 +973,7 @@ function ReportExceptionInline({
 
   return (
     <div className="w-full space-y-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-      <div className="text-xs font-bold text-amber-400">דיווח חריגה בנוכחות</div>
+      <div className="text-xs font-bold text-status-pending">דיווח חריגה בנוכחות</div>
       <select
         value={reason}
         onChange={(e) => setReason(e.target.value as never)}

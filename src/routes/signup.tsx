@@ -505,14 +505,14 @@ function SignupPage() {
       </div>
 
       {/* Branding panel — LEFT in RTL */}
-      <aside className="relative hidden w-[38%] shrink-0 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[oklch(0.13_0.03_260)] via-[oklch(0.12_0.03_255)] to-[oklch(0.09_0.02_265)] xl:flex">
+      <aside className="relative hidden w-[38%] shrink-0 flex-col items-center justify-center overflow-hidden bg-gradient-dark xl:flex">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 -left-32 h-80 w-80 rounded-full bg-primary/25 blur-3xl" />
-          <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div
             className="absolute inset-0 opacity-[0.025]"
             style={{
-              backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(white 1px, transparent 1px)",
               backgroundSize: "28px 28px",
             }}
           />
@@ -522,22 +522,22 @@ function SignupPage() {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
             <Gavel className="h-8 w-8 text-primary-foreground" />
           </div>
-          <div className="text-2xl font-extrabold tracking-tight">BuildForce Prime</div>
-          <div className="mt-2 text-sm text-muted-foreground">שוק כוח האדם המוביל לענף הבנייה</div>
+          <div className="text-2xl font-extrabold tracking-tight text-white">BuildForce Prime</div>
+          <div className="mt-2 text-sm text-white/70">שוק כוח האדם המוביל לענף הבנייה</div>
 
           <div className="mt-8 space-y-3 text-right">
             {[
               { icon: Zap, text: "הצעות תוך פחות מ-24 שעות" },
-              { icon: BadgeCheck, text: "47 תאגידים מאומתים" },
-              { icon: Shield, text: "מכרז אנונימי — מחיר נמוך תמיד" },
+              { icon: BadgeCheck, text: "הצעות אנונימיות עד הזכייה" },
+              { icon: Shield, text: "מכרז הפוך — המחיר רק יורד" },
               { icon: UserPlus, text: "הרשמה ושימוש בחינם לקבלנים" },
             ].map((item) => (
               <div
                 key={item.text}
-                className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/5 px-4 py-3"
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
               >
-                <item.icon className="h-4 w-4 shrink-0 text-primary" />
-                <span className="text-sm font-medium text-foreground/90">{item.text}</span>
+                <item.icon className="h-4 w-4 shrink-0 text-primary-glow" />
+                <span className="text-sm font-medium text-white/90">{item.text}</span>
               </div>
             ))}
           </div>

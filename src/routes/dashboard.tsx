@@ -64,15 +64,13 @@ const STATUS_META: Record<
   },
   awarded: {
     label: "נבחר זוכה",
-    chipClass:
-      "inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2.5 py-0.5 text-[11px] font-bold text-primary",
+    chipClass: "status-chip-approved",
     barClass: "status-bar-primary",
     icon: Trophy,
   },
   closed: {
     label: "סגורה",
-    chipClass:
-      "inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-2.5 py-0.5 text-[11px] font-bold text-muted-foreground",
+    chipClass: "status-chip-muted",
     barClass: "status-bar-none",
     icon: CheckCircle2,
   },
@@ -413,7 +411,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <div className="section-header-icon">
-            <Activity className="h-3.5 w-3.5 text-primary-foreground" />
+            <Activity className="h-3.5 w-3.5" />
           </div>
           <span className="text-sm font-bold">מודיעין כוח עבודה</span>
           <span className="info-chip">{monthName}</span>
@@ -422,7 +420,7 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
           {stats.projectsNeedingSite > 0 && (
             <Link
               to="/contractor/projects"
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 transition-colors hover:bg-amber-500/20"
+              className="status-chip-pending transition-opacity hover:opacity-80"
             >
               <AlertTriangle className="h-3 w-3" />
               {stats.projectsNeedingSite} פרויקטים ללא GPS
@@ -533,12 +531,12 @@ function WorkforceIntelligencePanel({ stats }: { stats: ContractorStats }) {
             </div>
           )}
           {monthly.pending > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-600">
+            <span className="status-chip-pending">
               <Clock className="h-3 w-3" /> {monthly.pending} ממתינים לאישור
             </span>
           )}
           {monthly.rejected > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-semibold text-destructive">
+            <span className="status-chip-rejected">
               <XCircle className="h-3 w-3" /> {monthly.rejected} נדחו — בדוק תיקונים
             </span>
           )}
@@ -769,7 +767,7 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button asChild className="bg-gradient-primary text-primary-foreground shadow-elegant">
               <Link to="/new-request">
-                <Plus className="ms-1 h-4 w-4" /> פרסם בקשה ראשונה
+                <Plus className="ms-1 h-4 w-4" /> פרסם בקשת כוח אדם
               </Link>
             </Button>
             <Button asChild variant="outline">

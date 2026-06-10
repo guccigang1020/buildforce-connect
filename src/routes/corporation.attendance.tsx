@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listCorporationAttendance, getMonthlySummary } from "@/lib/attendance.functions";
 import { AppShell } from "@/components/app-shell";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Clock,
   Users,
@@ -14,6 +15,7 @@ import {
   AlertTriangle,
   Filter,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 
 type CorpAttendanceRecord = {
@@ -57,6 +59,14 @@ export const Route = createFileRoute("/corporation/attendance")({
 });
 
 function Page() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) navigate({ to: "/login", replace: true });
+  }, [loading, user, navigate]);
+
   const list = useServerFn(listCorporationAttendance);
   const monthly = useServerFn(getMonthlySummary);
   const today = new Date();
@@ -65,6 +75,7 @@ function Page() {
   const { data, isLoading } = useQuery({
     queryKey: ["corp-att"],
     queryFn: () => list({ data: {} }),
+    enabled: !!user,
   });
   const { data: m } = useQuery({
     queryKey: ["corp-monthly", today.getFullYear(), today.getMonth() + 1],
@@ -72,6 +83,7 @@ function Page() {
       monthly({
         data: { role: "corporation", year: today.getFullYear(), month: today.getMonth() + 1 },
       }),
+    enabled: !!user,
   });
 
   // Previous month for real trend computation
@@ -86,6 +98,7 @@ function Page() {
           month: prevMonthDate.getMonth() + 1,
         },
       }),
+    enabled: !!user,
   });
 
   const records: CorpAttendanceRecord[] = data?.records ?? [];
@@ -136,6 +149,16 @@ function Page() {
     { key: "approved", label: "אושר" },
     { key: "exception", label: "חריגות" },
   ];
+
+  if (loading || !user) {
+    return (
+      <AppShell title="נוכחות צוותים">
+        <div className="grid place-items-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell title="נוכחות צוותים">
@@ -368,7 +391,7 @@ function Page() {
                         )}
 
                         {r.status === "exception" && (
-                          <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 text-xs text-status-disputed">
+                          <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-status-disputed">
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                             חריגה דווחה — ממתין לאישור קבלן
                           </div>
@@ -426,7 +449,7 @@ function KpiCard({
           className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
             trend.positive
               ? "bg-emerald-500/10 text-status-approved"
-              : "bg-orange-500/10 text-status-disputed"
+              : "bg-amber-500/10 text-status-disputed"
           }`}
         >
           {trend.positive ? (

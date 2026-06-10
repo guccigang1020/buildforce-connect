@@ -195,11 +195,11 @@ function Hero() {
                 </div>
               </div>
 
-              <div className="mt-5 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-400">
+              <div className="mt-5 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700">
                 <span className="inline-flex items-center gap-1.5">
                   <TrendingDown className="h-3.5 w-3.5" /> המחיר ירד ב-7% מאז הפרסום
                 </span>
-                <span dir="ltr" className="text-emerald-400/90">
+                <span dir="ltr" className="savings-badge">
                   חיסכון: ₪14/שעה
                 </span>
               </div>
@@ -279,8 +279,8 @@ function Hero() {
 /* ---------- LIVE STATS BAR ---------- */
 function LiveStatsBar() {
   const stats = [
-    { value: "12,500+", label: "עובדים בפלטפורמה", icon: Users },
-    { value: "47", label: "תאגידים מאומתים", icon: BadgeCheck },
+    { value: "מכרז הפוך", label: "תאגידים מתחרים על המחיר שלך", icon: Users },
+    { value: "מאומתים", label: "רק תאגידים שעברו בדיקה", icon: BadgeCheck },
     { value: "< 24h", label: "עד הצעה ראשונה", icon: Clock },
     { value: "₪0", label: "עלות לקבלן", icon: TrendingUp },
   ];
@@ -446,18 +446,16 @@ function HowItWorks() {
 /* ---------- CATEGORIES ---------- */
 function Categories() {
   const cats = [
-    { icon: Hammer, name: "טפסנים", count: 3200, desc: "טפסנות מודולרית, יציקות, קונסטרוקציה." },
-    { icon: Wrench, name: "ברזלנים", count: 2800, desc: "כיפוף, קשירה, רשתות, מוטות מאמץ." },
-    { icon: Layers, name: "רצפים", count: 1950, desc: "קרמיקה, גרניט פורצלן, אבן טבעית." },
-    { icon: PaintRoller, name: "טייחים", count: 1500, desc: "טיח פנים, חוץ, שכבות יסוד וגמר." },
+    { icon: Hammer, name: "טפסנים", desc: "טפסנות מודולרית, יציקות, קונסטרוקציה." },
+    { icon: Wrench, name: "ברזלנים", desc: "כיפוף, קשירה, רשתות, מוטות מאמץ." },
+    { icon: Layers, name: "רצפים", desc: "קרמיקה, גרניט פורצלן, אבן טבעית." },
+    { icon: PaintRoller, name: "טייחים", desc: "טיח פנים, חוץ, שכבות יסוד וגמר." },
     {
       icon: Building2,
       name: "עובדי גמר",
-      count: 2100,
       desc: "גבס, צבע, מסגרות פנים, עבודות עדינות.",
     },
   ];
-  const total = cats.reduce((s, c) => s + c.count, 0);
 
   return (
     <section id="categories" className="border-y border-border/60 bg-card/30 py-20 md:py-28">
@@ -472,54 +470,41 @@ function Categories() {
               כל בעלי המקצוע. תאגיד אחד.
             </h2>
           </div>
-          {/* Total count pill */}
+          {/* Value prop pill */}
           <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 px-6 py-4 text-center">
-            <div className="text-3xl font-black text-primary">{total.toLocaleString()}+</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">עובדים מקצועיים בפלטפורמה</div>
+            <div className="text-lg font-black text-primary">כל מקצועות הבנייה</div>
+            <div className="mt-0.5 text-xs text-muted-foreground">בפלטפורמה אחת</div>
           </div>
         </div>
 
-        {/* Category rows — horizontal list with worker-count bars */}
+        {/* Category rows */}
         <div className="mt-10 divide-y divide-border/40 rounded-2xl border border-border/60 bg-card">
-          {cats.map((c, i) => {
-            const barWidth = Math.round((c.count / cats[0].count) * 100);
-            return (
-              <div
-                key={c.name}
-                className="group flex items-center gap-4 px-6 py-5 transition-colors hover:bg-primary/3 first:rounded-t-2xl last:rounded-b-2xl"
-              >
-                {/* Rank number */}
-                <div className="w-6 shrink-0 text-center text-sm font-bold text-muted-foreground">
-                  {i + 1}
-                </div>
-                {/* Icon */}
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
-                  <c.icon className="h-5 w-5" />
-                </div>
-                {/* Name + desc */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="text-lg font-bold">{c.name}</span>
-                    <span className="text-xs text-muted-foreground">{c.desc}</span>
-                  </div>
-                  {/* Proportional bar */}
-                  <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted/60">
-                    <div
-                      className="h-full rounded-full bg-gradient-primary transition-all duration-700"
-                      style={{ width: `${barWidth}%` }}
-                    />
-                  </div>
-                </div>
-                {/* Worker count */}
-                <div className="shrink-0 text-right">
-                  <div className="text-lg font-extrabold text-primary">
-                    {c.count.toLocaleString()}+
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">עובדים</div>
+          {cats.map((c, i) => (
+            <div
+              key={c.name}
+              className="group flex items-center gap-4 px-6 py-5 transition-colors hover:bg-primary/3 first:rounded-t-2xl last:rounded-b-2xl"
+            >
+              {/* Rank number */}
+              <div className="w-6 shrink-0 text-center text-sm font-bold text-muted-foreground">
+                {i + 1}
+              </div>
+              {/* Icon */}
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant">
+                <c.icon className="h-5 w-5" />
+              </div>
+              {/* Name + desc */}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-3">
+                  <span className="text-lg font-bold">{c.name}</span>
+                  <span className="text-xs text-muted-foreground">{c.desc}</span>
                 </div>
               </div>
-            );
-          })}
+              {/* Verified chip */}
+              <div className="shrink-0">
+                <span className="status-chip-approved text-xs">מאומת</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -580,16 +565,16 @@ function WhyTrust() {
             {/* Proof stats grid */}
             <div className="mt-8 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-5">
-                <div className="text-4xl font-black text-primary md:text-5xl">47+</div>
+                <div className="text-2xl font-black text-primary md:text-3xl">מאומתים</div>
                 <div className="mt-1.5 text-sm font-semibold text-foreground">תאגידים מאומתים</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">רישוי ביטוח ובטיחות</div>
               </div>
               <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-5">
-                <div className="text-4xl font-black text-emerald-400 md:text-5xl" dir="ltr">
+                <div className="text-4xl font-black text-emerald-600 md:text-5xl" dir="ltr">
                   &lt;24h
                 </div>
                 <div className="mt-1.5 text-sm font-semibold text-foreground">עד הצעה ראשונה</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">ממוצע בפלטפורמה</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">יעד השירות שלנו</div>
               </div>
               <div className="rounded-2xl border border-border/60 bg-card p-5">
                 <div className="text-4xl font-black text-foreground md:text-5xl">₪0</div>
@@ -642,13 +627,13 @@ function SavingsShowcase() {
 
         <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-5">
           {/* Big number */}
-          <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/12 via-emerald-500/5 to-transparent p-8 lg:col-span-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-400">
+          <div className="relative overflow-hidden rounded-3xl border border-savings/25 bg-savings-soft p-8 lg:col-span-3">
+            <div className="savings-badge inline-flex items-center gap-1.5">
               <TrendingDown className="h-3.5 w-3.5" /> חיסכון חודשי לדוגמה
             </div>
-            <div className="mt-4 text-6xl font-black tracking-tight text-emerald-400 md:text-7xl">
+            <div className="mt-4 text-6xl font-black tracking-tight text-savings md:text-7xl">
               <span dir="ltr">₪18,000</span>
-              <span className="mr-2 align-middle text-2xl font-bold text-emerald-400/90">
+              <span className="mr-2 align-middle text-2xl font-bold text-savings/90">
                 / חודש
               </span>
             </div>
@@ -660,7 +645,7 @@ function SavingsShowcase() {
               <span className="text-muted-foreground">×</span>
               <span className="font-bold">6 ₪ פער/שעה</span>
               <span className="text-muted-foreground">=</span>
-              <span className="font-extrabold text-emerald-400" dir="ltr">
+              <span className="font-extrabold text-savings" dir="ltr">
                 ₪18,000
               </span>
             </div>

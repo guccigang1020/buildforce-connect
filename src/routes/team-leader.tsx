@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import {
   listMyTeamLeaderProjects,
@@ -104,11 +105,19 @@ function Page() {
 }
 
 function AuthedTeamLeaderPage() {
+  const { session, loading } = useAuth();
+  const navigate = useNavigate();
   const list = useServerFn(listMyTeamLeaderProjects);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["tl-teams"],
     queryFn: () => list(),
+    enabled: !!session,
   });
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) void navigate({ to: "/login", replace: true });
+  }, [loading, session, navigate]);
 
   const allTeams: Team[] = data?.teams ?? [];
   const teams = allTeams;

@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -146,6 +147,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const PUBLIC_COOKIE_PATHS = new Set(["/", "/login", "/signup", "/privacy", "/terms"]);
+
+function ConditionalCookieConsent() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (!PUBLIC_COOKIE_PATHS.has(pathname)) return null;
+  return <CookieConsent />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -154,7 +163,7 @@ function RootComponent() {
       <AuthProvider>
         <Outlet />
         <Toaster richColors position="top-center" />
-        <CookieConsent />
+        <ConditionalCookieConsent />
       </AuthProvider>
     </QueryClientProvider>
   );
