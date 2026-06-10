@@ -340,3 +340,35 @@ manual via Playwright MCP. Test suite to be built in Phase 4.
 6. After every item: apply the Definition of Done checklist and update this
    file. Work on a branch; do not commit/push or touch the real DB without
    explicit approval.
+
+---
+
+## Makeover run (branch ido/makeover, 2026-06-10)
+
+**Role separation (the owner's #1 ask) — DONE & enforced at 3 layers:**
+- App: `selfBootstrapAdmin` + admin/corp role-toggle UI deleted; roles fixed at
+  signup; OAuth redirect fixed to current origin.
+- Data: dedicated `admin@buildforce.dev` (admin-ONLY) seeded; mixed
+  corporation+admin account cleaned (scripts/seed-admin.mjs).
+- Schema: `20260610210000_role_separation_hardening.sql` — revokes client role
+  writes, safe `ensure_user_bootstrap`, one-role-per-user unique index,
+  mixed-data cleanup. (Needs one SQL-editor run on dev + prod — see
+  LOVABLE_HANDOFF.md.)
+
+**Design system — light "calm, statusful, fast"** (Notion/Monday/Linear):
+full token rewrite in styles.css (light slate, blue #1D4ED8, Rubik), status
+pills standardized, savings = the only orange, fake stats + dead video removed,
+coming-soon treatment redesigned. Page passes across all routes (4 subagents).
+
+**Flows — verified via headless Playwright:**
+- Full money loop: 2 sealed bids → savings hero ₪61,600 (math exact) → award →
+  winner identity + contacts revealed, loser stays anonymous. Zero console errors.
+- Award double-click window closed (buttons locked through refetch, verified t+1s).
+- Route sweep: 15 routes × 4 access levels — zero console errors, all guards work.
+- Validations: bid form (price 50–500, workers, date), wizard disabled-Next hint,
+  server errors surfaced as Hebrew toasts.
+
+**Data hygiene:** corrupt year-2211 request deleted; demo accounts:
+contractor.demo@ / corp.demo@buildforce.dev (Demo2026!), admin@buildforce.dev.
+
+**Prod:** untouched. Everything Lovable must run/do is in `LOVABLE_HANDOFF.md`.
