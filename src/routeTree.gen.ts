@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NewRequestRouteImport } from './routes/new-request'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GoRouteImport } from './routes/go'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CorporationDashboardRouteImport } from './routes/corporation-dashboard'
@@ -90,6 +91,11 @@ const NewRequestRoute = NewRequestRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoRoute = GoRouteImport.update({
+  id: '/go',
+  path: '/go',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/go': typeof GoRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/privacy': typeof PrivacyRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/go': typeof GoRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/privacy': typeof PrivacyRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/go': typeof GoRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/privacy': typeof PrivacyRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
+    | '/go'
     | '/login'
     | '/new-request'
     | '/privacy'
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
+    | '/go'
     | '/login'
     | '/new-request'
     | '/privacy'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
+    | '/go'
     | '/login'
     | '/new-request'
     | '/privacy'
@@ -423,6 +435,7 @@ export interface RootRouteChildren {
   CorporationDashboardRoute: typeof CorporationDashboardRoute
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GoRoute: typeof GoRoute
   LoginRoute: typeof LoginRoute
   NewRequestRoute: typeof NewRequestRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -522,6 +535,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/go': {
+      id: '/go'
+      path: '/go'
+      fullPath: '/go'
+      preLoaderRoute: typeof GoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -687,6 +707,7 @@ const rootRouteChildren: RootRouteChildren = {
   CorporationDashboardRoute: CorporationDashboardRoute,
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GoRoute: GoRoute,
   LoginRoute: LoginRoute,
   NewRequestRoute: NewRequestRoute,
   PrivacyRoute: PrivacyRoute,

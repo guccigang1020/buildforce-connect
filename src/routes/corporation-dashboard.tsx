@@ -132,13 +132,13 @@ function CorporationDashboard() {
 
       {/* ── Status alerts ── */}
       {!isCorporation && (
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm status-bar-pending">
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm status-bar-pending">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין להפעלת התפקיד.</span>
         </div>
       )}
       {isCorporation && !isApproved && (
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm status-bar-pending">
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm status-bar-pending">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.</span>
         </div>
@@ -168,7 +168,7 @@ function CorporationDashboard() {
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             זכיות
           </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-emerald-600" dir="ltr">
+          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-approved" dir="ltr">
             {isLoading ? "…" : stats.won}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
@@ -183,7 +183,7 @@ function CorporationDashboard() {
           </div>
           <div
             className={`mt-1 text-2xl font-semibold tabular-nums ${
-              !isLoading && stats.winRate > 0 ? "text-emerald-600" : ""
+              !isLoading && stats.winRate > 0 ? "text-status-approved" : ""
             }`}
             dir="ltr"
           >
@@ -253,9 +253,9 @@ function PriceIntelligencePanel({
               <span
                 className={`w-10 text-right text-xs font-semibold ${
                   (band.rate ?? 0) >= 60
-                    ? "text-emerald-600"
+                    ? "text-status-approved"
                     : (band.rate ?? 0) >= 30
-                      ? "text-amber-600"
+                      ? "text-status-pending"
                       : "text-destructive"
                 }`}
                 dir="ltr"
@@ -276,7 +276,7 @@ function PriceIntelligencePanel({
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
               <span className="text-[11px] text-muted-foreground">ממוצע בזכיות:</span>
-              <span className="text-xs font-semibold text-emerald-600">
+              <span className="text-xs font-semibold text-status-approved">
                 <span dir="ltr">₪{avgWinPrice}</span> לשעה
               </span>
             </div>

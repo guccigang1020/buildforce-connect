@@ -85,25 +85,19 @@ export function SiteNav() {
                   </Link>
                 </Button>
               )}
-              {isCorporation ? (
+              {isCorporation && (
                 <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/corporation-dashboard">
                     <Building2 className="h-4 w-4" />
                     {profile?.company_name?.split(" ")[0] ?? "לוח תאגיד"}
                   </Link>
                 </Button>
-              ) : (
+              )}
+              {isContractor && (
                 <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/dashboard">
                     <LayoutDashboard className="h-4 w-4" />
                     {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
-                  </Link>
-                </Button>
-              )}
-              {isContractor && (
-                <Button variant="ghost" size="sm" asChild className="gap-1.5">
-                  <Link to="/contractor/attendance">
-                    <ClipboardList className="h-4 w-4" /> נוכחות
                   </Link>
                 </Button>
               )}
@@ -181,23 +175,17 @@ export function SiteNav() {
                       </Link>
                     </Button>
                   )}
-                  {isCorporation ? (
+                  {isCorporation && (
                     <Button variant="outline" asChild onClick={() => setOpen(false)}>
                       <Link to="/corporation-dashboard">
                         <Building2 className="me-1 h-4 w-4" /> לוח תאגיד
                       </Link>
                     </Button>
-                  ) : (
-                    <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                      <Link to="/dashboard">
-                        <User className="me-1 h-4 w-4" /> דשבורד
-                      </Link>
-                    </Button>
                   )}
                   {isContractor && (
                     <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                      <Link to="/contractor/attendance">
-                        <ClipboardList className="me-1 h-4 w-4" /> נוכחות
+                      <Link to="/dashboard">
+                        <User className="me-1 h-4 w-4" /> דשבורד
                       </Link>
                     </Button>
                   )}

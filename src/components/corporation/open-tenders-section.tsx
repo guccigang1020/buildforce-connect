@@ -123,7 +123,7 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                         {dl ? (
                           <span
                             className={`inline-flex items-center gap-1 text-xs font-semibold ${
-                              dl.urgent ? "text-destructive" : "text-amber-600"
+                              dl.urgent ? "text-destructive" : "text-status-pending"
                             }`}
                             dir="ltr"
                           >

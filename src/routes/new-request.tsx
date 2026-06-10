@@ -122,8 +122,10 @@ function NewRequestPage() {
   });
 
   useEffect(() => {
+    // Silent redirect — landing-page CTAs route logged-out visitors to signup,
+    // so reaching here logged-out is a deep link; send to login without an
+    // error toast (nothing went wrong from the user's perspective).
     if (!loading && !session) {
-      toast.error("יש להתחבר כדי לפרסם בקשה");
       navigate({ to: "/login" });
     }
   }, [loading, session, navigate]);
@@ -294,7 +296,7 @@ function NewRequestPage() {
                         isCurrent
                           ? "text-primary"
                           : isCompleted
-                            ? "text-emerald-600"
+                            ? "text-status-approved"
                             : "text-muted-foreground/50"
                       }`}
                     >
@@ -543,7 +545,7 @@ function NewRequestPage() {
                   </div>
                 </div>
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
                   <input
                     type="checkbox"
                     checked={form.acceptTerms}

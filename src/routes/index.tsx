@@ -46,16 +46,21 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+// Role-aware primary CTA: logged-out visitors go to signup (never to a
+// protected page that bounces them with an error); logged-in users go to the
+// action that fits their single role.
+function usePrimaryCta(): "/signup" | "/admin" | "/corporation-dashboard" | "/new-request" {
+  const { session, hasRole } = useAuth();
+  if (!session) return "/signup";
+  if (hasRole("admin")) return "/admin";
+  if (hasRole("corporation")) return "/corporation-dashboard";
+  return "/new-request";
+}
+
 function Home() {
-  const { session, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && session) {
-      void navigate({ to: "/dashboard" });
-    }
-  }, [loading, session, navigate]);
-
+  // Logged-in users may browse the landing page freely — the nav and CTAs
+  // route them to their own area (the old auto-redirect bounced admins
+  // through the contractor dashboard and broke back-navigation).
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteNav />
@@ -79,6 +84,7 @@ function Home() {
 
 /* ---------- HERO ---------- */
 function Hero() {
+  const heroCta = usePrimaryCta();
   return (
     <section className="relative overflow-hidden">
       {/* Background image with flat overlay */}
@@ -105,7 +111,7 @@ function Hero() {
           <h1 className="text-display animate-fade-in">
             הם נלחמים.
             <br />
-            <span className="text-primary">אתה מרוויח.</span>
+            <span className="text-gradient-accent">אתה מרוויח.</span>
             <br />
             <span className="opacity-90">במחיר הכי נמוך.</span>
           </h1>
@@ -114,8 +120,8 @@ function Hero() {
             המחיר למטה. שקיפות מלאה, החלטה אצלך, ללא עמלה לקבלן.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="h-12 px-8 text-base font-semibold">
-              <Link to="/new-request">
+            <Button asChild size="lg" className="h-12 px-8 text-base font-semibold shadow-elegant">
+              <Link to={heroCta}>
                 פרסם בקשת כוח אדם
                 <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
               </Link>
@@ -149,8 +155,8 @@ function Hero() {
           <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm animate-fade-in">
             <div className="absolute -top-3 right-6 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
               </span>
               מכרז חי
             </div>
@@ -167,7 +173,7 @@ function Hero() {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/8 px-3 py-2 text-xs font-semibold text-emerald-700">
+            <div className="mt-5 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/8 px-3 py-2 text-xs font-semibold text-status-approved">
               <span className="inline-flex items-center gap-1.5">
                 <TrendingDown className="h-3.5 w-3.5" /> המחיר ירד ב-7% מאז הפרסום
               </span>
@@ -179,7 +185,7 @@ function Hero() {
             <div className="mt-6 space-y-3">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <span>הצעות שהתקבלו · 4</span>
-                <span className="inline-flex items-center gap-1 normal-case text-emerald-600">
+                <span className="inline-flex items-center gap-1 normal-case text-status-approved">
                   <Trophy className="h-3 w-3" /> מובילה
                 </span>
               </div>
@@ -196,7 +202,7 @@ function Hero() {
               ].map((c, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-between gap-2 rounded-lg border p-3 transition-colors ${c.best ? "border-emerald-500/40 bg-emerald-500/5" : "border-border/60 bg-secondary/40 hover:border-primary/40"}`}
+                  className={`flex items-center justify-between gap-2 rounded-lg border p-3 transition-colors ${c.best ? "border-emerald-500/40 bg-emerald-500/10" : "border-border/60 bg-secondary/40 hover:border-primary/40"}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-muted text-xs font-bold">
@@ -217,7 +223,7 @@ function Hero() {
                   <div className="flex items-center gap-2">
                     <div className="text-left" dir="ltr">
                       <div
-                        className={`text-base font-bold tabular-nums ${c.best ? "text-emerald-600" : ""}`}
+                        className={`text-base font-bold tabular-nums ${c.best ? "text-status-approved" : ""}`}
                       >
                         {c.price}
                       </div>
@@ -522,7 +528,7 @@ function WhyTrust() {
                 <div className="mt-0.5 text-xs text-muted-foreground">רישוי ביטוח ובטיחות</div>
               </div>
               <div className="rounded-lg border border-border bg-card p-5">
-                <div className="text-2xl font-bold text-emerald-600 md:text-3xl tabular-nums" dir="ltr">
+                <div className="text-2xl font-bold text-status-approved md:text-3xl tabular-nums" dir="ltr">
                   &lt;24h
                 </div>
                 <div className="mt-1.5 text-sm font-semibold text-foreground">עד הצעה ראשונה</div>
@@ -682,6 +688,7 @@ function EarlyAccess() {
 
 /* ---------- CTA BANNER ---------- */
 function CTABanner() {
+  const bannerCta = usePrimaryCta();
   return (
     <section className="px-4 pb-20 md:px-6 md:pb-28">
       <div className="mx-auto max-w-7xl rounded-2xl border border-border bg-card p-8 md:p-14">
@@ -696,7 +703,7 @@ function CTABanner() {
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
             <Button asChild size="lg" className="h-12 px-7 text-base font-semibold">
-              <Link to="/new-request">
+              <Link to={bannerCta}>
                 פרסם בקשה עכשיו
                 <ArrowLeft className="mr-2 h-4 w-4" />
               </Link>
@@ -977,7 +984,7 @@ function SideCard({
   const iconCls =
     color === "primary"
       ? "bg-primary/10 text-primary"
-      : "bg-emerald-500/10 text-emerald-600";
+      : "bg-emerald-500/10 text-status-approved";
   return (
     <div className="enterprise-card rounded-xl p-6 md:p-8">
       <div className="flex items-center gap-3">

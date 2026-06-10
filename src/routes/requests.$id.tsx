@@ -47,11 +47,11 @@ const OFFER_STATUS_LABELS: Record<string, string> = {
 
 function competitionLevel(count: number): { label: string; color: string } {
   if (count === 0)
-    return { label: "שקטה", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" };
+    return { label: "שקטה", color: "bg-emerald-500/10 text-status-approved border-emerald-500/20" };
   if (count < 3)
-    return { label: "מתחילה", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" };
+    return { label: "מתחילה", color: "bg-amber-500/10 text-status-pending border-amber-500/20" };
   if (count < 6)
-    return { label: "פעילה", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" };
+    return { label: "פעילה", color: "bg-amber-500/15 text-status-pending border-amber-500/30" };
   return {
     label: "חמה מאוד 🔥",
     color: "bg-destructive/10 text-destructive border-destructive/20",
@@ -189,7 +189,7 @@ function RequestPage() {
                   <>
                     {" · "}
                     <span
-                      className={`font-semibold ${deadlineUrgent ? "text-destructive" : "text-amber-600"}`}
+                      className={`font-semibold ${deadlineUrgent ? "text-destructive" : "text-status-pending"}`}
                     >
                       <Clock className="inline h-3 w-3 me-0.5 align-[-1px]" />
                       {deadlineUrgent

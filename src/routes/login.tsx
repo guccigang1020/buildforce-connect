@@ -40,7 +40,7 @@ function LoginPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/dashboard" });
+    if (!loading && session) navigate({ to: "/go" });
   }, [loading, session, navigate]);
 
   const onSubmit = async (data: LoginValues) => {
@@ -55,7 +55,7 @@ function LoginPage() {
       return;
     }
     toast.success("ברוך הבא!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/go" });
   };
 
   const handleGoogle = async () => {
@@ -68,7 +68,7 @@ function LoginPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/go" });
   };
 
   return (
@@ -191,6 +191,11 @@ function LoginPage() {
           <Link to="/signup" className="font-medium text-primary hover:underline">
             הירשם בחינם
           </Link>
+        </p>
+
+        <p className="mt-3 text-center text-xs text-muted-foreground/70">
+          מנהלי מערכת מתחברים מדף זה עם חשבון המנהל הייעודי — ומועברים אוטומטית
+          ללוח הניהול.
         </p>
       </div>
     </div>

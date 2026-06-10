@@ -114,7 +114,7 @@ function SignupPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/dashboard" });
+    if (!loading && session) navigate({ to: "/go" });
   }, [loading, session, navigate]);
 
   const onSubmit = async (data: FormValues) => {
@@ -223,7 +223,7 @@ function SignupPage() {
 
     if (signupData.session) {
       toast.success("נרשמת בהצלחה!");
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/go" });
     } else {
       toast.success("נרשמת בהצלחה! בדוק/י את האימייל לאישור החשבון.");
       navigate({ to: "/login" });
@@ -240,7 +240,7 @@ function SignupPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/go" });
   };
 
   const pickFile =
@@ -620,7 +620,7 @@ function FileField({
           error
             ? "border-destructive/60 bg-destructive/5"
             : file
-              ? "border-emerald-500/60 bg-emerald-500/5"
+              ? "border-emerald-500/60 bg-emerald-500/10"
               : "border-border/60 bg-card/30 hover:border-primary/50"
         }`}
       >

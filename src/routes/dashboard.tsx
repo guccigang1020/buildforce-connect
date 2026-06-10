@@ -195,7 +195,7 @@ function DashboardPage() {
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             זכיות
           </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-emerald-600" dir="ltr">
+          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-approved" dir="ltr">
             {isLoading ? "…" : stats.awarded}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
@@ -321,7 +321,7 @@ function RequestsTable({ requests }: { requests: MyRequest[] }) {
                 </td>
                 <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
                   {r.min_price != null ? (
-                    <span className="font-medium text-emerald-600">₪{r.min_price}</span>
+                    <span className="font-medium text-status-approved">₪{r.min_price}</span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
@@ -366,7 +366,7 @@ function RequestsTable({ requests }: { requests: MyRequest[] }) {
                   {r.offers_count} הצעות
                 </div>
                 {r.min_price != null && (
-                  <div className="text-xs font-medium text-emerald-600 tabular-nums">
+                  <div className="text-xs font-medium text-status-approved tabular-nums">
                     <span dir="ltr">₪{r.min_price}</span> לשעה
                   </div>
                 )}

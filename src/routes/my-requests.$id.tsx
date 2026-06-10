@@ -213,7 +213,7 @@ function MyRequestPage() {
                   request.status === "open" && (
                     <span
                       className={`mr-2 font-medium ${
-                        deadlineHours < 24 ? "text-destructive" : "text-amber-600"
+                        deadlineHours < 24 ? "text-destructive" : "text-status-pending"
                       }`}
                     >
                       ·{" "}
@@ -285,8 +285,10 @@ function MyRequestPage() {
                     / חודש
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground" dir="ltr">
-                  {savingsPerHour} ₪/שעה × {totalWorkers} עובדים × {HOURS_PER_WORKER_MONTH} שעות
+                <p className="mt-2 text-xs text-muted-foreground">
+                  <span dir="ltr">₪{savingsPerHour}</span> לשעה ×{" "}
+                  <span dir="ltr">{totalWorkers}</span> עובדים ×{" "}
+                  <span dir="ltr">{HOURS_PER_WORKER_MONTH}</span> שעות בחודש
                 </p>
               </div>
             )}
@@ -328,8 +330,7 @@ function MyRequestPage() {
             {minPrice > 0 && (
               <span className="mr-2">
                 <span className="savings-badge">
-                  <TrendingDown className="h-3 w-3" /> מינ׳{" "}
-                  <span dir="ltr">{minPrice} ₪/שעה</span>
+                  <TrendingDown className="h-3 w-3" /> מינ׳ <span dir="ltr">₪{minPrice}</span> לשעה
                 </span>
               </span>
             )}
@@ -382,7 +383,7 @@ function MyRequestPage() {
                         <tr
                           className={`premium-table-row ${
                             isWinner
-                              ? "bg-emerald-50 dark:bg-emerald-950/20"
+                              ? "bg-emerald-500/10"
                               : ""
                           } ${isRejected ? "opacity-50" : ""}`}
                         >
@@ -568,12 +569,12 @@ function MyRequestPage() {
                           !isRejected && (
                             <tr>
                               <td colSpan={8} className="px-4 pb-3 pt-0">
-                                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-                                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+                                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                                  <div className="flex items-center gap-1.5 text-xs font-semibold text-status-pending">
                                     <AlertTriangle className="h-3.5 w-3.5" /> תנאי התאגיד
                                     לזכייה
                                   </div>
-                                  <ul className="mt-1.5 space-y-0.5 text-xs text-amber-700">
+                                  <ul className="mt-1.5 space-y-0.5 text-xs text-status-pending">
                                     {o.requires_personal_guarantee && (
                                       <li>• ערבות אישית מהקבלן</li>
                                     )}
@@ -616,7 +617,7 @@ function MyRequestPage() {
                     <div
                       key={o.id}
                       className={`px-4 py-3 ${
-                        isWinner ? "bg-emerald-50 dark:bg-emerald-950/20" : ""
+                        isWinner ? "bg-emerald-500/10" : ""
                       } ${isRejected ? "opacity-50" : ""}`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -709,9 +710,9 @@ function MyRequestPage() {
 
         {/* ── Win panel ── */}
         {winningOffer && isOwner && (
-          <div className="enterprise-card border-emerald-500/30 bg-emerald-500/5 p-5">
+          <div className="enterprise-card border-emerald-500/30 bg-emerald-500/10 p-5">
             <h4 className="mb-3 flex items-center gap-2 border-b border-border pb-3 text-sm font-semibold">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" /> הזכייה הושלמה
+              <CheckCircle2 className="h-4 w-4 text-status-approved" /> הזכייה הושלמה
             </h4>
             <p className="text-sm text-muted-foreground">
               פרטי הקשר נחשפו לשני הצדדים. אנא צרו קשר תוך 48 שעות.
@@ -747,7 +748,7 @@ function MyRequestPage() {
                 </div>
               ) : null;
             })()}
-            <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-700">
+            <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-status-pending">
               כל תקשורת מסחרית חייבת לעבור דרך הפלטפורמה.
             </div>
           </div>

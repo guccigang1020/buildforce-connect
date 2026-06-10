@@ -237,7 +237,7 @@ function AdminDashboard() {
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             זכיות
           </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-emerald-600" dir="ltr">
+          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-approved" dir="ltr">
             {recentAwards}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">30 יום אחרון</div>
