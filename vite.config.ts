@@ -52,6 +52,7 @@ export default defineConfig({
         /^@emotion\//,
         "react-transition-group",
         "stylis-plugin-rtl",
+        "stylis",
         "react-is",
         "hoist-non-react-statics",
       ],
