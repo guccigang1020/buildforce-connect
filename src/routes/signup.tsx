@@ -231,7 +231,7 @@ function SignupPage() {
   const handleGoogle = async () => {
     setFormError(null);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
+      redirect_uri: `${window.location.origin}/go`,
     });
     if (result.error) {
       setFormError("הרשמה עם Google נכשלה");
