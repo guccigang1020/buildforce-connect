@@ -9,7 +9,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { mapAuthError } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
@@ -61,19 +60,6 @@ function LoginPage() {
     navigate({ to: "/go" });
   };
 
-  const handleGoogle = async () => {
-    setFormError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/go`,
-    });
-    if (result.error) {
-      setFormError("התחברות עם Google נכשלה");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/go" });
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-sm">
@@ -89,22 +75,6 @@ function LoginPage() {
 
         {/* Form card */}
         <div className="rounded-lg border border-border p-6 space-y-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogle}
-            disabled={isSubmitting}
-          >
-            <GoogleIcon />
-            המשך עם Google
-          </Button>
-
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> או{" "}
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
           {formError && (
             <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
               <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
@@ -202,16 +172,5 @@ function LoginPage() {
         </p>
       </div>
     </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="#EA4335"
-        d="M12 11v3.6h5.1c-.2 1.4-1.6 4-5.1 4-3 0-5.5-2.5-5.5-5.6S8.9 7.4 12 7.4c1.7 0 2.9.7 3.5 1.3l2.4-2.3C16.4 5 14.4 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.7 0-.5-.1-.9-.1-1.3H12z"
-      />
-    </svg>
   );
 }

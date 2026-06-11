@@ -14,15 +14,13 @@ import EngineeringIcon from "@mui/icons-material/Engineering";
 import WorkIcon from "@mui/icons-material/Work";
 import DescriptionIcon from "@mui/icons-material/Description";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import HandshakeIcon from "@mui/icons-material/Handshake";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import TagIcon from "@mui/icons-material/Tag";
 import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import UploadIcon from "@mui/icons-material/Upload";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 import { mapAuthError } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
@@ -67,8 +65,6 @@ const signupSchema = baseSchema.superRefine((d, ctx) => {
 
 type FormValues = z.infer<typeof signupSchema>;
 
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
@@ -103,10 +99,6 @@ function SignupPage() {
 
   const role = watch("role");
 
-  const [licenseFile, setLicenseFile] = useState<File | null>(null);
-  const [booksFile, setBooksFile] = useState<File | null>(null);
-  const [licenseError, setLicenseError] = useState<string | null>(null);
-  const [booksError, setBooksError] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [agreedError, setAgreedError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -120,16 +112,6 @@ function SignupPage() {
 
     // Inline validation for controls that live outside react-hook-form.
     let ok = true;
-    if (data.role === "contractor") {
-      if (!licenseFile) {
-        setLicenseError("יש להעלות תעודת קבלן רשום (PDF / תמונה)");
-        ok = false;
-      }
-      if (!booksFile) {
-        setBooksError("יש להעלות אישור ניהול ספרים (PDF / תמונה)");
-        ok = false;
-      }
-    }
     if (!agreed) {
       setAgreedError("יש לאשר את תנאי השימוש כדי להמשיך");
       ok = false;
@@ -178,47 +160,6 @@ function SignupPage() {
       return;
     }
 
-    const userId = signupData.user?.id;
-
-    // Doc uploads require an authenticated session. When email confirmation is
-    // enabled there is no session yet, so we can't upload as the user here —
-    // tell them, but don't lose the signup.
-    if (userId && data.role === "contractor" && (licenseFile || booksFile)) {
-      if (signupData.session) {
-        const uploaded: { license?: string; books?: string } = {};
-        const upload = async (file: File, kind: "license" | "books") => {
-          const ext = file.name.split(".").pop() || "bin";
-          const path = `${userId}/${kind}-${Date.now()}.${ext}`;
-          const { error: upErr } = await supabase.storage
-            .from("contractor-docs")
-            .upload(path, file);
-          if (upErr) {
-            console.error(`Failed to upload ${kind} doc`, upErr);
-            return;
-          }
-          uploaded[kind] = path;
-        };
-        if (licenseFile) await upload(licenseFile, "license");
-        if (booksFile) await upload(booksFile, "books");
-
-        if (Object.keys(uploaded).length > 0) {
-          const { error: updErr } = await supabase
-            .from("profiles")
-            .update({
-              license_doc_url: uploaded.license ?? null,
-              books_cert_url: uploaded.books ?? null,
-            })
-            .eq("user_id", userId);
-          if (updErr) console.error("Failed to attach contractor docs to profile", updErr);
-        }
-        if (!uploaded.license || !uploaded.books) {
-          toast.warning("חלק מהמסמכים לא הועלו. ניתן להשלים אותם מההגדרות לאחר ההתחברות.");
-        }
-      } else {
-        toast.message("נרשמת! לאחר אימות האימייל תוכל/י להעלות את מסמכי הקבלן מההגדרות.");
-      }
-    }
-
     if (signupData.session) {
       toast.success("נרשמת בהצלחה!");
       navigate({ to: "/go" });
@@ -227,29 +168,6 @@ function SignupPage() {
       navigate({ to: "/login" });
     }
   };
-
-  const handleGoogle = async () => {
-    setFormError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/go`,
-    });
-    if (result.error) {
-      setFormError("הרשמה עם Google נכשלה");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/go" });
-  };
-
-  const pickFile =
-    (setFile: (f: File | null) => void, setErr: (m: string | null) => void) => (f: File | null) => {
-      if (f && f.size > MAX_FILE_BYTES) {
-        setErr("הקובץ גדול מ-5MB");
-        return;
-      }
-      setErr(null);
-      setFile(f);
-    };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
@@ -287,22 +205,6 @@ function SignupPage() {
                 sub="שולח הצעות לקבלנים"
               />
             </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogle}
-            disabled={isSubmitting}
-          >
-            <GoogleIcon />
-            הרשמה עם Google
-          </Button>
-
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> או{" "}
-            <span className="h-px flex-1 bg-border" />
           </div>
 
           {formError && (
@@ -420,26 +322,24 @@ function SignupPage() {
                     placeholder="100 / 131 / ..."
                   />
                 </div>
-                <FileField
-                  id="license_file"
-                  label="תעודת קבלן רשום"
-                  icon={DescriptionIcon}
-                  required
-                  file={licenseFile}
-                  onFile={pickFile(setLicenseFile, setLicenseError)}
-                  accept=".pdf,image/*"
-                  error={licenseError}
-                />
-                <FileField
-                  id="books_file"
-                  label="אישור ניהול ספרים"
-                  icon={MenuBookIcon}
-                  required
-                  file={booksFile}
-                  onFile={pickFile(setBooksFile, setBooksError)}
-                  accept=".pdf,image/*"
-                  error={booksError}
-                />
+                <ComingSoonDoc icon={DescriptionIcon} label="תעודת קבלן רשום" />
+                <ComingSoonDoc icon={MenuBookIcon} label="אישור ניהול ספרים" />
+              </div>
+            )}
+
+            {/* Corporation verification */}
+            {role === "corporation" && (
+              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+                <div className="flex items-start gap-2.5">
+                  <VerifiedUserIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-muted-foreground" />
+                  <div>
+                    <div className="text-sm font-medium">אימות תאגיד</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      הפרטים נבדקים ע"י הצוות תוך 24 שעות.
+                    </div>
+                  </div>
+                </div>
+                <ComingSoonDoc icon={HandshakeIcon} label="הסכם התקשרות מול קבלנים" />
               </div>
             )}
 
@@ -576,70 +476,18 @@ function Field({
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="#EA4335"
-        d="M12 11v3.6h5.1c-.2 1.4-1.6 4-5.1 4-3 0-5.5-2.5-5.5-5.6S8.9 7.4 12 7.4c1.7 0 2.9.7 3.5 1.3l2.4-2.3C16.4 5 14.4 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.7 0-.5-.1-.9-.1-1.3H12z"
-      />
-    </svg>
-  );
-}
-
-function FileField({
-  id,
-  label,
+function ComingSoonDoc({
   icon: Icon,
-  required,
-  file,
-  onFile,
-  accept,
-  error,
+  label,
 }: {
-  id: string;
-  label: string;
   icon: React.ComponentType<{ className?: string; sx?: object }>;
-  required?: boolean;
-  file: File | null;
-  onFile: (f: File | null) => void;
-  accept?: string;
-  error?: string | null;
+  label: string;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-medium">
-        {label}
-        {required && <span className="ms-1 text-destructive">*</span>}
-      </Label>
-      <label
-        htmlFor={id}
-        className={`flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 transition-colors ${
-          error
-            ? "border-destructive/60 bg-destructive/5"
-            : file
-              ? "border-emerald-500/60 bg-emerald-500/10"
-              : "border-border/60 bg-card/30 hover:border-primary/50"
-        }`}
-      >
-        {file ? (
-          <CheckCircleIcon sx={{ fontSize: 16 }} className="text-emerald-500" />
-        ) : (
-          <UploadIcon sx={{ fontSize: 16 }} className="text-muted-foreground" />
-        )}
-        <Icon sx={{ fontSize: 16 }} className="text-muted-foreground" />
-        <span className="flex-1 truncate text-xs text-muted-foreground">
-          {file ? file.name : "בחר קובץ (PDF / תמונה, עד 5MB)"}
-        </span>
-        <input
-          id={id}
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
-        />
-      </label>
-      {error && <FieldError message={error} />}
+    <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-card/30 px-3 py-2.5">
+      <Icon sx={{ fontSize: 16 }} className="text-muted-foreground" />
+      <span className="flex-1 truncate text-sm font-medium">{label}</span>
+      <span className="status-chip-muted shrink-0">בקרוב</span>
     </div>
   );
 }
