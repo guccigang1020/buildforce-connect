@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/public/hooks/auto-approve-attendance"
           .from("attendance_records")
           .update({ status: "auto_approved", approved_at: nowIso, auto_approved_at: nowIso } as never)
           .in("id", ids);
-        await supabaseAdmin.from("attendance_events").insert(
+        await (supabaseAdmin as any).from("attendance_events").insert(
           ids.map((id) => ({
             record_id: id,
             kind: "auto_approval" as const,

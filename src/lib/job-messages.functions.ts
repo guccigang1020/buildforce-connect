@@ -77,7 +77,7 @@ export const sendJobMessage = createServerFn({ method: "POST" })
       }
     }
 
-    const { data: msg, error } = await supabase
+    const { data: msg, error } = await (supabase as any)
       .from("job_request_messages")
       .insert({
         request_id: data.requestId,
@@ -88,7 +88,7 @@ export const sendJobMessage = createServerFn({ method: "POST" })
       .select("id, created_at")
       .single();
     if (error || !msg) throw new Error(error?.message || "Failed to send message");
-    return { id: msg.id, createdAt: msg.created_at };
+    return { id: (msg as any).id, createdAt: (msg as any).created_at };
   });
 
 export const listJobMessages = createServerFn({ method: "POST" })
@@ -114,7 +114,7 @@ export const listJobMessages = createServerFn({ method: "POST" })
     if (!isOwner && !isCorp) {
       throw new Error("אין לך הרשאה לצפות בשיחה זו");
     }
-    const { data: messages, error } = await supabase
+    const { data: messages, error } = await (supabase as any)
       .from("job_request_messages")
       .select("*")
       .eq("request_id", data.requestId)
