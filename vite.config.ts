@@ -21,7 +21,7 @@ export default defineConfig({
   },
   vite: {
     optimizeDeps: {
-      exclude: ["react-is", "hoist-non-react-statics"],
+      exclude: ["react-is", "hoist-non-react-statics", "zod"],
     },
     resolve: {
       alias: [
