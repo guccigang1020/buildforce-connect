@@ -404,8 +404,8 @@ export const approveAllPending = createServerFn({ method: "POST" })
       .from("attendance_records")
       .update({ status: "approved", approved_by: userId })
       .in("id", ids);
-    await supabase
-      .from("attendance_events" as any)
+    await (supabase as any)
+      .from("attendance_events")
       .insert(ids.map((id) => ({ record_id: id, kind: "approval" as const, actor_id: userId })));
     return { count: ids.length };
   });
@@ -603,10 +603,10 @@ export const getAttendanceRecord = createServerFn({ method: "POST" })
     ) {
       throw new Error("אין לך הרשאה לצפות ברשומה זו");
     }
-    const { data: events } = await supabase
-      .from("attendance_events" as any)
+    const { data: events } = await (supabase as any)
+      .from("attendance_events")
       .select("*")
-      .eq("record_id" as any, data.recordId)
+      .eq("record_id", data.recordId)
       .order("created_at", { ascending: true });
     // signed photo URLs
     const signedUrls: Record<string, string> = {};
