@@ -24,25 +24,32 @@ export default defineConfig({
       exclude: ["react-is", "hoist-non-react-statics"],
     },
     resolve: {
-      alias: {
-        "entities/lib/decode.js": path.resolve(
-          process.cwd(),
-          "node_modules/entities/lib/decode.js",
-        ),
-        "entities/lib/encode.js": path.resolve(
-          process.cwd(),
-          "node_modules/entities/lib/encode.js",
-        ),
-        entities: path.resolve(process.cwd(), "node_modules/entities"),
-        "react-is": path.resolve(
-          process.cwd(),
-          "src/shims/react-is.mjs",
-        ),
-        "hoist-non-react-statics": path.resolve(
-          process.cwd(),
-          "src/shims/hoist-non-react-statics.mjs",
-        ),
-      },
+      alias: [
+        {
+          find: "entities/lib/decode.js",
+          replacement: path.resolve(process.cwd(), "node_modules/entities/lib/decode.js"),
+        },
+        {
+          find: "entities/lib/encode.js",
+          replacement: path.resolve(process.cwd(), "node_modules/entities/lib/encode.js"),
+        },
+        {
+          find: "entities",
+          replacement: path.resolve(process.cwd(), "node_modules/entities"),
+        },
+        {
+          find: /^react-is$/,
+          replacement: path.resolve(process.cwd(), "src/shims/react-is.mjs"),
+        },
+        {
+          find: /^react-is\/cjs\/react-is\.(development|production)\.js$/,
+          replacement: path.resolve(process.cwd(), "src/shims/react-is.mjs"),
+        },
+        {
+          find: /^hoist-non-react-statics$/,
+          replacement: path.resolve(process.cwd(), "src/shims/hoist-non-react-statics.mjs"),
+        },
+      ],
     },
     // MUI + emotion ship CJS that breaks Node's ESM directory imports during
     // SSR (react-transition-group). Bundling them into the SSR build fixes it.
