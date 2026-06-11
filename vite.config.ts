@@ -31,6 +31,14 @@ export default defineConfig({
           "node_modules/entities/lib/encode.js",
         ),
         entities: path.resolve(process.cwd(), "node_modules/entities"),
+        "react-is": path.resolve(
+          process.cwd(),
+          "node_modules/react-is/cjs/react-is.development.js",
+        ),
+        "hoist-non-react-statics": path.resolve(
+          process.cwd(),
+          "node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js",
+        ),
       },
     },
     // MUI + emotion ship CJS that breaks Node's ESM directory imports during
