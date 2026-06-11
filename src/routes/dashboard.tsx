@@ -81,7 +81,7 @@ function DashboardPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-requests"],
     queryFn: () => fetchMine({ data: {} as never }),
-    enabled: !!session,
+    enabled: !!session && !loading,
   });
 
   const isAdmin = hasRole("admin");
