@@ -17,7 +17,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import MailOutlineIcon from "@mui/icons-material/MailOutlined";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app-shell";
-import { getJobRequestWithOffers, closeJobRequest } from "@/lib/job-requests.functions";
+import { getJobRequestWithOffers } from "@/lib/job-requests.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { maskedRequestId } from "@/lib/anonymize";
 import { awardOffer } from "@/lib/job-offers.functions";
@@ -48,10 +48,8 @@ function MyRequestPage() {
   const qc = useQueryClient();
   const fetchData = useServerFn(getJobRequestWithOffers);
   const awardFn = useServerFn(awardOffer);
-  const closeFn = useServerFn(closeJobRequest);
   const [actingId, setActingId] = useState<string | null>(null);
   const [confirmingAwardId, setConfirmingAwardId] = useState<string | null>(null);
-  const [confirmingClose, setConfirmingClose] = useState(false);
 
   // Redirect unauthenticated visitors to login instead of firing a request
   // that 401s and crashes the page.
@@ -80,17 +78,6 @@ function MyRequestPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "שגיאה בבחירת זוכה");
       setActingId(null);
-    }
-  };
-
-  const handleClose = async () => {
-    setConfirmingClose(false);
-    try {
-      await closeFn({ data: { id } });
-      toast.success("הבקשה נסגרה");
-      qc.invalidateQueries({ queryKey: ["job-request", id] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "שגיאה");
     }
   };
 
@@ -155,40 +142,6 @@ function MyRequestPage() {
       )
     : null;
 
-  const closeAction =
-    isOwner && request.status === "open" ? (
-      confirmingClose ? (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">לסגור את הבקשה?</span>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={handleClose}
-            className="h-7 px-2.5 text-xs"
-          >
-            אישור
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setConfirmingClose(false)}
-            className="h-7 px-2.5 text-xs"
-          >
-            ביטול
-          </Button>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setConfirmingClose(true)}
-          className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/5"
-        >
-          <CloseIcon sx={{ fontSize: 16 }} /> סגור בקשה
-        </Button>
-      )
-    ) : undefined;
-
   return (
     <AppShell title={`בקשה ${maskedRequestId(request.id)}`}>
       <div className="space-y-6">
@@ -222,7 +175,6 @@ function MyRequestPage() {
                   )}
               </p>
             </div>
-            {closeAction}
           </div>
         </div>
 

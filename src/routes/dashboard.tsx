@@ -104,12 +104,7 @@ function DashboardPage() {
     const open = requests.filter((r) => r.status === "open").length;
     const awarded = requests.filter((r) => r.status === "awarded").length;
     const totalOffers = requests.reduce((s, r) => s + r.offers_count, 0);
-    const bestPrice = requests.reduce((best: number | null, r) => {
-      if (r.min_price == null) return best;
-      return best == null || r.min_price < best ? r.min_price : best;
-    }, null);
-    const convRate = requests.length > 0 ? Math.round((awarded / requests.length) * 100) : 0;
-    return { open, awarded, totalOffers, total: requests.length, bestPrice, convRate };
+    return { open, awarded, totalOffers, total: requests.length };
   }, [requests]);
 
   const filterCounts = useMemo(
@@ -159,7 +154,7 @@ function DashboardPage() {
       </div>
 
       {/* ── Stat row (pattern 2) ── */}
-      <div className="mb-6 grid grid-cols-2 overflow-hidden rounded-lg border border-border divide-x divide-x-reverse divide-border lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-3 overflow-hidden rounded-lg border border-border divide-x divide-x-reverse divide-border">
         <div className="px-5 py-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             סה"כ בקשות
@@ -167,7 +162,6 @@ function DashboardPage() {
           <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
             {isLoading ? "…" : stats.total}
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">כל הזמנים</div>
         </div>
         <div className="px-5 py-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -176,34 +170,13 @@ function DashboardPage() {
           <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
             {isLoading ? "…" : stats.open}
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">ממתינות לספקים</div>
         </div>
         <div className="px-5 py-4">
           <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            הצעות שהתקבלו
+            נבחר זוכה
           </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {isLoading ? "…" : stats.totalOffers}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {stats.bestPrice != null ? (
-              <>
-                מינ׳ <span dir="ltr">₪{stats.bestPrice}</span> לשעה
-              </>
-            ) : (
-              "—"
-            )}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            זכיות
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-approved" dir="ltr">
+          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-info" dir="ltr">
             {isLoading ? "…" : stats.awarded}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {stats.total > 0 ? `${stats.convRate}% המרה` : "—"}
           </div>
         </div>
       </div>

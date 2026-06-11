@@ -322,9 +322,6 @@ function RequestPage() {
                 </dd>
               </div>
             </dl>
-            <Button asChild variant="outline" size="sm" className="mt-4">
-              <Link to="/corporation-dashboard">לניהול ההצעה</Link>
-            </Button>
           </div>
         )}
 

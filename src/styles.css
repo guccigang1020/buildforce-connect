@@ -439,6 +439,7 @@
   .text-status-pending  { color: var(--color-status-pending);  }
   .text-status-disputed { color: var(--color-status-disputed); }
   .text-status-rejected { color: var(--color-status-rejected); }
+  .text-status-info     { color: oklch(0.5 0.16 255); }
 
   /* ── Status chips — bright Monday pills on dark ──── */
   .status-chip-live {
