@@ -14,137 +14,20 @@ export type Database = {
   }
   public: {
     Tables: {
-      attendance_corrections: {
-        Row: {
-          created_at: string
-          decided_at: string | null
-          decided_by: string | null
-          decision_note: string | null
-          id: string
-          reason: string
-          record_id: string
-          requested_by: string
-          requested_change: Json
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          decision_note?: string | null
-          id?: string
-          reason: string
-          record_id: string
-          requested_by: string
-          requested_change: Json
-          status?: string
-        }
-        Update: {
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          decision_note?: string | null
-          id?: string
-          reason?: string
-          record_id?: string
-          requested_by?: string
-          requested_change?: Json
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attendance_corrections_record_id_fkey"
-            columns: ["record_id"]
-            isOneToOne: false
-            referencedRelation: "attendance_records"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      attendance_events: {
-        Row: {
-          actor_id: string | null
-          created_at: string
-          gps_lat: number | null
-          gps_lng: number | null
-          id: string
-          kind: string
-          payload: Json | null
-          photo_url: string | null
-          record_id: string
-        }
-        Insert: {
-          actor_id?: string | null
-          created_at?: string
-          gps_lat?: number | null
-          gps_lng?: number | null
-          id?: string
-          kind: string
-          payload?: Json | null
-          photo_url?: string | null
-          record_id: string
-        }
-        Update: {
-          actor_id?: string | null
-          created_at?: string
-          gps_lat?: number | null
-          gps_lng?: number | null
-          id?: string
-          kind?: string
-          payload?: Json | null
-          photo_url?: string | null
-          record_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attendance_events_record_id_fkey"
-            columns: ["record_id"]
-            isOneToOne: false
-            referencedRelation: "attendance_records"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      attendance_notifications: {
-        Row: {
-          channel: string
-          id: string
-          kind: string
-          payload: Json | null
-          recipient_phone: string
-          recipient_role: string
-          record_id: string
-          sent_at: string
-        }
-        Insert: {
-          channel?: string
-          id?: string
-          kind: string
-          payload?: Json | null
-          recipient_phone: string
-          recipient_role: string
-          record_id: string
-          sent_at?: string
-        }
-        Update: {
-          channel?: string
-          id?: string
-          kind?: string
-          payload?: Json | null
-          recipient_phone?: string
-          recipient_role?: string
-          record_id?: string
-          sent_at?: string
-        }
-        Relationships: []
-      }
       attendance_records: {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          auto_approved_at: string | null
           contractor_id: string
           corporation_id: string
           created_at: string
+          dispute_reason: string | null
+          dispute_resolution_note: string | null
+          dispute_resolved_at: string | null
+          dispute_resolved_by: string | null
+          disputed_at: string | null
+          disputed_by: string | null
           end_gps_lat: number | null
           end_gps_lng: number | null
           end_photo_url: string | null
@@ -181,9 +64,16 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          auto_approved_at?: string | null
           contractor_id: string
           corporation_id: string
           created_at?: string
+          dispute_reason?: string | null
+          dispute_resolution_note?: string | null
+          dispute_resolved_at?: string | null
+          dispute_resolved_by?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
           end_gps_lat?: number | null
           end_gps_lng?: number | null
           end_photo_url?: string | null
@@ -220,9 +110,16 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          auto_approved_at?: string | null
           contractor_id?: string
           corporation_id?: string
           created_at?: string
+          dispute_reason?: string | null
+          dispute_resolution_note?: string | null
+          dispute_resolved_at?: string | null
+          dispute_resolved_by?: string | null
+          disputed_at?: string | null
+          disputed_by?: string | null
           end_gps_lat?: number | null
           end_gps_lng?: number | null
           end_photo_url?: string | null
@@ -309,123 +206,6 @@ export type Database = {
         }
         Relationships: []
       }
-      corporation_workforce: {
-        Row: {
-          corporation_id: string
-          count: number
-          created_at: string
-          id: string
-          nationality: string
-          role: string
-          updated_at: string
-        }
-        Insert: {
-          corporation_id: string
-          count?: number
-          created_at?: string
-          id?: string
-          nationality: string
-          role: string
-          updated_at?: string
-        }
-        Update: {
-          corporation_id?: string
-          count?: number
-          created_at?: string
-          id?: string
-          nationality?: string
-          role?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      email_send_log: {
-        Row: {
-          created_at: string
-          error_message: string | null
-          id: string
-          message_id: string | null
-          metadata: Json | null
-          recipient_email: string
-          status: string
-          template_name: string
-        }
-        Insert: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          message_id?: string | null
-          metadata?: Json | null
-          recipient_email: string
-          status: string
-          template_name: string
-        }
-        Update: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          message_id?: string | null
-          metadata?: Json | null
-          recipient_email?: string
-          status?: string
-          template_name?: string
-        }
-        Relationships: []
-      }
-      email_send_state: {
-        Row: {
-          auth_email_ttl_minutes: number
-          batch_size: number
-          id: number
-          retry_after_until: string | null
-          send_delay_ms: number
-          transactional_email_ttl_minutes: number
-          updated_at: string
-        }
-        Insert: {
-          auth_email_ttl_minutes?: number
-          batch_size?: number
-          id?: number
-          retry_after_until?: string | null
-          send_delay_ms?: number
-          transactional_email_ttl_minutes?: number
-          updated_at?: string
-        }
-        Update: {
-          auth_email_ttl_minutes?: number
-          batch_size?: number
-          id?: number
-          retry_after_until?: string | null
-          send_delay_ms?: number
-          transactional_email_ttl_minutes?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      email_unsubscribe_tokens: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          token: string
-          used_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          token: string
-          used_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          token?: string
-          used_at?: string | null
-        }
-        Relationships: []
-      }
       job_awards: {
         Row: {
           awarded_at: string
@@ -463,54 +243,6 @@ export type Database = {
             foreignKeyName: "job_awards_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: true
-            referencedRelation: "job_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      job_offer_price_log: {
-        Row: {
-          corporation_id: string
-          created_at: string
-          event_type: string
-          id: string
-          offer_id: string
-          previous_price: number | null
-          price_per_hour: number
-          request_id: string
-        }
-        Insert: {
-          corporation_id: string
-          created_at?: string
-          event_type: string
-          id?: string
-          offer_id: string
-          previous_price?: number | null
-          price_per_hour: number
-          request_id: string
-        }
-        Update: {
-          corporation_id?: string
-          created_at?: string
-          event_type?: string
-          id?: string
-          offer_id?: string
-          previous_price?: number | null
-          price_per_hour?: number
-          request_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "job_offer_price_log_offer_id_fkey"
-            columns: ["offer_id"]
-            isOneToOne: false
-            referencedRelation: "job_offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "job_offer_price_log_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
             referencedRelation: "job_requests"
             referencedColumns: ["id"]
           },
@@ -578,39 +310,6 @@ export type Database = {
           },
         ]
       }
-      job_ratings: {
-        Row: {
-          comment: string | null
-          created_at: string
-          direction: string
-          id: string
-          ratee_id: string
-          rater_id: string
-          request_id: string
-          score: number
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string
-          direction: string
-          id?: string
-          ratee_id: string
-          rater_id: string
-          request_id: string
-          score: number
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string
-          direction?: string
-          id?: string
-          ratee_id?: string
-          rater_id?: string
-          request_id?: string
-          score?: number
-        }
-        Relationships: []
-      }
       job_request_contacts: {
         Row: {
           contact_name: string
@@ -668,41 +367,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "job_request_items_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "job_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      job_request_messages: {
-        Row: {
-          body: string
-          corporation_id: string
-          created_at: string
-          id: string
-          request_id: string
-          sender_id: string
-        }
-        Insert: {
-          body: string
-          corporation_id: string
-          created_at?: string
-          id?: string
-          request_id: string
-          sender_id: string
-        }
-        Update: {
-          body?: string
-          corporation_id?: string
-          created_at?: string
-          id?: string
-          request_id?: string
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "job_request_messages_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "job_requests"
@@ -824,38 +488,6 @@ export type Database = {
         }
         Relationships: []
       }
-      project_members: {
-        Row: {
-          created_at: string
-          id: string
-          project_id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          project_id: string
-          role: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          project_id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_members_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       project_teams: {
         Row: {
           created_at: string
@@ -963,120 +595,6 @@ export type Database = {
         }
         Relationships: []
       }
-      rate_limits: {
-        Row: {
-          bucket: string
-          count: number
-          id: string
-          key: string
-        }
-        Insert: {
-          bucket: string
-          count?: number
-          id?: string
-          key: string
-        }
-        Update: {
-          bucket?: string
-          count?: number
-          id?: string
-          key?: string
-        }
-        Relationships: []
-      }
-      reminder_log: {
-        Row: {
-          id: string
-          kind: string
-          request_id: string
-          sent_at: string
-        }
-        Insert: {
-          id?: string
-          kind: string
-          request_id: string
-          sent_at?: string
-        }
-        Update: {
-          id?: string
-          kind?: string
-          request_id?: string
-          sent_at?: string
-        }
-        Relationships: []
-      }
-      sms_notifications: {
-        Row: {
-          body: string
-          channel: string
-          error: string | null
-          id: string
-          kind: string
-          payload: Json | null
-          provider: string | null
-          provider_message_id: string | null
-          recipient_phone: string
-          recipient_role: string
-          record_id: string
-          sent_at: string
-          status: string
-        }
-        Insert: {
-          body: string
-          channel: string
-          error?: string | null
-          id?: string
-          kind: string
-          payload?: Json | null
-          provider?: string | null
-          provider_message_id?: string | null
-          recipient_phone: string
-          recipient_role: string
-          record_id: string
-          sent_at?: string
-          status?: string
-        }
-        Update: {
-          body?: string
-          channel?: string
-          error?: string | null
-          id?: string
-          kind?: string
-          payload?: Json | null
-          provider?: string | null
-          provider_message_id?: string | null
-          recipient_phone?: string
-          recipient_role?: string
-          record_id?: string
-          sent_at?: string
-          status?: string
-        }
-        Relationships: []
-      }
-      suppressed_emails: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          metadata: Json | null
-          reason: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          metadata?: Json | null
-          reason: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          metadata?: Json | null
-          reason?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -1103,10 +621,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_rate_limit: {
-        Args: { _key: string; _max: number; _window_seconds: number }
-        Returns: boolean
-      }
       ensure_user_bootstrap: { Args: never; Returns: undefined }
       has_bid_on_request: {
         Args: { _corporation_id: string; _request_id: string }
@@ -1118,19 +632,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      is_project_member: {
-        Args: { _project_id: string; _user_id: string }
-        Returns: boolean
-      }
-      log_audit: {
-        Args: {
-          _action: string
-          _entity_id: string
-          _entity_type: string
-          _metadata?: Json
-        }
-        Returns: string
       }
       set_own_role: { Args: { _role: string }; Returns: undefined }
     }
