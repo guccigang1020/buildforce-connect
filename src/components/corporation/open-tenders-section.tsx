@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import SendIcon from "@mui/icons-material/Send";
 import LockIcon from "@mui/icons-material/Lock";
+import GroupIcon from "@mui/icons-material/Group";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,14 @@ type OpenRequest = {
   budget: string | null;
   created_at: string;
   deadline_at: string | null;
+  workers_count: number;
+  items: RequestItem[];
+};
+
+type RequestItem = {
+  role: string | null;
+  count: number;
+  nationality: string | null;
 };
 
 function deadlineLabel(deadline_at: string | null): { text: string; urgent: boolean } | null {
@@ -111,6 +120,7 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                 <tr className="premium-table-header">
                   <th className="px-4 py-2.5 text-start">מזהה</th>
                   <th className="px-4 py-2.5 text-start">מיקום</th>
+                  <th className="px-4 py-2.5 text-start">עובדים</th>
                   <th className="px-4 py-2.5 text-start">התחלה</th>
                   <th className="px-4 py-2.5 text-start">משך</th>
                   <th className="px-4 py-2.5 text-start">סגירה</th>
@@ -134,6 +144,9 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                       </td>
                       <td className="px-4 py-3 font-medium">{r.location}</td>
                       <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                        {r.workers_count > 0 ? r.workers_count : "—"}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-muted-foreground">
                         <span dir="ltr">{r.start_date}</span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{r.duration}</td>
@@ -152,7 +165,12 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-end">
-                        <SubmitOfferDialog requestId={r.id} isApproved={isApproved} />
+                        <SubmitOfferDialog
+                          requestId={r.id}
+                          isApproved={isApproved}
+                          items={r.items}
+                          totalWorkers={r.workers_count}
+                        />
                       </td>
                     </tr>
                   );
@@ -181,9 +199,16 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">
                       {r.start_date} · {r.duration}
+                      {r.workers_count > 0 && ` · ${r.workers_count} עובדים`}
                     </div>
                   </div>
-                  <SubmitOfferDialog requestId={r.id} isApproved={isApproved} compact />
+                  <SubmitOfferDialog
+                    requestId={r.id}
+                    isApproved={isApproved}
+                    items={r.items}
+                    totalWorkers={r.workers_count}
+                    compact
+                  />
                 </div>
               );
             })}
@@ -197,10 +222,14 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
 function SubmitOfferDialog({
   requestId,
   isApproved,
+  items,
+  totalWorkers,
   compact = false,
 }: {
   requestId: string;
   isApproved: boolean;
+  items: RequestItem[];
+  totalWorkers: number;
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -313,6 +342,39 @@ function SubmitOfferDialog({
             ההצעה שלך חסויה — הלקוח לא יראה את שם החברה או הצעות מתחרות עד לרגע הזכייה.
           </DialogDescription>
         </DialogHeader>
+
+        {/* What the constructor needs — exact workforce breakdown */}
+        {items.length > 0 && (
+          <div className="rounded-lg border border-border bg-muted/20">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="text-xs font-semibold text-foreground">דרישות הלקוח</span>
+              <span className="inline-flex items-center gap-1 rounded border border-border bg-card px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-muted-foreground">
+                <GroupIcon sx={{ fontSize: 12 }} /> {totalWorkers} עובדים
+              </span>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[11px] text-muted-foreground">
+                  <th className="px-3 py-1.5 text-start font-medium">תפקיד</th>
+                  <th className="px-3 py-1.5 text-start font-medium">לאום</th>
+                  <th className="px-3 py-1.5 text-end font-medium">כמות</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((it, i) => (
+                  <tr key={i} className="border-t border-border/60">
+                    <td className="px-3 py-2 font-medium">{it.role || "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{it.nationality || "—"}</td>
+                    <td className="px-3 py-2 text-end tabular-nums">
+                      <span dir="ltr">{it.count}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="price" className="text-sm font-semibold">
