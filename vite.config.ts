@@ -33,11 +33,11 @@ export default defineConfig({
         entities: path.resolve(process.cwd(), "node_modules/entities"),
         "react-is": path.resolve(
           process.cwd(),
-          "node_modules/react-is/cjs/react-is.development.js",
+          "src/shims/react-is.mjs",
         ),
         "hoist-non-react-statics": path.resolve(
           process.cwd(),
-          "node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js",
+          "src/shims/hoist-non-react-statics.mjs",
         ),
       },
     },
