@@ -9,14 +9,16 @@ import FactCheckIcon from "@mui/icons-material/FactCheck";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SearchIcon from "@mui/icons-material/Search";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
+import GavelIcon from "@mui/icons-material/Gavel";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { useServerFn } from "@tanstack/react-start";
 import {
   adminGetDashboardData,
+  adminGetAllRequestsWithOffers,
   adminSetVerificationStatus,
   adminGetDocumentUrl,
 } from "@/lib/admin.functions";
+import { maskedRequestId } from "@/lib/anonymize";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
@@ -88,22 +90,14 @@ function AdminPage() {
   return <AdminDashboard />;
 }
 
-type AuditEntry = {
-  id: string;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  actor_id: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-};
-
 function AdminDashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { session, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
+  // Primary admin view: corporation verification vs. marketplace oversight.
+  const [view, setView] = useState<"corps" | "auctions">("corps");
   const fetchDashboard = useServerFn(adminGetDashboardData);
 
   const { data, isLoading, error } = useQuery({
@@ -114,7 +108,6 @@ function AdminDashboard() {
 
   const profiles = (data?.profiles ?? []) as AdminProfile[];
   const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
-  const auditLog = (data?.auditLog ?? []) as AuditEntry[];
   const activeAuctions = (data?.activeAuctions ?? 0) as number;
   const recentAwards = (data?.recentAwards ?? 0) as number;
   const totalCorporations = (data?.totalCorporations ?? 0) as number;
@@ -251,6 +244,88 @@ function AdminDashboard() {
         </div>
       </div>
 
+      {/* Primary view switch — the two admin responsibilities */}
+      <div className="mb-5 inline-flex rounded-lg border border-border bg-card p-1">
+        <button
+          type="button"
+          onClick={() => setView("corps")}
+          className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+            view === "corps"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          אימות תאגידים
+          {stats.pending > 0 && (
+            <span
+              className={`ms-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+                view === "corps" ? "bg-white/25" : "bg-primary/15 text-primary"
+              }`}
+            >
+              {stats.pending}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("auctions")}
+          className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+            view === "auctions"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          מכרזים והצעות
+        </button>
+      </div>
+
+      {view === "auctions" ? (
+        <AuctionsOversight session={session} />
+      ) : (
+        <CorporationsVerification
+          tab={tab}
+          setTab={setTab}
+          stats={stats}
+          search={search}
+          setSearch={setSearch}
+          filtered={filtered}
+          rolesByUser={rolesByUser}
+          isLoading={isLoading}
+          error={error}
+          refresh={refresh}
+        />
+      )}
+    </AppShell>
+  );
+}
+
+type Stats = { total: number; corps: number; pending: number; approved: number; rejected: number };
+
+function CorporationsVerification({
+  tab,
+  setTab,
+  stats,
+  search,
+  setSearch,
+  filtered,
+  rolesByUser,
+  isLoading,
+  error,
+  refresh,
+}: {
+  tab: string;
+  setTab: (v: string) => void;
+  stats: Stats;
+  search: string;
+  setSearch: (v: string) => void;
+  filtered: AdminProfile[];
+  rolesByUser: Map<string, string[]>;
+  isLoading: boolean;
+  error: unknown;
+  refresh: () => void;
+}) {
+  return (
+    <>
       {/* Tab bar + search */}
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Tabs value={tab} onValueChange={setTab}>
@@ -266,12 +341,9 @@ function AdminDashboard() {
             <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
             <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
             <TabsTrigger value="all">כל התאגידים ({stats.corps})</TabsTrigger>
-            <TabsTrigger value="activity">
-              <ShowChartIcon sx={{ fontSize: 14 }} className="me-1" /> פעולות
-            </TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className={`relative w-full md:w-72 ${tab === "activity" ? "invisible" : ""}`}>
+        <div className="relative w-full md:w-72">
           <SearchIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -283,9 +355,7 @@ function AdminDashboard() {
       </div>
 
       {/* Content */}
-      {tab === "activity" ? (
-        <ActivityLog entries={auditLog} isLoading={isLoading} />
-      ) : error ? (
+      {error ? (
         <div className="empty-state border-destructive/30 bg-destructive/5">
           <div className="empty-state-icon border-destructive/20 bg-destructive/10">
             <ErrorOutlineIcon sx={{ fontSize: 32 }} className="text-destructive" />
@@ -343,71 +413,157 @@ function AdminDashboard() {
           </table>
         </div>
       )}
-    </AppShell>
+    </>
   );
 }
 
-function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading: boolean }) {
+// ── Admin marketplace oversight: every request with all its (named) offers ──
+type AdminOfferRow = {
+  id: string;
+  corporation_name: string;
+  price_per_hour: number | string;
+  available_workers: number;
+  start_date: string;
+  status: string;
+};
+type AdminRequestRow = {
+  id: string;
+  location: string;
+  start_date: string;
+  duration: string;
+  status: string;
+  owner_name: string;
+  items: { role: string; nationality: string; count: number }[];
+  offers: AdminOfferRow[];
+};
+
+const REQ_STATUS_META: Record<string, { label: string; chip: string }> = {
+  open: { label: "פתוח", chip: "status-chip-live" },
+  awarded: { label: "נבחר זוכה", chip: "status-chip-approved" },
+  closed: { label: "סגור", chip: "status-chip-muted" },
+  cancelled: { label: "בוטל", chip: "status-chip-rejected" },
+  expired: { label: "פג תוקף", chip: "status-chip-muted" },
+};
+const OFFER_STATUS_META: Record<string, { label: string; chip: string }> = {
+  submitted: { label: "הוגשה", chip: "status-chip-pending" },
+  awarded: { label: "זוכה", chip: "status-chip-approved" },
+  rejected: { label: "נדחתה", chip: "status-chip-rejected" },
+  withdrawn: { label: "נמשכה", chip: "status-chip-muted" },
+};
+
+function AuctionsOversight({ session }: { session: unknown }) {
+  const fetchAll = useServerFn(adminGetAllRequestsWithOffers);
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-all-requests"],
+    queryFn: () => fetchAll(),
+    enabled: Boolean(session),
+  });
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const requests = (data?.requests ?? []) as AdminRequestRow[];
+
   if (isLoading) {
     return (
       <div className="space-y-3 animate-pulse">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-lg border border-border bg-card p-4">
-            <div className="h-4 w-32 rounded bg-muted" />
-            <div className="mt-2 h-3 w-48 rounded bg-muted" />
-          </div>
+          <div key={i} className="h-16 rounded-lg border border-border bg-card" />
         ))}
       </div>
     );
   }
-  if (entries.length === 0) {
+  if (requests.length === 0) {
     return (
       <div className="empty-state">
         <div className="empty-state-icon">
-          <ShowChartIcon sx={{ fontSize: 32 }} className="text-primary" />
+          <GavelIcon sx={{ fontSize: 32 }} className="text-primary" />
         </div>
-        <h3 className="font-bold">אין פעולות להצגה</h3>
+        <h3 className="font-bold">עדיין אין מכרזים</h3>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          פעולות ניהול שיתבצעו במערכת יופיעו כאן.
+          מכרזים שקבלנים יפרסמו, וההצעות שיוגשו להם, יופיעו כאן.
         </p>
       </div>
     );
   }
 
   return (
-    <Card className="divide-y divide-border/60 overflow-hidden">
-      {entries.map((e) => (
-        <div
-          key={e.id}
-          className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-card/60 transition-colors"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="font-mono text-xs">
-                {e.action}
-              </Badge>
-              <span className="text-sm text-muted-foreground">{e.entity_type}</span>
-              {e.entity_id && (
-                <span className="font-mono text-xs text-muted-foreground">
-                  #{e.entity_id.slice(0, 8)}
+    <div className="space-y-2.5">
+      {requests.map((r) => {
+        const meta = REQ_STATUS_META[r.status] ?? REQ_STATUS_META.open;
+        const isOpen = expanded === r.id;
+        const totalWorkers = r.items.reduce((s, it) => s + (it.count ?? 0), 0);
+        return (
+          <div key={r.id} className="overflow-hidden rounded-lg border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setExpanded(isOpen ? null : r.id)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-muted/40 transition-colors"
+            >
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <span className="font-mono text-xs text-muted-foreground" dir="ltr">
+                  {maskedRequestId(r.id)}
                 </span>
-              )}
-            </div>
-            {e.metadata && Object.keys(e.metadata).length > 0 && (
-              <pre
-                className="mt-2 max-h-32 overflow-auto rounded-md bg-muted/40 p-2 text-xs text-muted-foreground"
-                dir="ltr"
-              >
-                {JSON.stringify(e.metadata, null, 2)}
-              </pre>
+                <span className="text-sm font-semibold truncate">{r.location}</span>
+                <span className={meta.chip}>{meta.label}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                <span>קבלן: {r.owner_name}</span>
+                <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-medium tabular-nums">
+                  {r.offers.length} הצעות
+                </span>
+              </div>
+            </button>
+
+            {isOpen && (
+              <div className="border-t border-border bg-muted/20 px-4 py-3">
+                <div className="mb-3 text-xs text-muted-foreground">
+                  דרישות: {totalWorkers} עובדים ·{" "}
+                  {r.items.map((it) => `${it.count}× ${it.role}`).join(" · ") || "—"} · התחלה{" "}
+                  <span dir="ltr">{r.start_date}</span> · {r.duration}
+                </div>
+                {r.offers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">לא הוגשו הצעות למכרז זה.</p>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border border-border bg-card">
+                    <table className="w-full min-w-[560px] text-sm">
+                      <thead>
+                        <tr className="premium-table-header">
+                          <th className="px-3 py-2 text-start">תאגיד</th>
+                          <th className="px-3 py-2 text-start">מחיר/שעה</th>
+                          <th className="px-3 py-2 text-start">עובדים</th>
+                          <th className="px-3 py-2 text-start">התחלה</th>
+                          <th className="px-3 py-2 text-start">סטטוס</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {r.offers.map((o) => {
+                          const om = OFFER_STATUS_META[o.status] ?? OFFER_STATUS_META.submitted;
+                          return (
+                            <tr key={o.id} className="premium-table-row">
+                              <td className="px-3 py-2.5 font-medium">{o.corporation_name}</td>
+                              <td className="px-3 py-2.5 font-semibold tabular-nums" dir="ltr">
+                                ₪{Number(o.price_per_hour).toLocaleString()}
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground" dir="ltr">
+                                {o.available_workers}
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground" dir="ltr">
+                                {o.start_date}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className={om.chip}>{om.label}</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-          <div className="whitespace-nowrap text-xs text-muted-foreground">
-            {new Date(e.created_at).toLocaleString("he-IL")}
-          </div>
-        </div>
-      ))}
-    </Card>
+        );
+      })}
+    </div>
   );
 }
 

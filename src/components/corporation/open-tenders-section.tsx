@@ -23,7 +23,6 @@ import {
 import { listOpenJobRequests } from "@/lib/job-requests.functions";
 import { submitOffer, listMyOffers } from "@/lib/job-offers.functions";
 import { maskedRequestId } from "@/lib/anonymize";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 type OpenRequest = {
   id: string;
@@ -35,20 +34,6 @@ type OpenRequest = {
   created_at: string;
   deadline_at: string | null;
 };
-
-/** Shown instead of the bid button once this corporation has an active offer. */
-function AlreadyBidChip({ requestId }: { requestId: string }) {
-  return (
-    <Link
-      to="/requests/$id"
-      params={{ id: requestId }}
-      className="status-chip-approved hover:opacity-80 transition-opacity"
-      title="כבר הגשת הצעה למכרז זה — לחץ לצפייה"
-    >
-      <CheckCircleIcon sx={{ fontSize: 12 }} /> הוגשה הצעה
-    </Link>
-  );
-}
 
 function deadlineLabel(deadline_at: string | null): { text: string; urgent: boolean } | null {
   if (!deadline_at) return null;
@@ -66,10 +51,12 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
     queryKey: ["open-job-requests"],
     queryFn: () => fetchOpen({ data: {} as never }),
   });
-  // The tenders the corporation already bid on — their action button becomes
-  // a "submitted" state instead of letting it open the bid dialog again.
+  // Tenders the corporation already has an active offer on are removed from
+  // this list entirely — once a bid exists it lives only under "ההצעות שלי".
+  // (Shared query key with MyOffersSection so a withdrawal re-lists the tender
+  // here immediately.)
   const { data: myOffersData } = useQuery({
-    queryKey: ["my-job-offers"],
+    queryKey: ["my-offers"],
     queryFn: () => fetchMyOffers(),
   });
   const alreadyBidRequestIds = new Set(
@@ -78,7 +65,9 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
       .map((o) => o.request_id),
   );
 
-  const requests = (data?.requests ?? []) as OpenRequest[];
+  const requests = ((data?.requests ?? []) as OpenRequest[]).filter(
+    (r) => !alreadyBidRequestIds.has(r.id),
+  );
 
   return (
     <div className="mt-8 space-y-3">
@@ -163,11 +152,7 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-end">
-                        {alreadyBidRequestIds.has(r.id) ? (
-                          <AlreadyBidChip requestId={r.id} />
-                        ) : (
-                          <SubmitOfferDialog requestId={r.id} isApproved={isApproved} />
-                        )}
+                        <SubmitOfferDialog requestId={r.id} isApproved={isApproved} />
                       </td>
                     </tr>
                   );
@@ -198,11 +183,7 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                       {r.start_date} · {r.duration}
                     </div>
                   </div>
-                  {alreadyBidRequestIds.has(r.id) ? (
-                    <AlreadyBidChip requestId={r.id} />
-                  ) : (
-                    <SubmitOfferDialog requestId={r.id} isApproved={isApproved} compact />
-                  )}
+                  <SubmitOfferDialog requestId={r.id} isApproved={isApproved} compact />
                 </div>
               );
             })}
@@ -292,7 +273,7 @@ function SubmitOfferDialog({
       }
       toast.success("ההצעה נשלחה בהצלחה ללקוח.");
       qc.invalidateQueries({ queryKey: ["open-job-requests"] });
-      qc.invalidateQueries({ queryKey: ["my-job-offers"] });
+      qc.invalidateQueries({ queryKey: ["my-offers"] });
       reset();
       setOpen(false);
     } catch (err) {

@@ -14,7 +14,6 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import LockIcon from "@mui/icons-material/Lock";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,19 +39,6 @@ const OFFER_STATUS_LABELS: Record<string, string> = {
   rejected: "לא נבחרה",
   withdrawn: "בוטלה",
 };
-
-function competitionLevel(count: number): { label: string; color: string } {
-  if (count === 0)
-    return { label: "שקטה", color: "bg-emerald-500/10 text-status-approved border-emerald-500/20" };
-  if (count < 3)
-    return { label: "מתחילה", color: "bg-amber-500/10 text-status-pending border-amber-500/20" };
-  if (count < 6)
-    return { label: "פעילה", color: "bg-amber-500/15 text-status-pending border-amber-500/30" };
-  return {
-    label: "חמה מאוד 🔥",
-    color: "bg-destructive/10 text-destructive border-destructive/20",
-  };
-}
 
 function RequestPage() {
   const { id } = Route.useParams();
@@ -119,7 +105,6 @@ function RequestPage() {
   }
 
   const { request: req, items, offers, isOwner } = data;
-  const offersCount = (data as { offers_count?: number }).offers_count ?? offers.length;
 
   if (isOwner) {
     return (
@@ -135,7 +120,6 @@ function RequestPage() {
   const totalWorkers = items.reduce((s, it) => s + (it.count ?? 0), 0);
   const myOffer = offers.find((o) => o.corporation_id === user.id);
   const isOpen = req.status === "open";
-  const compLevel = competitionLevel(offersCount);
 
   const deadlineHours = (req as { deadline_at?: string }).deadline_at
     ? Math.round(
@@ -170,14 +154,6 @@ function RequestPage() {
                   {maskedRequestId(req.id)}
                 </h2>
                 <span className={statusChipClass}>{statusLabel}</span>
-                {isOpen && offersCount > 0 && (
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold ${compLevel.color}`}
-                  >
-                    <LocalFireDepartmentIcon sx={{ fontSize: 12 }} />
-                    {offersCount} הצעות · {compLevel.label}
-                  </span>
-                )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 מכרז כוח אדם · {req.location}
@@ -283,38 +259,6 @@ function RequestPage() {
               <ScheduleIcon sx={{ fontSize: 12 }} className="inline me-0.5 align-[-1px]" /> סגירת המכרז:{" "}
               {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
             </p>
-          )}
-        </div>
-
-        {/* ── Sealed-bid notice ── */}
-        <div className="enterprise-card p-5 animate-fade-up delay-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold">סטטוס הצעות</h3>
-              <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs font-medium tabular-nums">
-                {offersCount}
-              </span>
-            </div>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {offersCount === 0
-              ? "עדיין לא הוגשו הצעות."
-              : "פרטי ההצעות חסויים — רק מזמין המכרז יכול לראותם."}
-          </p>
-          {offersCount > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {[
-                { icon: LockIcon, label: "אנונימיות מלאה" },
-                { icon: VisibilityIcon, label: "פרטים נחשפים רק אחרי בחירה" },
-              ].map(({ icon: Icon, label }) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-1.5 rounded border border-border bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground"
-                >
-                  <Icon sx={{ fontSize: 12 }} /> {label}
-                </span>
-              ))}
-            </div>
           )}
         </div>
 

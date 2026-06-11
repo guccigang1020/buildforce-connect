@@ -50,6 +50,7 @@ export function MyOffersSection() {
   const withdrawFn = useServerFn(withdrawOffer);
   const qc = useQueryClient();
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-offers"],
     queryFn: () => fetchMine(),
@@ -58,12 +59,15 @@ export function MyOffersSection() {
   const offers = (data?.offers ?? []) as MyOffer[];
 
   const handleWithdraw = async (offerId: string) => {
-    if (!confirm("למשוך את ההצעה? לא ניתן לבטל פעולה זו.")) return;
+    setConfirmingId(null);
     setWithdrawingId(offerId);
     try {
       await withdrawFn({ data: { offerId } });
-      toast.success("ההצעה נמשכה");
+      toast.success("ההצעה נמשכה — המכרז חזר לרשימת המכרזים הפתוחים");
+      // Refresh both the offers list AND the open-tenders list (the tender
+      // becomes available to bid on again).
       qc.invalidateQueries({ queryKey: ["my-offers"] });
+      qc.invalidateQueries({ queryKey: ["open-job-requests"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "שגיאה במשיכת ההצעה");
     } finally {
@@ -165,20 +169,42 @@ export function MyOffersSection() {
                               <VisibilityIcon sx={{ fontSize: 14 }} />
                             </Link>
                           </Button>
-                          {o.status === "submitted" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleWithdraw(o.id)}
-                              disabled={withdrawingId === o.id}
-                            >
-                              {withdrawingId === o.id ? (
-                                <CircularProgress size={14} color="inherit" />
-                              ) : (
-                                <UndoIcon sx={{ fontSize: 14 }} />
-                              )}
-                            </Button>
-                          )}
+                          {o.status === "submitted" &&
+                            (confirmingId === o.id ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-muted-foreground">למשוך?</span>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={() => handleWithdraw(o.id)}
+                                  disabled={withdrawingId === o.id}
+                                >
+                                  {withdrawingId === o.id ? (
+                                    <CircularProgress size={12} color="inherit" />
+                                  ) : (
+                                    "כן, משוך"
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={() => setConfirmingId(null)}
+                                >
+                                  ביטול
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setConfirmingId(o.id)}
+                                title="משוך הצעה"
+                              >
+                                <UndoIcon sx={{ fontSize: 14 }} /> משוך
+                              </Button>
+                            ))}
                         </div>
                       </td>
                     </tr>
@@ -231,21 +257,42 @@ export function MyOffersSection() {
                           <VisibilityIcon sx={{ fontSize: 14 }} />
                         </Link>
                       </Button>
-                      {o.status === "submitted" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8"
-                          onClick={() => handleWithdraw(o.id)}
-                          disabled={withdrawingId === o.id}
-                        >
-                          {withdrawingId === o.id ? (
-                            <CircularProgress size={14} color="inherit" />
-                          ) : (
+                      {o.status === "submitted" &&
+                        (confirmingId === o.id ? (
+                          <>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                              onClick={() => handleWithdraw(o.id)}
+                              disabled={withdrawingId === o.id}
+                            >
+                              {withdrawingId === o.id ? (
+                                <CircularProgress size={12} color="inherit" />
+                              ) : (
+                                "משוך"
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                              onClick={() => setConfirmingId(null)}
+                            >
+                              ביטול
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8"
+                            onClick={() => setConfirmingId(o.id)}
+                            title="משוך הצעה"
+                          >
                             <UndoIcon sx={{ fontSize: 14 }} />
-                          )}
-                        </Button>
-                      )}
+                          </Button>
+                        ))}
                     </div>
                   </div>
                   {isAwarded && (

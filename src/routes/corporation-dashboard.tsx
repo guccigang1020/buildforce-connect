@@ -1,26 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import CircularProgress from "@mui/material/CircularProgress";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { AppShell } from "@/components/app-shell";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
 import { useAuth } from "@/hooks/use-auth";
 import { listMyOffers } from "@/lib/job-offers.functions";
-
-const PRICE_BANDS = [
-  { label: "< ₪50", key: "budget", test: (p: number) => p < 50 },
-  { label: "₪50–₪64", key: "competitive", test: (p: number) => p >= 50 && p < 65 },
-  { label: "₪65–₪79", key: "average", test: (p: number) => p >= 65 && p < 80 },
-  { label: "₪80+", key: "premium", test: (p: number) => p >= 80 },
-];
 
 export const Route = createFileRoute("/corporation-dashboard")({
   head: () => ({
@@ -64,35 +53,6 @@ function CorporationDashboard() {
     const decided = won + lost;
     const winRate = decided > 0 ? Math.round((won / decided) * 100) : 0;
     return { open, won, decided, winRate, total: offers.length };
-  }, [offers]);
-
-  const priceIntelligence = useMemo(() => {
-    const decidedOffers = offers.filter((o) => o.status === "awarded" || o.status === "rejected");
-    if (decidedOffers.length === 0) return null;
-
-    const bands = PRICE_BANDS.map((band) => {
-      const inBand = decidedOffers.filter((o) => band.test(Number(o.price_per_hour)));
-      const wins = inBand.filter((o) => o.status === "awarded").length;
-      const rate = inBand.length > 0 ? Math.round((wins / inBand.length) * 100) : null;
-      return { label: band.label, wins, total: inBand.length, rate };
-    }).filter((b) => b.total > 0);
-
-    const wonOffers = decidedOffers.filter((o) => o.status === "awarded");
-    const lostOffers = decidedOffers.filter((o) => o.status === "rejected");
-    const avgWinPrice =
-      wonOffers.length > 0
-        ? Math.round(wonOffers.reduce((s, o) => s + Number(o.price_per_hour), 0) / wonOffers.length)
-        : null;
-    const avgLossPrice =
-      lostOffers.length > 0
-        ? Math.round(
-            lostOffers.reduce((s, o) => s + Number(o.price_per_hour), 0) / lostOffers.length,
-          )
-        : null;
-
-    const bestBand = [...bands].sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0))[0];
-
-    return { bands, avgWinPrice, avgLossPrice, bestBand };
   }, [offers]);
 
   if (loading || !user) {
@@ -195,13 +155,6 @@ function CorporationDashboard() {
         </div>
       </div>
 
-      {/* ── Price intelligence ── */}
-      {!isLoading && priceIntelligence && priceIntelligence.bands.length > 0 && (
-        <div className="mb-6">
-          <PriceIntelligencePanel intelligence={priceIntelligence} />
-        </div>
-      )}
-
       {/* ── Sub-sections ── */}
       <OpenTendersSection isApproved={Boolean(isApproved)} />
       <MyOffersSection />
@@ -209,87 +162,3 @@ function CorporationDashboard() {
   );
 }
 
-function PriceIntelligencePanel({
-  intelligence,
-}: {
-  intelligence: {
-    bands: { label: string; wins: number; total: number; rate: number | null }[];
-    avgWinPrice: number | null;
-    avgLossPrice: number | null;
-    bestBand: { label: string; wins: number; total: number; rate: number | null } | undefined;
-  };
-}) {
-  const { bands, avgWinPrice, avgLossPrice, bestBand } = intelligence;
-  const maxRate = Math.max(...bands.map((b) => b.rate ?? 0));
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h3 className="text-sm font-semibold">ניתוח תמחור</h3>
-        {bestBand?.rate != null && (
-          <span className="status-chip-approved">
-            <TrendingUpIcon sx={{ fontSize: 12 }} />
-            <span dir="ltr">{bestBand.label}</span> —{" "}
-            <span dir="ltr">{bestBand.rate}%</span> זכיות
-          </span>
-        )}
-      </div>
-
-      <div className="divide-y divide-border/40 px-4 py-1">
-        {bands.map((band) => (
-          <div key={band.label} className="flex items-center gap-3 py-3">
-            <div className="w-20 shrink-0 text-xs font-semibold text-foreground/80" dir="ltr">
-              {band.label}
-            </div>
-            <div className="flex flex-1 items-center gap-2">
-              <div className="progress-track flex-1">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${maxRate > 0 ? ((band.rate ?? 0) / maxRate) * 100 : 0}%` }}
-                />
-              </div>
-              <span
-                className={`w-10 text-right text-xs font-semibold ${
-                  (band.rate ?? 0) >= 60
-                    ? "text-status-approved"
-                    : (band.rate ?? 0) >= 30
-                      ? "text-status-pending"
-                      : "text-destructive"
-                }`}
-                dir="ltr"
-              >
-                {band.rate != null ? `${band.rate}%` : "—"}
-              </span>
-            </div>
-            <div className="w-14 shrink-0 text-right text-[11px] text-muted-foreground" dir="ltr">
-              {band.wins}/{band.total}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {(avgWinPrice != null || avgLossPrice != null) && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-border bg-muted/20 px-4 py-3">
-          {avgWinPrice != null && (
-            <div className="flex items-center gap-1.5">
-              <CheckCircleIcon sx={{ fontSize: 12 }} className="text-emerald-500" />
-              <span className="text-[11px] text-muted-foreground">ממוצע בזכיות:</span>
-              <span className="text-xs font-semibold text-status-approved">
-                <span dir="ltr">₪{avgWinPrice}</span> לשעה
-              </span>
-            </div>
-          )}
-          {avgLossPrice != null && avgWinPrice != null && (
-            <div className="flex items-center gap-1.5">
-              <CancelIcon sx={{ fontSize: 12 }} className="text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">ממוצע בהפסדים:</span>
-              <span className="text-xs font-semibold">
-                <span dir="ltr">₪{avgLossPrice}</span> לשעה
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}

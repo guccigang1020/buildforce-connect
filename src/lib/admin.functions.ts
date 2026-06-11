@@ -53,6 +53,103 @@ export const adminSetVerificationStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Admin oversight of the whole marketplace: every request with all its offers,
+// corporation identities revealed (admin-only — corporations never see this).
+export const adminGetAllRequestsWithOffers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [{ supabaseAdmin }, { assertAdmin }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/admin.server"),
+    ]);
+    await assertAdmin(context.userId);
+
+    const { data: requests, error: reqErr } = await supabaseAdmin
+      .from("job_requests")
+      .select("id, location, start_date, duration, status, created_at, deadline_at, user_id")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (reqErr) throw new Error(reqErr.message);
+
+    const reqIds = (requests ?? []).map((r) => r.id);
+    const ownerIds = Array.from(new Set((requests ?? []).map((r) => r.user_id)));
+
+    const [{ data: offers }, { data: items }, { data: owners }] = await Promise.all([
+      reqIds.length
+        ? supabaseAdmin
+            .from("job_offers")
+            .select(
+              "id, request_id, corporation_id, price_per_hour, available_workers, start_date, status, created_at",
+            )
+            .in("request_id", reqIds)
+            .order("price_per_hour", { ascending: true })
+        : Promise.resolve({ data: [] as never[] }),
+      reqIds.length
+        ? supabaseAdmin
+            .from("job_request_items")
+            .select("request_id, role, nationality, count")
+            .in("request_id", reqIds)
+        : Promise.resolve({ data: [] as never[] }),
+      ownerIds.length
+        ? supabaseAdmin
+            .from("profiles")
+            .select("user_id, full_name, company_name")
+            .in("user_id", ownerIds)
+        : Promise.resolve({ data: [] as never[] }),
+    ]);
+
+    // Corporation names for every offer
+    const corpIds = Array.from(new Set((offers ?? []).map((o) => o.corporation_id)));
+    const { data: corps } = corpIds.length
+      ? await supabaseAdmin
+          .from("profiles")
+          .select("user_id, full_name, company_name")
+          .in("user_id", corpIds)
+      : { data: [] as never[] };
+
+    const corpName = new Map(
+      (corps ?? []).map((c) => [c.user_id, c.company_name || c.full_name || "—"]),
+    );
+    const ownerName = new Map(
+      (owners ?? []).map((o) => [o.user_id, o.full_name || o.company_name || "—"]),
+    );
+
+    type AdminOffer = {
+      id: string;
+      request_id: string;
+      corporation_id: string;
+      price_per_hour: number;
+      available_workers: number;
+      start_date: string;
+      status: string;
+      created_at: string;
+      corporation_name: string;
+    };
+    type AdminItem = { request_id: string; role: string; nationality: string; count: number };
+
+    const offersByReq = new Map<string, AdminOffer[]>();
+    for (const o of offers ?? []) {
+      const arr = offersByReq.get(o.request_id) ?? [];
+      arr.push({ ...o, corporation_name: corpName.get(o.corporation_id) ?? "—" });
+      offersByReq.set(o.request_id, arr);
+    }
+    const itemsByReq = new Map<string, AdminItem[]>();
+    for (const it of items ?? []) {
+      const arr = itemsByReq.get(it.request_id) ?? [];
+      arr.push(it);
+      itemsByReq.set(it.request_id, arr);
+    }
+
+    return {
+      requests: (requests ?? []).map((r) => ({
+        ...r,
+        owner_name: ownerName.get(r.user_id) ?? "—",
+        items: itemsByReq.get(r.id) ?? [],
+        offers: offersByReq.get(r.id) ?? [],
+      })),
+    };
+  });
+
 export const adminGetDocumentUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ path: z.string().min(1).max(500) }).parse(d))
