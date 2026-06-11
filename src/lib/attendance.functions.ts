@@ -405,7 +405,7 @@ export const approveAllPending = createServerFn({ method: "POST" })
       .update({ status: "approved", approved_by: userId })
       .in("id", ids);
     await supabase
-      .from("attendance_events")
+      .from("attendance_events" as any)
       .insert(ids.map((id) => ({ record_id: id, kind: "approval" as const, actor_id: userId })));
     return { count: ids.length };
   });
@@ -604,16 +604,16 @@ export const getAttendanceRecord = createServerFn({ method: "POST" })
       throw new Error("אין לך הרשאה לצפות ברשומה זו");
     }
     const { data: events } = await supabase
-      .from("attendance_events")
+      .from("attendance_events" as any)
       .select("*")
-      .eq("record_id", data.recordId)
+      .eq("record_id" as any, data.recordId)
       .order("created_at", { ascending: true });
     // signed photo URLs
     const signedUrls: Record<string, string> = {};
     const paths = [
       rec.start_photo_url,
       rec.end_photo_url,
-      ...(events ?? []).map((e) => e.photo_url),
+      ...((events ?? []) as any[]).map((e: any) => e.photo_url),
     ].filter(Boolean) as string[];
     if (paths.length) {
       const { data: signed } = await supabaseAdmin.storage
