@@ -154,7 +154,62 @@ P3-1 / OQ-3, now upgraded to high priority.
 
 ---
 
-## Current Status: 🟢 Full reverse-auction validated (post → bid → award). Remaining: 3 non-blocking bugs + migration-drift reconciliation
+## Business-plan alignment work (branch ido/refactor-v1)
+- ✅ **P0-1 Savings Engine** (plan's #1 differentiator) wired into the live request
+  page: hero "₪/month saved vs. the highest offer" + per-offer "cheaper by X₪/hr"
+  badge. Validated live = ₪42,240/mo on a 235→205 spread, 8 workers. Was dead code.
+- ✅ **P0-2 Winner reveal at award**: server fn returns winning corp name+phone+email
+  to owner; card + win panel show it. Validated live.
+- ✅ **Role-based routing**: corporation → /corporation-dashboard, contractor →
+  /dashboard (was: corp landed on contractor view). Validated live.
+- ✅ **Branded BF-XXXX tender IDs** replacing raw UUID prefixes everywhere. Validated.
+- ✅ **No-broken-pages sweep**: dashboard, contractor/corp accounts, projects,
+  attendance all render with zero crashes/error banners across both roles.
+- Demo accounts created via signup UI: `demo.corp.beta@gmail.com` / `Demo2026!`
+  (approved corp). Email-confirm skipped via admin API. Seed request `d5798196`
+  has the 2-bid spread used for the savings demo.
+- Commits: 20de690 (savings+reveal), 055d27a (routing+ids).
+
+### Remaining (larger efforts — need a steer or setup)
+- Landing page still uses mock `CORPORATIONS`; redesign to communicate the value
+  prop (reverse auction → savings → attendance → anti-circumvention). Investor-facing.
+- Full **attendance GPS+photo → daily account → invoice** demo needs a team_leader
+  account + project assignment to run end-to-end (code exists).
+- Role assignment: `ensure_user_bootstrap` re-adds a default contractor role.
+- `corporation_workforce` 404 (schema drift) — low demo value.
+
+---
+
+## Autonomous run on ido/refactor-v1 (2026-06-09/10) — business-plan alignment
+
+1. ✅ **Landing redesign** (4c99353): replaced the named-corp directory (mock
+   CORPORATIONS, which contradicted the anonymity moat) with a **Savings Engine
+   showcase** (₪18,000/mo example); masked hero bidders (BF-XXXX + lock); fixed a
+   broken CTA (fake request id → /signup); repointed nav. Validated live.
+2. ✅ **Dead/mock cleanup** (461923b): deleted auction-panel.tsx, auction-state.ts,
+   export-pdf.ts, selections-store.ts (all dead), the orphaned /corporations/$id
+   mock page, and mock-data.ts → replaced with catalog.ts (real pick-lists only).
+   `tsc --noEmit` = 0 errors.
+3. ✅ **Role-assignment dual-role bug** — RESOLVED (no code needed): verified the
+   newest signup (demo.corp.beta) has a clean single role. Was a symptom of the
+   profiles/user_roles RLS gap already fixed; bootstrap no longer fires spuriously.
+4. 🟡 **Attendance → daily account → invoice** — pipeline **verified wired**:
+   awarded requests become projects (2 shown); the contractor setup flow (GPS
+   geo-fence → site manager → teams) renders and accepts input; team-leader page +
+   `getGps`/`watermarkImage` capture code exist; daily-account pages render.
+   **Setup is gated on GPS site location (device geolocation) and check-in needs a
+   camera** — inherent device dependencies that can't be faithfully validated in a
+   headless browser. The live GPS+photo demo is a real-device task.
+
+Earlier same-session (committed): P0 Savings Engine + winner reveal (20de690),
+role routing + BF-XXXX ids (055d27a).
+
+Demo accounts (kazm dev DB): idor980 (contractor) / idor981, demo.corp.beta
+(corporations, Demo2026!). Open request d5798196 has a 2-bid spread.
+
+---
+
+## Current Status: 🟢 Business-plan alignment delivered on ido/refactor-v1 — savings engine, anonymity, clean landing, dead-code removed. Attendance check-in is a device demo.
 
 Implementation of Phase 1 is **gated** behind Phase 0 (see plan §4). Do **not**
 write fix migrations or production code until all four P0 items pass. Reason:
@@ -285,3 +340,35 @@ manual via Playwright MCP. Test suite to be built in Phase 4.
 6. After every item: apply the Definition of Done checklist and update this
    file. Work on a branch; do not commit/push or touch the real DB without
    explicit approval.
+
+---
+
+## Makeover run (branch ido/makeover, 2026-06-10)
+
+**Role separation (the owner's #1 ask) — DONE & enforced at 3 layers:**
+- App: `selfBootstrapAdmin` + admin/corp role-toggle UI deleted; roles fixed at
+  signup; OAuth redirect fixed to current origin.
+- Data: dedicated `admin@buildforce.dev` (admin-ONLY) seeded; mixed
+  corporation+admin account cleaned (scripts/seed-admin.mjs).
+- Schema: `20260610210000_role_separation_hardening.sql` — revokes client role
+  writes, safe `ensure_user_bootstrap`, one-role-per-user unique index,
+  mixed-data cleanup. (Needs one SQL-editor run on dev + prod — see
+  LOVABLE_HANDOFF.md.)
+
+**Design system — light "calm, statusful, fast"** (Notion/Monday/Linear):
+full token rewrite in styles.css (light slate, blue #1D4ED8, Rubik), status
+pills standardized, savings = the only orange, fake stats + dead video removed,
+coming-soon treatment redesigned. Page passes across all routes (4 subagents).
+
+**Flows — verified via headless Playwright:**
+- Full money loop: 2 sealed bids → savings hero ₪61,600 (math exact) → award →
+  winner identity + contacts revealed, loser stays anonymous. Zero console errors.
+- Award double-click window closed (buttons locked through refetch, verified t+1s).
+- Route sweep: 15 routes × 4 access levels — zero console errors, all guards work.
+- Validations: bid form (price 50–500, workers, date), wizard disabled-Next hint,
+  server errors surfaced as Hebrew toasts.
+
+**Data hygiene:** corrupt year-2211 request deleted; demo accounts:
+contractor.demo@ / corp.demo@buildforce.dev (Demo2026!), admin@buildforce.dev.
+
+**Prod:** untouched. Everything Lovable must run/do is in `LOVABLE_HANDOFF.md`.

@@ -1,11 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { Flame, ShieldCheck, Users, ArrowLeft, PlayCircle, TrendingDown, Eye } from "lucide-react";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import PlayCircleIcon from "@mui/icons-material/PlayCircle";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import featureAuction from "@/assets/feature-auction.jpg";
 import featureWorkers from "@/assets/feature-workers.jpg";
 import featureChat from "@/assets/feature-secure-chat.jpg";
-import platformVideo from "@/assets/platform-hero.mp4.asset.json";
-
-const VIDEO_URL = (platformVideo as { url: string }).url;
 
 const FEATURES = [
   {
@@ -13,23 +16,29 @@ const FEATURES = [
     title: "תאגידים נלחמים על המחיר שלך",
     body: "פותח בקשה אחת — ועשרות תאגידים מתחילים להוריד הצעות זה מול זה. אתה רואה את המחיר יורד בזמן אמת, עם טיימר 48 שעות וגרף חי שמראה כל הורדה.",
     image: featureAuction,
+    soon: false,
     bullets: [
-      { icon: Flame, text: "ספירה לאחור חיה — ככל שמתקרבים לדדליין, ההצעות הופכות אגרסיביות יותר" },
-      { icon: TrendingDown, text: "גרף ירידת מחיר אנימטיבי בזמן אמת" },
-      { icon: Eye, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו" },
+      {
+        icon: LocalFireDepartmentIcon,
+        text: "ספירה לאחור חיה — ככל שמתקרבים לדדליין, ההצעות הופכות אגרסיביות יותר",
+        soon: false,
+      },
+      { icon: TrendingDownIcon, text: "גרף ירידת מחיר אנימטיבי בזמן אמת", soon: false },
+      { icon: VisibilityIcon, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו", soon: false },
     ],
-    accent: "from-orange-500 to-amber-400",
-    glow: "shadow-[0_30px_120px_-20px_rgba(232,93,58,0.55)]",
+    accent: "from-primary to-primary-glow",
+    glow: "shadow-[0_30px_120px_-20px_rgba(29,78,216,0.35)]",
   },
   {
     eyebrow: "עובדים אמיתיים · ספקים מאומתים",
     title: "פועלים שמגיעים לאתר. נקודה.",
-    body: "כל ספק ב-BuildForce עובר אימות מקצועי, ביטוחי ורגולטורי. אם פועל לא הופיע — אנחנו שולחים מחליף תוך 4 שעות, על חשבון התאגיד.",
+    body: "כל ספק ב-BuildForce עובר אימות מקצועי, ביטוחי ורגולטורי. החזון שלנו: אם פועל לא מגיע — שולחים מחליף תוך 4 שעות, על חשבון התאגיד.",
     image: featureWorkers,
+    soon: false,
     bullets: [
-      { icon: ShieldCheck, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות" },
-      { icon: Users, text: "דירוג פועל-לפי-פועל, לא רק תאגיד" },
-      { icon: Flame, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה' },
+      { icon: VerifiedUserIcon, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות", soon: true },
+      { icon: GroupIcon, text: "דירוג פועל-לפי-פועל, לא רק תאגיד", soon: true },
+      { icon: LocalFireDepartmentIcon, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה', soon: true },
     ],
     accent: "from-emerald-500 to-teal-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(45,212,168,0.45)]",
@@ -37,17 +46,22 @@ const FEATURES = [
   {
     eyebrow: "צ׳אט מאובטח · אנונימיות מלאה",
     title: "השליטה אצלך — תמיד",
-    body: "מספרי טלפון, מיילים וקישורים נחסמים אוטומטית בצ׳אט עד החתימה. שיחות עוברות דרך מספרים וירטואליים שלנו. אף אחד לא עוקף אותך.",
+    body: "החזון: מספרי טלפון, מיילים וקישורים ייחסמו אוטומטית בצ׳אט עד החתימה, ושיחות יעברו דרך מספרים וירטואליים שלנו — כך שאף אחד לא יעקוף אותך.",
     image: featureChat,
+    soon: true,
     bullets: [
-      { icon: ShieldCheck, text: "מסיכת זהות עד חתימת הסכם" },
-      { icon: Flame, text: "חסימה אוטומטית של פרטי קשר חיצוניים" },
-      { icon: Eye, text: "Audit trail מלא: זמן, IP, חתימה דיגיטלית" },
+      { icon: VerifiedUserIcon, text: "מסיכת זהות עד חתימת הסכם", soon: true },
+      { icon: LocalFireDepartmentIcon, text: "חסימה אוטומטית של פרטי קשר חיצוניים", soon: true },
+      { icon: VisibilityIcon, text: "Audit trail מלא: זמן, IP, חתימה דיגיטלית", soon: true },
     ],
     accent: "from-fuchsia-500 to-violet-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(217,70,239,0.45)]",
   },
 ];
+
+function ComingSoonPill() {
+  return <span className="status-chip-muted shrink-0">בקרוב</span>;
+}
 
 export function PlatformShowcase() {
   return (
@@ -60,18 +74,18 @@ export function PlatformShowcase() {
       }}
     >
       {/* Glow orbs */}
-      <div className="pointer-events-none absolute -left-32 top-40 h-96 w-96 rounded-full bg-orange-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-32 top-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-32 bottom-40 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 md:px-6">
         {/* Section header */}
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-primary">
-            <PlayCircle className="h-3.5 w-3.5" /> פלטפורמה בפעולה
+            <PlayCircleIcon sx={{ fontSize: 14 }} /> פלטפורמה בפעולה
           </div>
           <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
             איך BuildForce{" "}
-            <span className="bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
+            <span className="text-gradient-primary">
               משנה את המשחק
             </span>
           </h2>
@@ -80,25 +94,24 @@ export function PlatformShowcase() {
           </p>
         </div>
 
-        {/* Video hero strip */}
+        {/* Hero image strip */}
         <div className="relative mt-12 overflow-hidden rounded-3xl border border-border/60 shadow-elegant">
-          <video
-            src={VIDEO_URL}
+          <img
+            src={featureWorkers}
+            alt="פלטפורמה בפעולה"
             className="h-[260px] w-full object-cover md:h-[420px]"
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster={featureWorkers}
+            loading="eager"
+            width={1280}
+            height={420}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary backdrop-blur">
               <span className="relative grid h-2 w-2 place-items-center">
-                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/70" />
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="absolute inset-0 animate-ping rounded-full bg-primary/70" />
+                <span className="h-2 w-2 rounded-full bg-primary" />
               </span>
-              247 בקשות פעילות עכשיו
+              כל הצעה חדשה דוחפת את המחיר למטה
             </div>
             <h3 className="mt-3 max-w-2xl text-2xl font-extrabold md:text-4xl">
               קבלן אחד. הצעות אינסוף. מחיר שיורד.
@@ -126,7 +139,7 @@ export function PlatformShowcase() {
                   height={896}
                 />
                 <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${f.accent}`} />
-                <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur">
+                <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-[11px] font-bold uppercase tracking-wider backdrop-blur">
                   <span className={`h-2 w-2 rounded-full bg-gradient-to-br ${f.accent}`} />
                   {f.eyebrow}
                 </div>
@@ -134,27 +147,33 @@ export function PlatformShowcase() {
 
               {/* Copy */}
               <div>
-                <div
-                  className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${f.accent} bg-clip-text px-0 py-0 text-[11px] font-extrabold uppercase tracking-wider text-transparent`}
-                >
-                  {f.eyebrow}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div
+                    className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${f.accent} bg-clip-text px-0 py-0 text-[11px] font-extrabold uppercase tracking-wider text-transparent`}
+                  >
+                    {f.eyebrow}
+                  </div>
+                  {f.soon && <ComingSoonPill />}
                 </div>
                 <h3 className="mt-2 text-2xl font-extrabold leading-tight md:text-4xl">
                   {f.title}
                 </h3>
                 <p className="mt-3 text-base text-muted-foreground md:text-lg">{f.body}</p>
                 <ul className="mt-6 space-y-3">
-                  {f.bullets.map(({ icon: Icon, text }) => (
+                  {f.bullets.map(({ icon: Icon, text, soon }) => (
                     <li
                       key={text}
                       className="flex items-start gap-3 rounded-2xl border border-border/40 bg-card/60 p-3 backdrop-blur-sm"
                     >
                       <span
-                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-white shadow-elegant`}
+                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-primary-foreground shadow-elegant`}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon sx={{ fontSize: 16 }} />
                       </span>
-                      <span className="pt-1.5 text-sm font-medium">{text}</span>
+                      <span className="flex flex-1 flex-wrap items-center justify-between gap-2 pt-1.5">
+                        <span className="text-sm font-medium">{text}</span>
+                        {soon && <ComingSoonPill />}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -167,10 +186,10 @@ export function PlatformShowcase() {
         <div className="mt-24 text-center">
           <Link
             to="/new-request"
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500 px-8 py-4 text-base font-extrabold text-white shadow-elegant transition-transform hover:scale-105"
+            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-primary px-8 py-4 text-base font-extrabold text-primary-foreground shadow-elegant transition-transform hover:scale-105"
           >
             פתח בקשה ותראה איך תאגידים נלחמים עליך
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowBackIcon sx={{ fontSize: 20 }} />
           </Link>
         </div>
       </div>

@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  HardHat,
-  Menu,
-  X,
-  LogOut,
-  LayoutDashboard,
-  User,
-  ShieldCheck,
-  Building2,
-  ClipboardList,
-} from "lucide-react";
+import EngineeringIcon from "@mui/icons-material/Engineering";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import LogoutIcon from "@mui/icons-material/Logout";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import PersonIcon from "@mui/icons-material/Person";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +27,7 @@ export function SiteNav() {
   const links = [
     { label: "איך זה עובד", to: "/" as const, hash: "how" },
     { label: "פלטפורמה", to: "/" as const, hash: "platform" },
-    { label: "תאגידים", to: "/" as const, hash: "corps" },
+    { label: "החיסכון", to: "/" as const, hash: "savings" },
   ];
 
   const handleSignOut = async () => {
@@ -45,7 +42,7 @@ export function SiteNav() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary shadow-elegant">
-            <HardHat className="h-4 w-4 text-primary-foreground" />
+            <EngineeringIcon sx={{ fontSize: 16 }} className="text-primary-foreground" />
           </div>
           <span className="text-base font-extrabold tracking-tight">
             Build<span className="text-primary">Force</span>
@@ -54,7 +51,7 @@ export function SiteNav() {
         {session && isAdmin && (
           <Button variant="ghost" size="icon" asChild className="md:hidden">
             <Link to="/admin" aria-label="אזור אדמין">
-              <ShieldCheck className="h-5 w-5 text-primary" />
+              <VerifiedUserIcon sx={{ fontSize: 20 }} className="text-primary" />
             </Link>
           </Button>
         )}
@@ -75,35 +72,29 @@ export function SiteNav() {
             <>
               {isAdmin && (
                 <Badge variant="outline" className="border-primary/50 text-primary">
-                  <ShieldCheck className="ms-1 h-3.5 w-3.5" /> מנהל מערכת
+                  <VerifiedUserIcon sx={{ fontSize: 14 }} className="ms-1" /> מנהל מערכת
                 </Badge>
               )}
               {isAdmin && (
                 <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/admin">
-                    <ShieldCheck className="h-4 w-4" /> אדמין
+                    <VerifiedUserIcon sx={{ fontSize: 16 }} /> אדמין
                   </Link>
                 </Button>
               )}
-              {isCorporation ? (
+              {isCorporation && (
                 <Button variant="ghost" size="sm" asChild className="gap-1.5">
                   <Link to="/corporation-dashboard">
-                    <Building2 className="h-4 w-4" />
+                    <ApartmentIcon sx={{ fontSize: 16 }} />
                     {profile?.company_name?.split(" ")[0] ?? "לוח תאגיד"}
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="ghost" size="sm" asChild className="gap-1.5">
-                  <Link to="/dashboard">
-                    <LayoutDashboard className="h-4 w-4" />
-                    {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
                   </Link>
                 </Button>
               )}
               {isContractor && (
                 <Button variant="ghost" size="sm" asChild className="gap-1.5">
-                  <Link to="/contractor/attendance">
-                    <ClipboardList className="h-4 w-4" /> נוכחות
+                  <Link to="/dashboard">
+                    <DashboardIcon sx={{ fontSize: 16 }} />
+                    {profile?.full_name?.split(" ")[0] ?? "האזור שלי"}
                   </Link>
                 </Button>
               )}
@@ -116,7 +107,7 @@ export function SiteNav() {
                 <div className="grid h-6 w-6 place-items-center rounded-full bg-gradient-primary text-[11px] font-bold text-primary-foreground">
                   {initial}
                 </div>
-                <LogOut className="h-3.5 w-3.5" />
+                <LogoutIcon sx={{ fontSize: 14 }} />
               </button>
             </>
           ) : (
@@ -136,10 +127,10 @@ export function SiteNav() {
         </div>
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden text-foreground"
+          className="grid h-10 w-10 place-items-center text-foreground md:hidden"
           aria-label="תפריט"
         >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {open ? <CloseIcon sx={{ fontSize: 24 }} /> : <MenuIcon sx={{ fontSize: 24 }} />}
         </button>
       </div>
       {open && (
@@ -151,7 +142,7 @@ export function SiteNav() {
                 to={l.to}
                 hash={l.hash}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="flex items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {l.label}
               </Link>
@@ -165,7 +156,7 @@ export function SiteNav() {
                         {profile?.full_name ?? profile?.user_id ?? "החשבון שלי"}
                       </span>
                       <Badge variant="outline" className="border-primary/50 text-primary">
-                        <ShieldCheck className="ms-1 h-3.5 w-3.5" /> מנהל מערכת
+                        <VerifiedUserIcon sx={{ fontSize: 14 }} className="ms-1" /> מנהל מערכת
                       </Badge>
                     </div>
                   )}
@@ -177,32 +168,26 @@ export function SiteNav() {
                       className="col-span-2"
                     >
                       <Link to="/admin">
-                        <ShieldCheck className="me-1 h-4 w-4" /> אדמין
+                        <VerifiedUserIcon sx={{ fontSize: 16 }} className="me-1" /> אדמין
                       </Link>
                     </Button>
                   )}
-                  {isCorporation ? (
+                  {isCorporation && (
                     <Button variant="outline" asChild onClick={() => setOpen(false)}>
                       <Link to="/corporation-dashboard">
-                        <Building2 className="me-1 h-4 w-4" /> לוח תאגיד
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                      <Link to="/dashboard">
-                        <User className="me-1 h-4 w-4" /> דשבורד
+                        <ApartmentIcon sx={{ fontSize: 16 }} className="me-1" /> לוח תאגיד
                       </Link>
                     </Button>
                   )}
                   {isContractor && (
                     <Button variant="outline" asChild onClick={() => setOpen(false)}>
-                      <Link to="/contractor/attendance">
-                        <ClipboardList className="me-1 h-4 w-4" /> נוכחות
+                      <Link to="/dashboard">
+                        <PersonIcon sx={{ fontSize: 16 }} className="me-1" /> דשבורד
                       </Link>
                     </Button>
                   )}
                   <Button variant="outline" onClick={handleSignOut}>
-                    <LogOut className="me-1 h-4 w-4" /> התנתק
+                    <LogoutIcon sx={{ fontSize: 16 }} className="me-1" /> התנתק
                   </Button>
                 </>
               ) : (

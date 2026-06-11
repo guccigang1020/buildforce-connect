@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Cookie, X } from "lucide-react";
+import CookieIcon from "@mui/icons-material/Cookie";
+import CloseIcon from "@mui/icons-material/Close";
 import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "bf_cookie_consent_v1";
@@ -38,9 +39,9 @@ export function CookieConsent() {
     >
       <div className="flex flex-wrap items-start gap-3">
         <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
-          <Cookie className="h-4 w-4" />
+          <CookieIcon sx={{ fontSize: 16 }} />
         </div>
-        <div className="min-w-0 flex-1 text-sm">
+        <div className="min-w-0 flex-1 pl-10 text-sm">
           <div className="font-bold">אנחנו משתמשים בעוגיות</div>
           <p className="mt-1 text-xs text-muted-foreground">
             אנו משתמשים בעוגיות חיוניות לתפעול האתר ובעוגיות אופציונליות לשיפור החוויה. ניתן לקרוא ב
@@ -53,9 +54,9 @@ export function CookieConsent() {
         <button
           onClick={() => decide("rejected")}
           aria-label="סגור"
-          className="absolute left-3 top-3 text-muted-foreground hover:text-foreground"
+          className="absolute left-1 top-1 grid h-10 w-10 place-items-center text-muted-foreground hover:text-foreground"
         >
-          <X className="h-4 w-4" />
+          <CloseIcon sx={{ fontSize: 16 }} />
         </button>
       </div>
       <div className="mt-3 flex flex-wrap justify-end gap-2">

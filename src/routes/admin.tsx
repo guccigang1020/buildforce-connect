@@ -2,29 +2,27 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  ShieldCheck,
-  Users,
-  FileCheck2,
-  FileX2,
-  Loader2,
-  ExternalLink,
-  Search,
-  Building2,
-  HardHat,
-  Activity,
-  Gavel,
-  Trophy,
-  AlertCircle,
-  BarChart3,
-} from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import SearchIcon from "@mui/icons-material/Search";
+import GavelIcon from "@mui/icons-material/Gavel";
+import HardHatIcon from "@mui/icons-material/Engineering";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import HandshakeIcon from "@mui/icons-material/Handshake";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { useServerFn } from "@tanstack/react-start";
 import {
   adminGetDashboardData,
+  adminGetAllRequestsWithOffers,
   adminSetVerificationStatus,
-  adminToggleRole,
   adminGetDocumentUrl,
 } from "@/lib/admin.functions";
+import { maskedRequestId } from "@/lib/anonymize";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
@@ -87,7 +85,7 @@ function AdminPage() {
     return (
       <AppShell title="מנהל מערכת">
         <div className="grid place-items-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <CircularProgress size={24} color="inherit" className="text-muted-foreground" />
         </div>
       </AppShell>
     );
@@ -96,22 +94,14 @@ function AdminPage() {
   return <AdminDashboard />;
 }
 
-type AuditEntry = {
-  id: string;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  actor_id: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-};
-
 function AdminDashboard() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { session, profile } = useAuth();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
+  // Primary admin view: corporation verification vs. marketplace oversight.
+  const [view, setView] = useState<"corps" | "auctions">("corps");
   const fetchDashboard = useServerFn(adminGetDashboardData);
 
   const { data, isLoading, error } = useQuery({
@@ -122,13 +112,10 @@ function AdminDashboard() {
 
   const profiles = (data?.profiles ?? []) as AdminProfile[];
   const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
-  const auditLog = (data?.auditLog ?? []) as AuditEntry[];
   const activeAuctions = (data?.activeAuctions ?? 0) as number;
   const completedDeals = (data?.completedDeals ?? 0) as number;
-  const recentAwards = (data?.recentAwards ?? 0) as number;
-  const monthlyWorkforceValue = (data?.monthlyWorkforceValue ?? 0) as number;
-  const monthlyWorkerHours = (data?.monthlyWorkerHours ?? 0) as number;
   const totalCorporations = (data?.totalCorporations ?? 0) as number;
+  const totalContractors = (data?.totalContractors ?? 0) as number;
 
   useEffect(() => {
     if (!error) return;
@@ -149,9 +136,17 @@ function AdminDashboard() {
     return m;
   }, [roles]);
 
+  // Verification applies ONLY to corporations (manpower suppliers).
+  // Contractors don't need admin approval — listing them in this queue was
+  // confusing ("why is a contractor pending?").
+  const corporations = useMemo(
+    () => profiles.filter((p) => (rolesByUser.get(p.user_id) ?? []).includes("corporation")),
+    [profiles, rolesByUser],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return profiles.filter((p) => {
+    return corporations.filter((p) => {
       if (tab === "pending" && p.verification_status !== "pending") return false;
       if (tab === "approved" && p.verification_status !== "approved") return false;
       if (tab === "rejected" && p.verification_status !== "rejected") return false;
@@ -165,16 +160,19 @@ function AdminDashboard() {
         p.city,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [profiles, tab, search]);
+  }, [corporations, tab, search]);
 
   const stats = useMemo(
     () => ({
       total: profiles.length,
-      pending: profiles.filter((p) => p.verification_status === "pending").length,
-      approved: profiles.filter((p) => p.verification_status === "approved").length,
-      rejected: profiles.filter((p) => p.verification_status === "rejected").length,
+      corps: corporations.length,
+      pending: corporations.filter((p) => p.verification_status === "pending").length,
+      approved: corporations.filter((p) => p.verification_status === "approved").length,
+      rejected: corporations.filter(
+        (p) => p.verification_status !== "approved" && p.verification_status !== "pending",
+      ).length,
     }),
-    [profiles],
+    [profiles, corporations],
   );
 
   const refresh = () => {
@@ -185,89 +183,225 @@ function AdminDashboard() {
     <AppShell
       title="מנהל מערכת"
       action={
-        <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs">
-          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <VerifiedUserIcon sx={{ fontSize: 14 }} className="text-primary" />
           <span className="font-semibold text-primary">אדמין</span>
-          <span className="text-muted-foreground">· {profile?.full_name ?? ""}</span>
+          {profile?.full_name && <span>· {profile.full_name}</span>}
         </div>
       }
     >
-      {/* KPI strip — row 1: marketplace health */}
-      <div className="mb-3 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up">
-        <StatCard
-          label="סה״כ משתמשים"
-          value={stats.total}
-          icon={<Users className="h-5 w-5" />}
+      {/* Pattern 1 — page header */}
+      <div className="mb-6 flex items-start justify-between border-b border-border pb-5">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">לוח בקרה — מנהל מערכת</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {stats.pending > 0 ? `${stats.pending} תאגידים ממתינים לאישור · ` : ""}
+            {stats.corps} תאגידים · {stats.total} משתמשים רשומים
+          </p>
+        </div>
+      </div>
+
+      {/* Stat tiles — the five numbers that matter to an operator */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        <StatTile
+          icon={HardHatIcon}
+          tone="neutral"
+          label="קבלנים"
+          value={totalContractors}
+          sub="מזמיני כוח אדם"
         />
-        <StatCard
+        <StatTile
+          icon={ApartmentIcon}
+          tone="neutral"
+          label="תאגידים"
+          value={totalCorporations}
+          sub="ספקי כוח אדם"
+        />
+        <StatTile
+          icon={HourglassEmptyIcon}
+          tone={stats.pending > 0 ? "pending" : "neutral"}
           label="ממתינים לאישור"
           value={stats.pending}
-          icon={<AlertCircle className="h-5 w-5" />}
-          highlight
+          sub="תאגידים חדשים"
+          highlight={stats.pending > 0}
         />
-        <StatCard
-          label="מכרזים פעילים"
+        <StatTile
+          icon={GavelIcon}
+          tone="info"
+          label="מכרזים פתוחים"
           value={activeAuctions}
-          icon={<Gavel className="h-5 w-5" />}
+          sub="מקבלים הצעות"
         />
-        <StatCard
+        <StatTile
+          icon={HandshakeIcon}
+          tone="success"
           label="עסקאות שנסגרו"
           value={completedDeals}
-          icon={<Trophy className="h-5 w-5" />}
+          sub="זכיות בין קבלן לתאגיד"
         />
       </div>
 
-      {/* KPI strip — row 2: platform activity */}
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 animate-fade-up delay-100">
-        <StatCard
-          label="זכיות — 30 יום אחרון"
-          value={recentAwards}
-          icon={<Activity className="h-5 w-5" />}
-          sub={completedDeals > 0 ? `מתוך ${completedDeals} סה״כ` : undefined}
-        />
-        <StatCard
-          label="תאגידי כוח אדם"
-          value={totalCorporations}
-          icon={<Building2 className="h-5 w-5" />}
-          sub={`${stats.approved} ספקים מאושרים`}
-        />
-        <StatCard
-          label="שעות עבודה החודש"
-          value={monthlyWorkerHours > 0 ? Math.round(monthlyWorkerHours).toLocaleString() : 0}
-          icon={<BarChart3 className="h-5 w-5" />}
-          sub={monthlyWorkforceValue > 0 ? `₪${Math.round(monthlyWorkforceValue / 1000)}K ערך` : undefined}
-        />
-        <StatCard
-          label="מאושרים (%)"
-          value={stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}
-          icon={<HardHat className="h-5 w-5" />}
-          sub={`${stats.approved} מתוך ${stats.total}`}
-          suffix="%"
-        />
+      {/* Primary view switch — the two admin responsibilities */}
+      <div className="mb-5 inline-flex rounded-lg border border-border bg-card p-1">
+        <button
+          type="button"
+          onClick={() => setView("corps")}
+          className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+            view === "corps"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          אימות תאגידים
+          {stats.pending > 0 && (
+            <span
+              className={`ms-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+                view === "corps" ? "bg-white/25" : "bg-primary/15 text-primary"
+              }`}
+            >
+              {stats.pending}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("auctions")}
+          className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
+            view === "auctions"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          מכרזים והצעות
+        </button>
       </div>
 
+      {view === "auctions" ? (
+        <AuctionsOversight session={session} />
+      ) : (
+        <CorporationsVerification
+          tab={tab}
+          setTab={setTab}
+          stats={stats}
+          search={search}
+          setSearch={setSearch}
+          filtered={filtered}
+          rolesByUser={rolesByUser}
+          isLoading={isLoading}
+          error={error}
+          refresh={refresh}
+        />
+      )}
+    </AppShell>
+  );
+}
+
+type Stats = { total: number; corps: number; pending: number; approved: number; rejected: number };
+
+const TILE_TONE: Record<
+  string,
+  { iconWrap: string; value: string; ring: string }
+> = {
+  neutral: { iconWrap: "bg-muted text-muted-foreground", value: "text-foreground", ring: "border-border" },
+  info: {
+    iconWrap: "bg-[oklch(0.6_0.095_205_/_0.14)] text-primary-glow",
+    value: "text-foreground",
+    ring: "border-border",
+  },
+  success: {
+    iconWrap: "bg-[oklch(0.55_0.1_152_/_0.14)] text-status-approved",
+    value: "text-status-approved",
+    ring: "border-border",
+  },
+  pending: {
+    iconWrap: "bg-[oklch(0.58_0.11_75_/_0.16)] text-status-pending",
+    value: "text-status-pending",
+    ring: "border-status-pending/40",
+  },
+};
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone = "neutral",
+  highlight = false,
+}: {
+  icon: React.ComponentType<{ sx?: object; className?: string }>;
+  label: string;
+  value: number;
+  sub?: string;
+  tone?: "neutral" | "info" | "success" | "pending";
+  highlight?: boolean;
+}) {
+  const t = TILE_TONE[tone] ?? TILE_TONE.neutral;
+  return (
+    <div
+      className={`rounded-lg border bg-card p-4 transition-shadow hover:shadow-sm-app ${
+        highlight ? t.ring : "border-border"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <span className={`grid h-8 w-8 place-items-center rounded-md ${t.iconWrap}`}>
+          <Icon sx={{ fontSize: 18 }} />
+        </span>
+      </div>
+      <div className={`mt-2 text-3xl font-bold tabular-nums ${t.value}`} dir="ltr">
+        {value}
+      </div>
+      {sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>}
+    </div>
+  );
+}
+
+function CorporationsVerification({
+  tab,
+  setTab,
+  stats,
+  search,
+  setSearch,
+  filtered,
+  rolesByUser,
+  isLoading,
+  error,
+  refresh,
+}: {
+  tab: string;
+  setTab: (v: string) => void;
+  stats: Stats;
+  search: string;
+  setSearch: (v: string) => void;
+  filtered: AdminProfile[];
+  rolesByUser: Map<string, string[]>;
+  isLoading: boolean;
+  error: unknown;
+  refresh: () => void;
+}) {
+  return (
+    <>
       {/* Tab bar + search */}
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between animate-fade-up delay-100">
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-card/60 border border-border/60">
             <TabsTrigger value="pending">
               ממתינים
               {stats.pending > 0 && (
-                <span className="ms-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                <span className="ms-1.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[11px] font-bold text-primary">
                   {stats.pending}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
             <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
-            <TabsTrigger value="all">הכל ({stats.total})</TabsTrigger>
-            <TabsTrigger value="activity">
-              <Activity className="me-1 h-3.5 w-3.5" /> פעולות
-            </TabsTrigger>
+            <TabsTrigger value="all">כל התאגידים ({stats.corps})</TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className={`relative w-full md:w-72 ${tab === "activity" ? "invisible" : ""}`}>
-          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative w-full md:w-72">
+          <SearchIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -278,129 +412,219 @@ function AdminDashboard() {
       </div>
 
       {/* Content */}
-      {tab === "activity" ? (
-        <ActivityLog entries={auditLog} isLoading={isLoading} />
-      ) : error ? (
-        <Card className="p-6 text-sm text-destructive">
-          שגיאה בטעינת ניהול: {error instanceof Error ? error.message : "שגיאה לא ידועה"}
-        </Card>
+      {error ? (
+        <div className="empty-state border-destructive/30 bg-destructive/5">
+          <div className="empty-state-icon border-destructive/20 bg-destructive/10">
+            <ErrorOutlineIcon sx={{ fontSize: 32 }} className="text-destructive" />
+          </div>
+          <h3 className="font-bold">שגיאה בטעינת נתוני הניהול</h3>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            לא הצלחנו לטעון את הנתונים. נסה לרענן את הדף.
+          </p>
+        </div>
       ) : isLoading ? (
-        <div className="grid place-items-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center text-muted-foreground">
-          אין משתמשים בקטגוריה זו
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((p) => (
-            <UserRow
-              key={p.id}
-              profile={p}
-              roles={rolesByUser.get(p.user_id) ?? []}
-              onChange={refresh}
-            />
+        <div className="space-y-3 animate-pulse">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card p-4">
+              <div className="h-5 w-40 rounded bg-muted" />
+              <div className="mt-2 h-4 w-64 rounded bg-muted" />
+            </div>
           ))}
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <GroupIcon sx={{ fontSize: 32 }} className="text-primary" />
+          </div>
+          <h3 className="font-bold">אין משתמשים בקטגוריה זו</h3>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {search ? "נסה לשנות את מילות החיפוש." : "משתמשים חדשים יופיעו כאן לאחר הרשמה."}
+          </p>
+        </div>
+      ) : (
+        /* Pattern 3 — data table */
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full min-w-[700px] text-sm">
+            <thead>
+              <tr className="premium-table-header">
+                <th className="px-4 py-3 text-right font-medium">שם</th>
+                <th className="px-4 py-3 text-right font-medium">תפקיד</th>
+                <th className="px-4 py-3 text-right font-medium">עסק</th>
+                <th className="px-4 py-3 text-right font-medium">ח.פ</th>
+                <th className="px-4 py-3 text-right font-medium">עיר</th>
+                <th className="px-4 py-3 text-right font-medium">נרשם</th>
+                <th className="px-4 py-3 text-right font-medium">סטטוס</th>
+                <th className="px-4 py-3 text-right font-medium">פעולה</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => (
+                <UserTableRow
+                  key={p.id}
+                  profile={p}
+                  roles={rolesByUser.get(p.user_id) ?? []}
+                  onChange={refresh}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
-    </AppShell>
+    </>
   );
 }
 
-function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading: boolean }) {
+// ── Admin marketplace oversight: every request with all its (named) offers ──
+type AdminOfferRow = {
+  id: string;
+  corporation_name: string;
+  price_per_hour: number | string;
+  available_workers: number;
+  start_date: string;
+  status: string;
+};
+type AdminRequestRow = {
+  id: string;
+  location: string;
+  start_date: string;
+  duration: string;
+  status: string;
+  owner_name: string;
+  items: { role: string; nationality: string; count: number }[];
+  offers: AdminOfferRow[];
+};
+
+const REQ_STATUS_META: Record<string, { label: string; chip: string }> = {
+  open: { label: "פתוח", chip: "status-chip-live" },
+  awarded: { label: "נבחר זוכה", chip: "status-chip-info" },
+  closed: { label: "סגור", chip: "status-chip-muted" },
+  cancelled: { label: "בוטל", chip: "status-chip-rejected" },
+  expired: { label: "פג תוקף", chip: "status-chip-muted" },
+};
+const OFFER_STATUS_META: Record<string, { label: string; chip: string }> = {
+  submitted: { label: "הוגשה", chip: "status-chip-pending" },
+  awarded: { label: "זוכה", chip: "status-chip-info" },
+  rejected: { label: "נדחתה", chip: "status-chip-rejected" },
+  withdrawn: { label: "נמשכה", chip: "status-chip-muted" },
+};
+
+function AuctionsOversight({ session }: { session: unknown }) {
+  const fetchAll = useServerFn(adminGetAllRequestsWithOffers);
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-all-requests"],
+    queryFn: () => fetchAll(),
+    enabled: Boolean(session),
+  });
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const requests = (data?.requests ?? []) as AdminRequestRow[];
+
   if (isLoading) {
     return (
-      <div className="grid place-items-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-3 animate-pulse">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-16 rounded-lg border border-border bg-card" />
+        ))}
       </div>
     );
   }
-  if (entries.length === 0) {
+  if (requests.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-12 text-center text-muted-foreground">
-        אין פעולות להצגה
+      <div className="empty-state">
+        <div className="empty-state-icon">
+          <GavelIcon sx={{ fontSize: 32 }} className="text-primary" />
+        </div>
+        <h3 className="font-bold">עדיין אין מכרזים</h3>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          מכרזים שקבלנים יפרסמו, וההצעות שיוגשו להם, יופיעו כאן.
+        </p>
       </div>
     );
   }
 
   return (
-    <Card className="divide-y divide-border/60 overflow-hidden">
-      {entries.map((e) => (
-        <div key={e.id} className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-card/60 transition-colors">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="font-mono text-xs">
-                {e.action}
-              </Badge>
-              <span className="text-sm text-muted-foreground">{e.entity_type}</span>
-              {e.entity_id && (
-                <span className="font-mono text-xs text-muted-foreground">
-                  #{e.entity_id.slice(0, 8)}
+    <div className="space-y-2.5">
+      {requests.map((r) => {
+        const meta = REQ_STATUS_META[r.status] ?? REQ_STATUS_META.open;
+        const isOpen = expanded === r.id;
+        const totalWorkers = r.items.reduce((s, it) => s + (it.count ?? 0), 0);
+        return (
+          <div key={r.id} className="overflow-hidden rounded-lg border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setExpanded(isOpen ? null : r.id)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-muted/40 transition-colors"
+            >
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <span className="font-mono text-xs text-muted-foreground" dir="ltr">
+                  {maskedRequestId(r.id)}
                 </span>
-              )}
-            </div>
-            {e.metadata && Object.keys(e.metadata).length > 0 && (
-              <pre
-                className="mt-2 max-h-32 overflow-auto rounded-md bg-muted/40 p-2 text-xs text-muted-foreground"
-                dir="ltr"
-              >
-                {JSON.stringify(e.metadata, null, 2)}
-              </pre>
+                <span className="text-sm font-semibold truncate">{r.location}</span>
+                <span className={meta.chip}>{meta.label}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                <span>קבלן: {r.owner_name}</span>
+                <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 font-medium tabular-nums">
+                  {r.offers.length} הצעות
+                </span>
+              </div>
+            </button>
+
+            {isOpen && (
+              <div className="border-t border-border bg-muted/20 px-4 py-3">
+                <div className="mb-3 text-xs text-muted-foreground">
+                  דרישות: {totalWorkers} עובדים ·{" "}
+                  {r.items.map((it) => `${it.count}× ${it.role}`).join(" · ") || "—"} · התחלה{" "}
+                  <span dir="ltr">{r.start_date}</span> · {r.duration}
+                </div>
+                {r.offers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">לא הוגשו הצעות למכרז זה.</p>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border border-border bg-card">
+                    <table className="w-full min-w-[560px] text-sm">
+                      <thead>
+                        <tr className="premium-table-header">
+                          <th className="px-3 py-2 text-start">תאגיד</th>
+                          <th className="px-3 py-2 text-start">מחיר/שעה</th>
+                          <th className="px-3 py-2 text-start">עובדים</th>
+                          <th className="px-3 py-2 text-start">התחלה</th>
+                          <th className="px-3 py-2 text-start">סטטוס</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {r.offers.map((o) => {
+                          const om = OFFER_STATUS_META[o.status] ?? OFFER_STATUS_META.submitted;
+                          return (
+                            <tr key={o.id} className="premium-table-row">
+                              <td className="px-3 py-2.5 font-medium">{o.corporation_name}</td>
+                              <td className="px-3 py-2.5 font-semibold tabular-nums">
+                                <span dir="ltr">₪{Number(o.price_per_hour).toLocaleString()}</span>
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground">
+                                <span dir="ltr">{o.available_workers}</span>
+                              </td>
+                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground">
+                                <span dir="ltr">{o.start_date}</span>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className={om.chip}>{om.label}</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-          <div className="whitespace-nowrap text-xs text-muted-foreground">
-            {new Date(e.created_at).toLocaleString("he-IL")}
-          </div>
-        </div>
-      ))}
-    </Card>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-  highlight,
-  sub,
-  suffix,
-}: {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  highlight?: boolean;
-  sub?: string;
-  suffix?: string;
-}) {
-  const isHighlighted = highlight && Number(value) > 0;
-  return (
-    <div
-      className={`rounded-2xl border p-5 transition-all hover:shadow-card ${
-        isHighlighted
-          ? "border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5"
-          : "border-border/60 bg-card"
-      }`}
-    >
-      <div
-        className={`grid h-10 w-10 place-items-center rounded-xl ${
-          isHighlighted
-            ? "bg-gradient-primary text-primary-foreground shadow-elegant"
-            : "bg-primary/15 text-primary"
-        }`}
-      >
-        {icon}
-      </div>
-      <div className="mt-4 text-2xl font-extrabold tracking-tight md:text-3xl">
-        {value}{suffix}
-      </div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
-      {sub && <div className="mt-0.5 text-[10px] text-muted-foreground/70">{sub}</div>}
+        );
+      })}
     </div>
   );
 }
 
-function UserRow({
+function UserTableRow({
   profile,
   roles,
   onChange,
@@ -415,56 +639,44 @@ function UserRow({
   const isAdmin = roles.includes("admin");
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-border hover:bg-card/80">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-              {profile.full_name[0]}
-            </div>
-            <h3 className="text-base font-bold">{profile.full_name}</h3>
-            <StatusBadge status={profile.verification_status} />
-            {isAdmin && (
-              <Badge variant="outline" className="border-primary/50 text-primary">
-                אדמין
-              </Badge>
-            )}
-            {isCorporation && (
-              <Badge variant="secondary">
-                <Building2 className="me-1 h-3 w-3" /> תאגיד
-              </Badge>
-            )}
-            {isContractor && (
-              <Badge variant="secondary">
-                <HardHat className="me-1 h-3 w-3" /> קבלן/יזם
-              </Badge>
+    <>
+      <tr className="premium-table-row h-12">
+        <td className="px-4 py-2.5">
+          <span className="font-medium text-foreground">{profile.full_name}</span>
+        </td>
+        <td className="px-4 py-2.5">
+          <div className="flex flex-wrap gap-1">
+            {isAdmin && <span className="role-badge">אדמין</span>}
+            {isCorporation && <span className="role-badge">תאגיד</span>}
+            {isContractor && <span className="role-badge">קבלן</span>}
+            {roles.length === 0 && (
+              <span className="text-xs text-muted-foreground">—</span>
             )}
           </div>
-          <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
-            {profile.business_name && (
-              <span>עסק: <span className="text-foreground">{profile.business_name}</span></span>
-            )}
-            {profile.business_id && (
-              <span>ח.פ: <span className="text-foreground">{profile.business_id}</span></span>
-            )}
-            {profile.contractor_license_number && (
-              <span>רישיון: <span className="text-foreground">{profile.contractor_license_number}</span></span>
-            )}
-            {profile.phone && (
-              <span>טלפון: <span className="text-foreground">{profile.phone}</span></span>
-            )}
-            {profile.city && (
-              <span>עיר: <span className="text-foreground">{profile.city}</span></span>
-            )}
-            <span className="text-[11px]">
-              {new Date(profile.created_at).toLocaleDateString("he-IL")}
-            </span>
-          </div>
-        </div>
-        <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
-          פתח לבדיקה
-        </Button>
-      </div>
+        </td>
+        <td className="px-4 py-2.5 text-sm text-muted-foreground">
+          {profile.business_name || "—"}
+        </td>
+        <td className="px-4 py-2.5">
+          <span className="font-mono text-xs tabular-nums" dir="ltr">
+            {profile.business_id || "—"}
+          </span>
+        </td>
+        <td className="px-4 py-2.5 text-sm text-muted-foreground">
+          {profile.city || "—"}
+        </td>
+        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-muted-foreground">
+          {new Date(profile.created_at).toLocaleDateString("he-IL")}
+        </td>
+        <td className="px-4 py-2.5">
+          <StatusBadge status={profile.verification_status} />
+        </td>
+        <td className="px-4 py-2.5">
+          <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
+            פתח לבדיקה
+          </Button>
+        </td>
+      </tr>
       {open && (
         <ReviewDialog
           profile={profile}
@@ -473,16 +685,14 @@ function UserRow({
           onChange={onChange}
         />
       )}
-    </div>
+    </>
   );
 }
 
 function StatusBadge({ status }: { status: AdminProfile["verification_status"] }) {
-  if (status === "approved")
-    return <Badge className="bg-green-500/15 text-green-400 hover:bg-green-500/20">מאושר</Badge>;
-  if (status === "rejected")
-    return <Badge className="bg-red-500/15 text-red-400 hover:bg-red-500/20">נדחה</Badge>;
-  return <Badge className="bg-amber-500/15 text-amber-400 hover:bg-amber-500/20">ממתין</Badge>;
+  if (status === "approved") return <span className="status-chip-approved">מאושר</span>;
+  if (status === "rejected") return <span className="status-chip-rejected">נדחה</span>;
+  return <span className="status-chip-pending">ממתין</span>;
 }
 
 function ReviewDialog({
@@ -499,8 +709,8 @@ function ReviewDialog({
   const [notes, setNotes] = useState(profile.admin_notes ?? "");
   const [busy, setBusy] = useState(false);
   const [docs, setDocs] = useState<{ label: string; url: string | null }[]>([]);
+  const [notesError, setNotesError] = useState<string | null>(null);
   const setStatusFn = useServerFn(adminSetVerificationStatus);
-  const toggleRoleFn = useServerFn(adminToggleRole);
   const getDocUrlFn = useServerFn(adminGetDocumentUrl);
 
   useEffect(() => {
@@ -527,6 +737,11 @@ function ReviewDialog({
   }, [profile, getDocUrlFn]);
 
   const setStatus = async (status: "approved" | "rejected") => {
+    if (status === "rejected" && !notes.trim()) {
+      setNotesError("יש להזין סיבת דחייה לפני אישור הפעולה");
+      return;
+    }
+    setNotesError(null);
     setBusy(true);
     try {
       await setStatusFn({ data: { profileId: profile.id, status, notes: notes || null } });
@@ -554,19 +769,6 @@ function ReviewDialog({
     toast.success(status === "approved" ? "המשתמש אושר" : "המשתמש נדחה");
     onChange();
     onClose();
-  };
-
-  const toggleRole = async (role: "corporation" | "admin") => {
-    setBusy(true);
-    const action = roles.includes(role) ? "remove" : "add";
-    try {
-      await toggleRoleFn({ data: { targetUserId: profile.user_id, role, action } });
-      toast.success(action === "add" ? "נוסף תפקיד " + role : "הוסר תפקיד " + role);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "שגיאה");
-    }
-    setBusy(false);
-    onChange();
   };
 
   return (
@@ -605,7 +807,7 @@ function ReviewDialog({
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" /> צפה
+                      <OpenInNewIcon sx={{ fontSize: 14 }} /> צפה
                     </a>
                   ) : (
                     <span className="text-xs text-muted-foreground">לא הועלה</span>
@@ -619,32 +821,46 @@ function ReviewDialog({
             <h4 className="mb-2 font-semibold text-foreground/80">הערות אדמין</h4>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                if (notesError) setNotesError(null);
+              }}
               rows={3}
               placeholder="סיבת דחייה / הערות פנימיות..."
-              className="bg-card/60"
+              aria-invalid={notesError ? true : undefined}
+              className={`bg-card/60 ${notesError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
+            {notesError && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-destructive">
+                <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
+                {notesError}
+              </p>
+            )}
           </section>
 
           <section>
-            <h4 className="mb-2 font-semibold text-foreground/80">תפקידים</h4>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant={roles.includes("corporation") ? "default" : "outline"}
-                onClick={() => toggleRole("corporation")}
-                disabled={busy}
-              >
-                {roles.includes("corporation") ? "הסר תאגיד" : "הפוך לתאגיד"}
-              </Button>
-              <Button
-                size="sm"
-                variant={roles.includes("admin") ? "default" : "outline"}
-                onClick={() => toggleRole("admin")}
-                disabled={busy}
-              >
-                {roles.includes("admin") ? "הסר אדמין" : "הפוך לאדמין"}
-              </Button>
+            <h4 className="mb-2 font-semibold text-foreground/80">תפקיד</h4>
+            <div className="flex flex-wrap items-center gap-2">
+              {roles.length > 0 ? (
+                roles.map((r) => (
+                  <span key={r} className="role-badge">
+                    {r === "contractor"
+                      ? "קבלן"
+                      : r === "corporation"
+                        ? "תאגיד"
+                        : r === "admin"
+                          ? "מנהל מערכת"
+                          : r === "team_leader"
+                            ? "ראש צוות"
+                            : r}
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground">ללא תפקיד</span>
+              )}
+              <span className="text-xs text-muted-foreground">
+                · התפקיד נקבע בהרשמה ואינו ניתן לשינוי מכאן
+              </span>
             </div>
           </section>
         </div>
@@ -655,23 +871,19 @@ function ReviewDialog({
           </Button>
           <Button variant="destructive" onClick={() => setStatus("rejected")} disabled={busy}>
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <CircularProgress size={16} color="inherit" />
             ) : (
               <>
-                <FileX2 className="me-1 h-4 w-4" /> דחה
+                <HighlightOffIcon sx={{ fontSize: 16 }} className="me-1" /> דחה
               </>
             )}
           </Button>
-          <Button
-            onClick={() => setStatus("approved")}
-            disabled={busy}
-            className="bg-gradient-primary text-primary-foreground"
-          >
+          <Button onClick={() => setStatus("approved")} disabled={busy}>
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <CircularProgress size={16} color="inherit" />
             ) : (
               <>
-                <FileCheck2 className="me-1 h-4 w-4" /> אשר
+                <FactCheckIcon sx={{ fontSize: 16 }} className="me-1" /> אשר
               </>
             )}
           </Button>

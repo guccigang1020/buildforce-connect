@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieConsent } from "@/components/cookie-consent";
+import { MuiProvider } from "@/lib/mui-theme";
 
 function NotFoundComponent() {
   return (
@@ -110,6 +112,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Cg fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 13l5-5 4 4-5 5z'/%3E%3Cpath d='M16.5 12.5l3 3'/%3E%3Cpath d='M11 21h9'/%3E%3C/g%3E%3C/svg%3E",
+      },
+      {
         rel: "stylesheet",
         href: appCss,
       },
@@ -117,7 +124,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Heebo:wght@400;500;700&display=swap",
       },
     ],
   }),
@@ -127,10 +134,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Critical inline CSS — applied on the very first paint, before the main
+// stylesheet (and, in dev, before Vite injects Tailwind) so there is no flash
+// of unstyled content: cream background is set immediately and MUI icons are
+// constrained so they never appear as giant black circles for a frame.
+const CRITICAL_CSS = `
+  html,body{background:#EFEDE7;color:#22363B;margin:0;
+    font-family:"Rubik","Heebo",system-ui,sans-serif}
+  svg.MuiSvgIcon-root{width:1em;height:1em;font-size:1.25rem;fill:currentColor}
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="he" dir="rtl" className="dark">
+    <html lang="he" dir="rtl">
       <head>
+        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
         <HeadContent />
       </head>
       <body>
@@ -141,16 +159,26 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const PUBLIC_COOKIE_PATHS = new Set(["/", "/login", "/signup", "/privacy", "/terms"]);
+
+function ConditionalCookieConsent() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (!PUBLIC_COOKIE_PATHS.has(pathname)) return null;
+  return <CookieConsent />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-center" />
-        <CookieConsent />
-      </AuthProvider>
-    </QueryClientProvider>
+    <MuiProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Outlet />
+          <Toaster richColors position="top-center" />
+          <ConditionalCookieConsent />
+        </AuthProvider>
+      </QueryClientProvider>
+    </MuiProvider>
   );
 }

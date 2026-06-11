@@ -3,22 +3,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MapPin, Calendar, Clock, Send, Loader2, ListChecks } from "lucide-react";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import SendIcon from "@mui/icons-material/Send";
+import LockIcon from "@mui/icons-material/Lock";
+import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { listOpenJobRequests } from "@/lib/job-requests.functions";
-import { submitOffer } from "@/lib/job-offers.functions";
+import { submitOffer, listMyOffers } from "@/lib/job-offers.functions";
+import { maskedRequestId } from "@/lib/anonymize";
 
 type OpenRequest = {
   id: string;
@@ -31,159 +35,245 @@ type OpenRequest = {
   deadline_at: string | null;
 };
 
-export function OpenTendersSection() {
+function deadlineLabel(deadline_at: string | null): { text: string; urgent: boolean } | null {
+  if (!deadline_at) return null;
+  const hoursLeft = Math.round((new Date(deadline_at).getTime() - Date.now()) / 3_600_000);
+  if (hoursLeft <= 0) return { text: "נסגר", urgent: true };
+  if (hoursLeft < 24) return { text: `${hoursLeft}ש׳`, urgent: true };
+  const daysLeft = Math.round(hoursLeft / 24);
+  return { text: `${daysLeft} ימים`, urgent: daysLeft <= 2 };
+}
+
+export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
   const fetchOpen = useServerFn(listOpenJobRequests);
+  const fetchMyOffers = useServerFn(listMyOffers);
   const { data, isLoading } = useQuery({
     queryKey: ["open-job-requests"],
     queryFn: () => fetchOpen({ data: {} as never }),
   });
+  // Tenders the corporation already has an active offer on are removed from
+  // this list entirely — once a bid exists it lives only under "ההצעות שלי".
+  // (Shared query key with MyOffersSection so a withdrawal re-lists the tender
+  // here immediately.)
+  const { data: myOffersData } = useQuery({
+    queryKey: ["my-offers"],
+    queryFn: () => fetchMyOffers(),
+  });
+  const alreadyBidRequestIds = new Set(
+    ((myOffersData?.offers ?? []) as { request_id: string; status: string }[])
+      .filter((o) => o.status !== "withdrawn")
+      .map((o) => o.request_id),
+  );
 
-  const requests = (data?.requests ?? []) as OpenRequest[];
+  const requests = ((data?.requests ?? []) as OpenRequest[]).filter(
+    (r) => !alreadyBidRequestIds.has(r.id),
+  );
 
   return (
-    <div className="mt-10">
-      {/* Section header */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="section-header-icon">
-            <ListChecks className="h-3.5 w-3.5 text-primary-foreground" />
-          </div>
-          <h2 className="text-base font-bold md:text-lg">מכרזים פתוחים להגשת הצעה</h2>
-        </div>
+    <div className="mt-8 space-y-3">
+      {/* Section title */}
+      <div className="flex items-center justify-between border-b border-border pb-2.5">
+        <h3 className="text-sm font-semibold">
+          מכרזים פתוחים
+          {requests.length > 0 && (
+            <span className="ms-2 rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+              {requests.length}
+            </span>
+          )}
+        </h3>
         <a
           href="#my-offers"
-          className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ListChecks className="h-3.5 w-3.5" /> לניהול ההצעות שלי
+          ההצעות שלי ↓
         </a>
       </div>
 
       {isLoading ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {[0, 1].map((i) => (
-            <div key={i} className="skeleton-kpi animate-pulse bg-muted/40" />
+            <div key={i} className="h-12 animate-pulse rounded bg-muted/40" />
           ))}
         </div>
       ) : requests.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-card/40 py-12 text-center">
-          <ListChecks className="mx-auto mb-3 h-8 w-8 text-muted-foreground/30" />
-          <p className="text-sm font-semibold text-muted-foreground">אין כרגע מכרזים פתוחים</p>
-          <p className="mt-1 text-xs text-muted-foreground">מכרזים חדשים יופיעו כאן ברגע שיפורסמו.</p>
+        <div className="empty-state">
+          <p className="text-sm font-semibold text-foreground">אין כרגע מכרזים פתוחים</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            מכרזים חדשים יופיעו כאן ברגע שיפורסמו — תוכל להגיש הצעת מחיר סגורה מיד.
+          </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {requests.map((r, idx) => (
-            <TenderRow key={r.id} req={r} rank={idx + 1} />
-          ))}
-        </div>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-hidden rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="premium-table-header">
+                  <th className="px-4 py-2.5 text-start">מזהה</th>
+                  <th className="px-4 py-2.5 text-start">מיקום</th>
+                  <th className="px-4 py-2.5 text-start">התחלה</th>
+                  <th className="px-4 py-2.5 text-start">משך</th>
+                  <th className="px-4 py-2.5 text-start">סגירה</th>
+                  <th className="px-4 py-2.5 text-end">פעולה</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.map((r) => {
+                  const dl = deadlineLabel(r.deadline_at);
+                  return (
+                    <tr key={r.id} className="premium-table-row">
+                      <td className="px-4 py-3">
+                        <Link
+                          to="/requests/$id"
+                          params={{ id: r.id }}
+                          className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          dir="ltr"
+                        >
+                          {maskedRequestId(r.id)}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 font-medium">{r.location}</td>
+                      <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                        <span dir="ltr">{r.start_date}</span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{r.duration}</td>
+                      <td className="px-4 py-3">
+                        {dl ? (
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-semibold ${
+                              dl.urgent ? "text-destructive" : "text-status-pending"
+                            }`}
+                            dir="ltr"
+                          >
+                            <ScheduleIcon sx={{ fontSize: 12 }} className="shrink-0" /> {dl.text}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <SubmitOfferDialog requestId={r.id} isApproved={isApproved} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile compact rows */}
+          <div className="md:hidden space-y-2">
+            {requests.map((r) => {
+              const dl = deadlineLabel(r.deadline_at);
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 gap-3"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">{r.location}</span>
+                      {dl?.urgent && (
+                        <span className="text-[11px] font-semibold text-destructive shrink-0">
+                          {dl.text}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">
+                      {r.start_date} · {r.duration}
+                    </div>
+                  </div>
+                  <SubmitOfferDialog requestId={r.id} isApproved={isApproved} compact />
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function TenderRow({ req, rank }: { req: OpenRequest; rank: number }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-primary/40 hover:shadow-card status-bar-live md:p-5">
-      <div className="flex min-w-0 items-start gap-3">
-        {/* Rank badge */}
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted/50 text-sm font-extrabold text-muted-foreground">
-          {rank}
-        </div>
-        <div className="min-w-0">
-          {/* Location + date chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="info-chip font-semibold">
-              <MapPin className="h-3 w-3 text-primary" /> {req.location}
-            </span>
-            <span className="info-chip">
-              <Calendar className="h-3 w-3" /> {req.start_date} · {req.duration}
-            </span>
-            {req.deadline_at && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600">
-                <Clock className="h-3 w-3" /> סגירה{" "}
-                {new Date(req.deadline_at).toLocaleDateString("he-IL")}
-              </span>
-            )}
-          </div>
-          {/* Commitment + budget */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-            <span>התחייבות {req.commitment_months} חודשים</span>
-            {req.budget && (
-              <span className="font-semibold text-foreground">תקציב {req.budget}</span>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Link
-          to="/requests/$id"
-          params={{ id: req.id }}
-          className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-        >
-          פרטים
-        </Link>
-        <SubmitOfferDialog requestId={req.id} />
-      </div>
-    </div>
-  );
-}
-
-function SubmitOfferDialog({ requestId }: { requestId: string }) {
+function SubmitOfferDialog({
+  requestId,
+  isApproved,
+  compact = false,
+}: {
+  requestId: string;
+  isApproved: boolean;
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pricePerHour, setPricePerHour] = useState("");
   const [availableWorkers, setAvailableWorkers] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [responseTimeHours, setResponseTimeHours] = useState("24");
-  const [warrantyDays, setWarrantyDays] = useState("30");
-  const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
-  const [requiresPersonalGuarantee, setRequiresPersonalGuarantee] = useState(false);
-  const [requiresSecurityCheck, setRequiresSecurityCheck] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [workersError, setWorkersError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
 
   const qc = useQueryClient();
   const submitFn = useServerFn(submitOffer);
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const reset = () => {
     setPricePerHour("");
     setAvailableWorkers("");
     setStartDate("");
-    setResponseTimeHours("24");
-    setWarrantyDays("30");
-    setInsurance(true);
     setNote("");
-    setRequiresPersonalGuarantee(false);
-    setRequiresSecurityCheck(false);
+    setPriceError(null);
+    setWorkersError(null);
+    setDateError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPriceError(null);
+    setWorkersError(null);
+    setDateError(null);
+
     const price = Number(pricePerHour);
     const workers = Number(availableWorkers);
-    const respTime = Number(responseTimeHours);
-    const warranty = Number(warrantyDays);
-    if (!price || price <= 0) return toast.error("יש להזין מחיר תקין לשעה");
-    if (!workers || workers <= 0) return toast.error("יש להזין מספר עובדים זמינים");
-    if (!startDate.trim()) return toast.error("יש להזין תאריך התחלה אפשרי");
+    let hasErrors = false;
+    if (!price || price < 50) {
+      setPriceError("מחיר לשעה חייב להיות לפחות ₪50");
+      hasErrors = true;
+    } else if (price > 500) {
+      setPriceError("מחיר לשעה לא יכול לעלות על ₪500");
+      hasErrors = true;
+    }
+    if (!workers || workers <= 0) {
+      setWorkersError("יש להזין מספר עובדים זמינים");
+      hasErrors = true;
+    }
+    if (!startDate) {
+      setDateError("יש להזין תאריך התחלה אפשרי");
+      hasErrors = true;
+    } else if (startDate < todayISO) {
+      setDateError("תאריך ההתחלה לא יכול להיות בעבר");
+      hasErrors = true;
+    }
+    if (hasErrors) return;
 
     setSubmitting(true);
     try {
-      await submitFn({
+      const result = await submitFn({
         data: {
           requestId,
           pricePerHour: price,
           availableWorkers: workers,
-          startDate: startDate.trim(),
-          responseTimeHours: respTime || 24,
-          warrantyDays: warranty || 30,
-          insurance,
+          startDate,
           note: note.trim() || undefined,
-          requiresPersonalGuarantee,
-          requiresSecurityCheck,
         },
       });
+      if (result && typeof result === "object" && "error" in result) {
+        toast.error((result as { error: string }).error);
+        return;
+      }
       toast.success("ההצעה נשלחה בהצלחה ללקוח.");
       qc.invalidateQueries({ queryKey: ["open-job-requests"] });
+      qc.invalidateQueries({ queryKey: ["my-offers"] });
       reset();
       setOpen(false);
     } catch (err) {
@@ -193,122 +283,102 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
     }
   };
 
+  if (!isApproved) {
+    return (
+      <Button
+        type="button"
+        disabled
+        size={compact ? "sm" : "default"}
+        title="החשבון ממתין לאימות אדמין — לא ניתן להגיש הצעות עדיין"
+        variant="outline"
+      >
+        <LockIcon sx={{ fontSize: 14 }} />
+        {!compact && " ממתין לאישור"}
+      </Button>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
-          <Send className="h-3.5 w-3.5" /> הגש הצעה
+        <Button size={compact ? "sm" : "default"} className="gap-1.5 shrink-0">
+          <SendIcon sx={{ fontSize: 14 }} />
+          {compact ? "הגש" : "הגש הצעה"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>הגשת הצעה למכרז</DialogTitle>
+          <DialogTitle>הגשת הצעה סגורה למכרז</DialogTitle>
+          <DialogDescription>
+            ההצעה שלך חסויה — הלקוח לא יראה את שם החברה או הצעות מתחרות עד לרגע הזכייה.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="price" className="text-sm font-semibold">
+              מחיר לשעה (₪) *
+            </Label>
+            <Input
+              id="price"
+              type="number"
+              min="50"
+              max="500"
+              step="0.5"
+              dir="ltr"
+              value={pricePerHour}
+              onChange={(e) => {
+                setPricePerHour(e.target.value);
+                setPriceError(null);
+              }}
+              required
+              className={`h-11 text-base font-semibold ${priceError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+              placeholder="₪ לשעה"
+            />
+            {priceError ? (
+              <p className="text-xs text-destructive">{priceError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">טווח: ₪50–₪500. הצעה חסויה לחלוטין.</p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="price">מחיר לשעה (₪) *</Label>
-              <Input
-                id="price"
-                type="number"
-                min="1"
-                step="0.5"
-                value={pricePerHour}
-                onChange={(e) => setPricePerHour(e.target.value)}
-                required
-                className="h-11"
-                placeholder="₪"
-              />
-            </div>
             <div className="space-y-1.5">
               <Label htmlFor="workers">עובדים זמינים *</Label>
               <Input
                 id="workers"
                 type="number"
                 min="1"
+                dir="ltr"
                 value={availableWorkers}
-                onChange={(e) => setAvailableWorkers(e.target.value)}
+                onChange={(e) => {
+                  setAvailableWorkers(e.target.value);
+                  setWorkersError(null);
+                }}
                 required
-                className="h-11"
+                className={`h-11 ${workersError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
+              {workersError && <p className="text-xs text-destructive">{workersError}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sd">תאריך התחלה *</Label>
+              <Input
+                id="sd"
+                type="date"
+                min={todayISO}
+                dir="ltr"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setDateError(null);
+                }}
+                required
+                className={`h-11 ${dateError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+              />
+              {dateError && <p className="text-xs text-destructive">{dateError}</p>}
             </div>
           </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
-            <Input
-              id="sd"
-              placeholder="למשל: 01/06/2026"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-              className="h-11"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="rt">זמן תגובה (שעות)</Label>
-              <Input
-                id="rt"
-                type="number"
-                min="1"
-                max="168"
-                value={responseTimeHours}
-                onChange={(e) => setResponseTimeHours(e.target.value)}
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="wd">אחריות (ימים)</Label>
-              <Input
-                id="wd"
-                type="number"
-                min="0"
-                max="365"
-                value={warrantyDays}
-                onChange={(e) => setWarrantyDays(e.target.value)}
-                className="h-11"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="ins"
-              checked={insurance}
-              onCheckedChange={(v) => setInsurance(v === true)}
-            />
-            <Label htmlFor="ins" className="cursor-pointer">
-              כלול ביטוח מלא
-            </Label>
-          </div>
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
-            <div className="text-xs font-bold text-amber-600">
-              דרישות לערבות העסקה (במידה והקבלן יבחר בהצעתך)
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="pg"
-                checked={requiresPersonalGuarantee}
-                onCheckedChange={(v) => setRequiresPersonalGuarantee(v === true)}
-              />
-              <Label htmlFor="pg" className="cursor-pointer text-sm">
-                דורש ערבות אישית מהקבלן
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="sc"
-                checked={requiresSecurityCheck}
-                onCheckedChange={(v) => setRequiresSecurityCheck(v === true)}
-              />
-              <Label htmlFor="sc" className="cursor-pointer text-sm">
-                דורש צ׳ק לבטחון מהקבלן
-              </Label>
-            </div>
-            <div className="text-[10px] text-muted-foreground">
-              ניתן לסמן אחד מהם, את שניהם, או אף אחד. הדרישות יוצגו לקבלן יחד עם ההצעה.
-            </div>
-          </div>
-          <div>
             <Label htmlFor="note">הערות</Label>
             <Textarea
               id="note"
@@ -319,6 +389,7 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
               placeholder="פרטים נוספים על ההצעה..."
             />
           </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -331,10 +402,10 @@ function SubmitOfferDialog({ requestId }: { requestId: string }) {
             <Button type="submit" disabled={submitting}>
               {submitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> שולח...
+                  <CircularProgress size={16} color="inherit" /> שולח...
                 </>
               ) : (
-                "שלח הצעה"
+                "שלח הצעה סגורה"
               )}
             </Button>
           </DialogFooter>

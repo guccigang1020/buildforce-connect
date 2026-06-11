@@ -4,15 +4,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const submitSchema = z.object({
   requestId: z.string().uuid(),
-  pricePerHour: z.number().positive().max(10000),
+  pricePerHour: z.number().min(50, "מחיר לשעה חייב להיות לפחות ₪50").max(500, "מחיר לשעה לא יכול לעלות על ₪500"),
   availableWorkers: z.number().int().positive().max(10000),
-  startDate: z.string().min(1).max(50),
-  responseTimeHours: z.number().int().min(1).max(168).default(24),
-  warrantyDays: z.number().int().min(0).max(365).default(30),
-  insurance: z.boolean().default(true),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "תאריך לא תקין")
+    .refine((d) => d >= new Date().toISOString().slice(0, 10), {
+      message: "תאריך ההתחלה לא יכול להיות בעבר",
+    }),
   note: z.string().max(2000).optional(),
-  requiresPersonalGuarantee: z.boolean().default(false),
-  requiresSecurityCheck: z.boolean().default(false),
 });
 
 export const submitOffer = createServerFn({ method: "POST" })
@@ -35,6 +35,20 @@ export const submitOffer = createServerFn({ method: "POST" })
       throw new Error("חשבונך טרם אומת על ידי אדמין. לא ניתן להגיש הצעות לפני קבלת אישור.");
     }
 
+    // One bid per corporation per request — a second submission is rejected
+    // (a withdrawn bid may be replaced by a new one).
+    const { data: existing } = await supabaseAdmin
+      .from("job_offers")
+      .select("id, status")
+      .eq("request_id", data.requestId)
+      .eq("corporation_id", userId)
+      .neq("status", "withdrawn")
+      .limit(1)
+      .maybeSingle();
+    if (existing) {
+      throw new Error("כבר הגשת הצעה למכרז זה — ניתן להגיש הצעה אחת בלבד לכל מכרז.");
+    }
+
     const { data: offer, error } = await supabase
       .from("job_offers")
       .insert({
@@ -43,16 +57,27 @@ export const submitOffer = createServerFn({ method: "POST" })
         price_per_hour: data.pricePerHour,
         available_workers: data.availableWorkers,
         start_date: data.startDate,
-        response_time_hours: data.responseTimeHours,
-        warranty_days: data.warrantyDays,
-        insurance: data.insurance,
         note: data.note ?? null,
-        requires_personal_guarantee: data.requiresPersonalGuarantee,
-        requires_security_check: data.requiresSecurityCheck,
       })
       .select("id, request_id")
       .single();
     if (error || !offer) throw new Error(error?.message || "Failed to submit offer");
+
+    // Race guard (double-click / two tabs): if two inserts slipped past the
+    // pre-check concurrently, keep only the FIRST active offer and roll back
+    // this one. (The DB unique index in the hardening migration makes this
+    // impossible at the schema level once applied.)
+    const { data: actives } = await supabaseAdmin
+      .from("job_offers")
+      .select("id, created_at")
+      .eq("request_id", data.requestId)
+      .eq("corporation_id", userId)
+      .neq("status", "withdrawn")
+      .order("created_at", { ascending: true });
+    if ((actives?.length ?? 0) > 1 && actives![0].id !== offer.id) {
+      await supabaseAdmin.from("job_offers").delete().eq("id", offer.id);
+      throw new Error("כבר הגשת הצעה למכרז זה — ניתן להגיש הצעה אחת בלבד לכל מכרז.");
+    }
 
     // Notify request owner
     const { data: req } = await supabaseAdmin

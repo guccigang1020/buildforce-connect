@@ -19,6 +19,15 @@ export function maskedInitial(corpId: string): string {
   return maskedCorpId(corpId).slice(-2);
 }
 
+// Clean, platform-branded tender id (e.g. "BF-3947") instead of a raw UUID,
+// matching the business-plan branding.
+export function maskedRequestId(requestId: string): string {
+  let h = 0;
+  for (let i = 0; i < requestId.length; i++) h = (h * 33 + requestId.charCodeAt(i)) | 0;
+  const code = (Math.abs(h) % 9000) + 1000;
+  return `BF-${code}`;
+}
+
 export function maskedRegions(_regions: string): string {
   return "אזור פעילות נחשף לאחר חתימה";
 }

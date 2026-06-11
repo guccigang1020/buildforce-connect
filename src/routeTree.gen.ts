@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NewRequestRouteImport } from './routes/new-request'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as GoRouteImport } from './routes/go'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CorporationDashboardRouteImport } from './routes/corporation-dashboard'
@@ -26,9 +27,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
 import { Route as MyRequestsIdRouteImport } from './routes/my-requests.$id'
-import { Route as LaborSupplierAttendanceRouteImport } from './routes/labor-supplier.attendance'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as CorporationsIdRouteImport } from './routes/corporations.$id'
+import { Route as CorporationAttendanceRouteImport } from './routes/corporation.attendance'
 import { Route as CorporationAccountsRouteImport } from './routes/corporation.accounts'
 import { Route as ContractorProjectsRouteImport } from './routes/contractor.projects'
 import { Route as ContractorAttendanceRouteImport } from './routes/contractor.attendance'
@@ -93,6 +93,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GoRoute = GoRouteImport.update({
+  id: '/go',
+  path: '/go',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -128,19 +133,14 @@ const MyRequestsIdRoute = MyRequestsIdRouteImport.update({
   path: '/my-requests/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LaborSupplierAttendanceRoute = LaborSupplierAttendanceRouteImport.update({
-  id: '/labor-supplier/attendance',
-  path: '/labor-supplier/attendance',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CorporationsIdRoute = CorporationsIdRouteImport.update({
-  id: '/corporations/$id',
-  path: '/corporations/$id',
+const CorporationAttendanceRoute = CorporationAttendanceRouteImport.update({
+  id: '/corporation/attendance',
+  path: '/corporation/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CorporationAccountsRoute = CorporationAccountsRouteImport.update({
@@ -221,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/go': typeof GoRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/privacy': typeof PrivacyRoute
@@ -235,9 +236,8 @@ export interface FileRoutesByFullPath {
   '/contractor/attendance': typeof ContractorAttendanceRoute
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
-  '/corporations/$id': typeof CorporationsIdRoute
+  '/corporation/attendance': typeof CorporationAttendanceRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -256,6 +256,7 @@ export interface FileRoutesByTo {
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/go': typeof GoRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/privacy': typeof PrivacyRoute
@@ -270,9 +271,8 @@ export interface FileRoutesByTo {
   '/contractor/attendance': typeof ContractorAttendanceRoute
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
-  '/corporations/$id': typeof CorporationsIdRoute
+  '/corporation/attendance': typeof CorporationAttendanceRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -292,6 +292,7 @@ export interface FileRoutesById {
   '/corporation-dashboard': typeof CorporationDashboardRoute
   '/dashboard': typeof DashboardRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/go': typeof GoRoute
   '/login': typeof LoginRoute
   '/new-request': typeof NewRequestRoute
   '/privacy': typeof PrivacyRoute
@@ -306,9 +307,8 @@ export interface FileRoutesById {
   '/contractor/attendance': typeof ContractorAttendanceRoute
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
-  '/corporations/$id': typeof CorporationsIdRoute
+  '/corporation/attendance': typeof CorporationAttendanceRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/labor-supplier/attendance': typeof LaborSupplierAttendanceRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
   '/requests/$id': typeof RequestsIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -329,6 +329,7 @@ export interface FileRouteTypes {
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
+    | '/go'
     | '/login'
     | '/new-request'
     | '/privacy'
@@ -343,9 +344,8 @@ export interface FileRouteTypes {
     | '/contractor/attendance'
     | '/contractor/projects'
     | '/corporation/accounts'
-    | '/corporations/$id'
+    | '/corporation/attendance'
     | '/email/unsubscribe'
-    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
@@ -364,6 +364,7 @@ export interface FileRouteTypes {
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
+    | '/go'
     | '/login'
     | '/new-request'
     | '/privacy'
@@ -378,9 +379,8 @@ export interface FileRouteTypes {
     | '/contractor/attendance'
     | '/contractor/projects'
     | '/corporation/accounts'
-    | '/corporations/$id'
+    | '/corporation/attendance'
     | '/email/unsubscribe'
-    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
@@ -399,6 +399,7 @@ export interface FileRouteTypes {
     | '/corporation-dashboard'
     | '/dashboard'
     | '/forgot-password'
+    | '/go'
     | '/login'
     | '/new-request'
     | '/privacy'
@@ -413,9 +414,8 @@ export interface FileRouteTypes {
     | '/contractor/attendance'
     | '/contractor/projects'
     | '/corporation/accounts'
-    | '/corporations/$id'
+    | '/corporation/attendance'
     | '/email/unsubscribe'
-    | '/labor-supplier/attendance'
     | '/my-requests/$id'
     | '/requests/$id'
     | '/lovable/email/suppression'
@@ -435,6 +435,7 @@ export interface RootRouteChildren {
   CorporationDashboardRoute: typeof CorporationDashboardRoute
   DashboardRoute: typeof DashboardRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GoRoute: typeof GoRoute
   LoginRoute: typeof LoginRoute
   NewRequestRoute: typeof NewRequestRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -449,9 +450,8 @@ export interface RootRouteChildren {
   ContractorAttendanceRoute: typeof ContractorAttendanceRoute
   ContractorProjectsRoute: typeof ContractorProjectsRoute
   CorporationAccountsRoute: typeof CorporationAccountsRoute
-  CorporationsIdRoute: typeof CorporationsIdRoute
+  CorporationAttendanceRoute: typeof CorporationAttendanceRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
-  LaborSupplierAttendanceRoute: typeof LaborSupplierAttendanceRoute
   MyRequestsIdRoute: typeof MyRequestsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -537,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/go': {
+      id: '/go'
+      path: '/go'
+      fullPath: '/go'
+      preLoaderRoute: typeof GoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -586,13 +593,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MyRequestsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/labor-supplier/attendance': {
-      id: '/labor-supplier/attendance'
-      path: '/labor-supplier/attendance'
-      fullPath: '/labor-supplier/attendance'
-      preLoaderRoute: typeof LaborSupplierAttendanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
       path: '/email/unsubscribe'
@@ -600,11 +600,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/corporations/$id': {
-      id: '/corporations/$id'
-      path: '/corporations/$id'
-      fullPath: '/corporations/$id'
-      preLoaderRoute: typeof CorporationsIdRouteImport
+    '/corporation/attendance': {
+      id: '/corporation/attendance'
+      path: '/corporation/attendance'
+      fullPath: '/corporation/attendance'
+      preLoaderRoute: typeof CorporationAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/corporation/accounts': {
@@ -707,6 +707,7 @@ const rootRouteChildren: RootRouteChildren = {
   CorporationDashboardRoute: CorporationDashboardRoute,
   DashboardRoute: DashboardRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GoRoute: GoRoute,
   LoginRoute: LoginRoute,
   NewRequestRoute: NewRequestRoute,
   PrivacyRoute: PrivacyRoute,
@@ -721,9 +722,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContractorAttendanceRoute: ContractorAttendanceRoute,
   ContractorProjectsRoute: ContractorProjectsRoute,
   CorporationAccountsRoute: CorporationAccountsRoute,
-  CorporationsIdRoute: CorporationsIdRoute,
+  CorporationAttendanceRoute: CorporationAttendanceRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
-  LaborSupplierAttendanceRoute: LaborSupplierAttendanceRoute,
   MyRequestsIdRoute: MyRequestsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,

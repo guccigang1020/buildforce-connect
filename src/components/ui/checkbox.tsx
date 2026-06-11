@@ -1,26 +1,32 @@
 import * as React from "react";
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+import MuiCheckbox from "@mui/material/Checkbox";
 
-import { cn } from "@/lib/utils";
-
+/** MUI-backed Checkbox keeping the Radix API (checked / onCheckedChange). */
 const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      "grid place-content-center peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
-      className,
-    )}
+  HTMLButtonElement,
+  {
+    checked?: boolean;
+    defaultChecked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
+    disabled?: boolean;
+    id?: string;
+    className?: string;
+    "aria-label"?: string;
+  }
+>(({ checked, defaultChecked, onCheckedChange, disabled, id, className, ...props }, ref) => (
+  <MuiCheckbox
+    ref={ref as React.Ref<HTMLButtonElement>}
+    id={id}
+    checked={checked}
+    defaultChecked={defaultChecked}
+    disabled={disabled}
+    onChange={(e) => onCheckedChange?.(e.target.checked)}
+    size="small"
+    className={className}
+    sx={{ padding: "4px" }}
     {...props}
-  >
-    <CheckboxPrimitive.Indicator className={cn("grid place-content-center text-current")}>
-      <Check className="h-4 w-4" />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
+  />
 ));
-Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+Checkbox.displayName = "Checkbox";
 
 export { Checkbox };

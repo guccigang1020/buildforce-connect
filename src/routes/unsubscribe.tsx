@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, MailX, CheckCircle2, AlertTriangle, Ban } from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import UnsubscribeIcon from "@mui/icons-material/Unsubscribe";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import BlockIcon from "@mui/icons-material/Block";
 import { Button } from "@/components/ui/button";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -62,14 +66,14 @@ function UnsubscribePage() {
           <div className="rounded-3xl border border-border/60 bg-card/60 p-8 text-center shadow-elegant backdrop-blur-sm">
             {state === "loading" && (
               <>
-                <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                <CircularProgress size={32} color="inherit" className="mx-auto text-primary" />
                 <p className="mt-4 text-sm text-muted-foreground">בודק את הבקשה…</p>
               </>
             )}
             {state === "ready" && (
               <>
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/15 text-primary">
-                  <MailX className="h-7 w-7" />
+                  <UnsubscribeIcon sx={{ fontSize: 28 }} />
                 </div>
                 <h1 className="mt-4 text-2xl font-extrabold">ביטול קבלת מיילים</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -83,7 +87,7 @@ function UnsubscribePage() {
                 >
                   {busy ? (
                     <>
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" /> מבטל…
+                      <CircularProgress size={16} color="inherit" className="ml-2" /> מבטל…
                     </>
                   ) : (
                     "אישור ביטול"
@@ -94,7 +98,7 @@ function UnsubscribePage() {
             {state === "success" && (
               <>
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-500/15 text-emerald-500">
-                  <CheckCircle2 className="h-7 w-7" />
+                  <CheckCircleIcon sx={{ fontSize: 28 }} />
                 </div>
                 <h1 className="mt-4 text-2xl font-extrabold">בוטל בהצלחה</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -108,7 +112,7 @@ function UnsubscribePage() {
             {state === "already" && (
               <>
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-                  <Ban className="h-7 w-7" />
+                  <BlockIcon sx={{ fontSize: 28 }} />
                 </div>
                 <h1 className="mt-4 text-2xl font-extrabold">כבר בוטלת</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -119,7 +123,7 @@ function UnsubscribePage() {
             {state === "invalid" && (
               <>
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-destructive/15 text-destructive">
-                  <AlertTriangle className="h-7 w-7" />
+                  <WarningAmberIcon sx={{ fontSize: 28 }} />
                 </div>
                 <h1 className="mt-4 text-2xl font-extrabold">קישור לא תקין</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -130,7 +134,7 @@ function UnsubscribePage() {
             {state === "error" && (
               <>
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-destructive/15 text-destructive">
-                  <AlertTriangle className="h-7 w-7" />
+                  <WarningAmberIcon sx={{ fontSize: 28 }} />
                 </div>
                 <h1 className="mt-4 text-2xl font-extrabold">שגיאה</h1>
                 <p className="mt-2 text-sm text-muted-foreground">נסה שוב מאוחר יותר.</p>

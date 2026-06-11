@@ -2,41 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const BOOTSTRAP_ADMIN_EMAILS = ["chmv1243@gmail.com", "bbuildforceprime@gmail.com"];
-
-// One-time self-bootstrap for the designated admin account.
-// Uses service-role key to bypass RLS + the prevent_self_verification trigger.
-export const selfBootstrapAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Verify the requesting user is the designated admin email
-    const { data: authData, error: uErr } = await supabaseAdmin.auth.admin.getUserById(userId);
-    if (uErr || !authData?.user) throw new Error("User not found");
-    const email = (authData.user.email ?? "").toLowerCase();
-    if (!BOOTSTRAP_ADMIN_EMAILS.includes(email)) {
-      throw new Error("Forbidden: not a designated admin account");
-    }
-
-    // Insert admin role (service role bypasses the "admins only" RLS policy)
-    const { error: roleErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: userId, role: "admin" });
-    if (roleErr && !/duplicate|already exists/i.test(roleErr.message)) {
-      throw new Error(roleErr.message);
-    }
-
-    // Mark profile as approved (service role bypasses prevent_self_verification trigger)
-    const { error: profErr } = await supabaseAdmin
-      .from("profiles")
-      .update({ verification_status: "approved", is_verified: true })
-      .eq("user_id", userId);
-    if (profErr) throw new Error(profErr.message);
-
-    return { ok: true };
-  });
+// NOTE: Admin access is provisioned exclusively by `scripts/seed-admin.mjs`
+// (a dedicated admin-only account). There is intentionally NO in-app path to
+// gain or grant the admin role — roles are fixed at signup and never mixed.
 
 export const adminGetDashboardData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -85,47 +53,101 @@ export const adminSetVerificationStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const adminToggleRole = createServerFn({ method: "POST" })
+// Admin oversight of the whole marketplace: every request with all its offers,
+// corporation identities revealed (admin-only — corporations never see this).
+export const adminGetAllRequestsWithOffers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        targetUserId: z.string().uuid(),
-        role: z.enum(["corporation", "admin"]),
-        action: z.enum(["add", "remove"]),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     const [{ supabaseAdmin }, { assertAdmin }] = await Promise.all([
       import("@/integrations/supabase/client.server"),
       import("@/lib/admin.server"),
     ]);
     await assertAdmin(context.userId);
-    if (data.action === "remove") {
-      const { error } = await supabaseAdmin
-        .from("user_roles")
-        .delete()
-        .eq("user_id", data.targetUserId)
-        .eq("role", data.role);
-      if (error) throw new Error(error.message);
-    } else {
-      const { error } = await supabaseAdmin
-        .from("user_roles")
-        .insert({ user_id: data.targetUserId, role: data.role });
-      if (error && !/duplicate/i.test(error.message)) throw new Error(error.message);
+
+    const { data: requests, error: reqErr } = await supabaseAdmin
+      .from("job_requests")
+      .select("id, location, start_date, duration, status, created_at, deadline_at, user_id")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (reqErr) throw new Error(reqErr.message);
+
+    const reqIds = (requests ?? []).map((r) => r.id);
+    const ownerIds = Array.from(new Set((requests ?? []).map((r) => r.user_id)));
+
+    const [{ data: offers }, { data: items }, { data: owners }] = await Promise.all([
+      reqIds.length
+        ? supabaseAdmin
+            .from("job_offers")
+            .select(
+              "id, request_id, corporation_id, price_per_hour, available_workers, start_date, status, created_at",
+            )
+            .in("request_id", reqIds)
+            .order("price_per_hour", { ascending: true })
+        : Promise.resolve({ data: [] as never[] }),
+      reqIds.length
+        ? supabaseAdmin
+            .from("job_request_items")
+            .select("request_id, role, nationality, count")
+            .in("request_id", reqIds)
+        : Promise.resolve({ data: [] as never[] }),
+      ownerIds.length
+        ? supabaseAdmin
+            .from("profiles")
+            .select("user_id, full_name, company_name")
+            .in("user_id", ownerIds)
+        : Promise.resolve({ data: [] as never[] }),
+    ]);
+
+    // Corporation names for every offer
+    const corpIds = Array.from(new Set((offers ?? []).map((o) => o.corporation_id)));
+    const { data: corps } = corpIds.length
+      ? await supabaseAdmin
+          .from("profiles")
+          .select("user_id, full_name, company_name")
+          .in("user_id", corpIds)
+      : { data: [] as never[] };
+
+    const corpName = new Map(
+      (corps ?? []).map((c) => [c.user_id, c.company_name || c.full_name || "—"]),
+    );
+    const ownerName = new Map(
+      (owners ?? []).map((o) => [o.user_id, o.full_name || o.company_name || "—"]),
+    );
+
+    type AdminOffer = {
+      id: string;
+      request_id: string;
+      corporation_id: string;
+      price_per_hour: number;
+      available_workers: number;
+      start_date: string;
+      status: string;
+      created_at: string;
+      corporation_name: string;
+    };
+    type AdminItem = { request_id: string; role: string; nationality: string; count: number };
+
+    const offersByReq = new Map<string, AdminOffer[]>();
+    for (const o of offers ?? []) {
+      const arr = offersByReq.get(o.request_id) ?? [];
+      arr.push({ ...o, corporation_name: corpName.get(o.corporation_id) ?? "—" });
+      offersByReq.set(o.request_id, arr);
+    }
+    const itemsByReq = new Map<string, AdminItem[]>();
+    for (const it of items ?? []) {
+      const arr = itemsByReq.get(it.request_id) ?? [];
+      arr.push(it);
+      itemsByReq.set(it.request_id, arr);
     }
 
-    const { error: auditError } = await supabaseAdmin.from("audit_log").insert({
-      actor_id: context.userId,
-      action: `admin.role_${data.action}`,
-      entity_type: "user_role",
-      entity_id: data.targetUserId,
-      metadata: { role: data.role },
-    });
-    if (auditError) throw new Error(auditError.message);
-
-    return { ok: true };
+    return {
+      requests: (requests ?? []).map((r) => ({
+        ...r,
+        owner_name: ownerName.get(r.user_id) ?? "—",
+        items: itemsByReq.get(r.id) ?? [],
+        offers: offersByReq.get(r.id) ?? [],
+      })),
+    };
   });
 
 export const adminGetDocumentUrl = createServerFn({ method: "POST" })
