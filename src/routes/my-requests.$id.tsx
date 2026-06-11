@@ -39,8 +39,6 @@ const STATUS_META: Record<string, { label: string; chipClass: string }> = {
   cancelled: { label: "בוטלה", chipClass: "status-chip-rejected" },
 };
 
-const HOURS_PER_WORKER_MONTH = 176; // ~22 work days × 8h
-
 function MyRequestPage() {
   const { id } = Route.useParams();
   const { session, loading } = useAuth();
@@ -131,8 +129,7 @@ function MyRequestPage() {
   // Savings Engine — core differentiator: translate auction into one ₪ number
   const chosenPrice = winningOffer ? Number(winningOffer.price_per_hour) : minPrice;
   const savingsPerHour = maxPrice > chosenPrice ? maxPrice - chosenPrice : 0;
-  const monthlySavings =
-    savingsPerHour > 0 ? Math.round(savingsPerHour * totalWorkers * HOURS_PER_WORKER_MONTH) : 0;
+  const hourlySavings = savingsPerHour > 0 ? Math.round(savingsPerHour * totalWorkers) : 0;
 
   // Deadline countdown
   const deadlineHours = (request as { deadline_at?: string }).deadline_at
@@ -223,22 +220,21 @@ function MyRequestPage() {
             </div>
 
             {/* Hero savings number — intentionally orange and large (business plan) */}
-            {monthlySavings > 0 && (
+            {hourlySavings > 0 && (
               <div className="border-b border-border bg-savings-soft px-5 py-6 md:px-8">
                 <span className="savings-badge uppercase tracking-wider">
                   <TrendingDownIcon sx={{ fontSize: 14 }} />
-                  {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
+                  {winningOffer ? "החיסכון שהשגת" : "חיסכון לשעה מוערך"}
                 </span>
                 <div className="mt-3 text-5xl font-black leading-none tracking-tight text-savings md:text-6xl">
-                  <span dir="ltr">₪{monthlySavings.toLocaleString()}</span>
+                  <span dir="ltr">₪{hourlySavings.toLocaleString()}</span>
                   <span className="mr-2 align-middle text-lg font-bold text-savings/80">
-                    / חודש
+                    / שעה
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
                   <span dir="ltr">₪{savingsPerHour}</span> לשעה ×{" "}
-                  <span dir="ltr">{totalWorkers}</span> עובדים ×{" "}
-                  <span dir="ltr">{HOURS_PER_WORKER_MONTH}</span> שעות בחודש
+                  <span dir="ltr">{totalWorkers}</span> עובדים
                 </p>
               </div>
             )}

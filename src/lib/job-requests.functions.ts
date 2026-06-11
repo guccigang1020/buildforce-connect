@@ -172,7 +172,37 @@ export const listOpenJobRequests = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
-    return { requests: data ?? [] };
+
+    const requests = data ?? [];
+    // Attach the full workforce breakdown (role / count / nationality) per
+    // request so corporations see exactly what's needed before bidding.
+    const ids = requests.map((r) => r.id);
+    const itemsByReq = new Map<
+      string,
+      { role: string | null; count: number; nationality: string | null }[]
+    >();
+    if (ids.length > 0) {
+      const { data: items } = await supabaseAdmin
+        .from("job_request_items")
+        .select("request_id, count, role, nationality")
+        .in("request_id", ids);
+      for (const it of items ?? []) {
+        const arr = itemsByReq.get(it.request_id) ?? [];
+        arr.push({ role: it.role, count: it.count ?? 0, nationality: it.nationality });
+        itemsByReq.set(it.request_id, arr);
+      }
+    }
+
+    return {
+      requests: requests.map((r) => {
+        const items = itemsByReq.get(r.id) ?? [];
+        return {
+          ...r,
+          items,
+          workers_count: items.reduce((s, i) => s + i.count, 0),
+        };
+      }),
+    };
   });
 
 export const getJobRequestWithOffers = createServerFn({ method: "POST" })

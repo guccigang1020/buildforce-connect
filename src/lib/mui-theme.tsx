@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import createCache from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
@@ -13,10 +13,18 @@ const rtlPlugin =
     : (rtlPluginImport as { default: typeof rtlPluginImport }).default;
 
 // RTL style cache — MUI flips margins/paddings/positions for Hebrew.
-const rtlCache = createCache({
-  key: "mui-rtl",
-  stylisPlugins: [rtlPlugin],
-});
+// Must be created PER RENDER, not as a module singleton: emotion dedupes
+// against a cache's `inserted` registry, so a shared server cache emits the
+// critical <style> tags on the first request only and nothing thereafter —
+// every later SSR response then ships MUI markup with no styles, causing a
+// flash of unstyled components until the client hydrates. A fresh cache per
+// request re-emits the inline styles every time; on the client the lazy
+// initializer runs once and hydrates from the SSR <style data-emotion> tags.
+const createRtlCache = () =>
+  createCache({
+    key: "mui-rtl",
+    stylisPlugins: [rtlPlugin],
+  });
 
 // BuildForce theme — ColorHunt palette 146C78 · 0E91A1 · 7DCE94 · EFEDE7,
 // matched to the CSS tokens in styles.css. Flat, clean Material.
@@ -61,8 +69,11 @@ export const muiTheme = createTheme({
 });
 
 export function MuiProvider({ children }: { children: ReactNode }) {
+  // One cache per provider instance: a fresh cache for each SSR request, and a
+  // single stable cache on the client (the lazy initializer runs once).
+  const [cache] = useState(createRtlCache);
   return (
-    <CacheProvider value={rtlCache}>
+    <CacheProvider value={cache}>
       <ThemeProvider theme={muiTheme}>{children}</ThemeProvider>
     </CacheProvider>
   );

@@ -7,7 +7,6 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import GroupIcon from "@mui/icons-material/Group";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SearchIcon from "@mui/icons-material/Search";
 import GavelIcon from "@mui/icons-material/Gavel";
 import HardHatIcon from "@mui/icons-material/Engineering";
@@ -20,7 +19,6 @@ import {
   adminGetDashboardData,
   adminGetAllRequestsWithOffers,
   adminSetVerificationStatus,
-  adminGetDocumentUrl,
 } from "@/lib/admin.functions";
 import { maskedRequestId } from "@/lib/anonymize";
 import { sendTransactionalEmail } from "@/lib/email/send";
@@ -672,9 +670,13 @@ function UserTableRow({
           <StatusBadge status={profile.verification_status} />
         </td>
         <td className="px-4 py-2.5">
-          <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
-            פתח לבדיקה
-          </Button>
+          {profile.verification_status === "approved" ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            <Button onClick={() => setOpen(true)} variant="outline" size="sm" className="shrink-0">
+              פתח לבדיקה
+            </Button>
+          )}
         </td>
       </tr>
       {open && (
@@ -708,33 +710,10 @@ function ReviewDialog({
 }) {
   const [notes, setNotes] = useState(profile.admin_notes ?? "");
   const [busy, setBusy] = useState(false);
-  const [docs, setDocs] = useState<{ label: string; url: string | null }[]>([]);
   const [notesError, setNotesError] = useState<string | null>(null);
   const setStatusFn = useServerFn(adminSetVerificationStatus);
-  const getDocUrlFn = useServerFn(adminGetDocumentUrl);
 
-  useEffect(() => {
-    const load = async () => {
-      const items: { label: string; path: string | null }[] = [
-        { label: "תעודת קבלן רשום", path: profile.license_doc_url },
-        { label: "ביטוח צד ג׳", path: profile.insurance_doc_url },
-        { label: "אישור ניהול ספרים", path: profile.books_cert_url },
-      ];
-      const resolved = await Promise.all(
-        items.map(async (it) => {
-          if (!it.path) return { label: it.label, url: null };
-          try {
-            const res = await getDocUrlFn({ data: { path: it.path } });
-            return { label: it.label, url: res.url };
-          } catch {
-            return { label: it.label, url: null };
-          }
-        }),
-      );
-      setDocs(resolved);
-    };
-    void load();
-  }, [profile, getDocUrlFn]);
+  const docs = ["אישור ניהול ספרים", "רישיון תאגיד שנתי"];
 
   const setStatus = async (status: "approved" | "rejected") => {
     if (status === "rejected" && !notes.trim()) {
@@ -784,8 +763,7 @@ function ReviewDialog({
             <div className="grid grid-cols-2 gap-2 rounded-xl border border-border/60 bg-muted/30 p-3">
               <Field label="שם עסק" value={profile.business_name} />
               <Field label="ח.פ / ע.מ" value={profile.business_id} />
-              <Field label="רישיון קבלן" value={profile.contractor_license_number} />
-              <Field label="סיווג" value={profile.contractor_classification} />
+              <Field label="אימייל" value={profile.email} />
               <Field label="טלפון" value={profile.phone} />
               <Field label="עיר" value={profile.city} />
             </div>
@@ -794,24 +772,13 @@ function ReviewDialog({
           <section>
             <h4 className="mb-2 font-semibold text-foreground/80">מסמכים</h4>
             <div className="space-y-2">
-              {docs.map((d) => (
+              {docs.map((label) => (
                 <div
-                  key={d.label}
+                  key={label}
                   className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2"
                 >
-                  <span>{d.label}</span>
-                  {d.url ? (
-                    <a
-                      href={d.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
-                    >
-                      <OpenInNewIcon sx={{ fontSize: 14 }} /> צפה
-                    </a>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">לא הועלה</span>
-                  )}
+                  <span>{label}</span>
+                  <span className="status-chip-muted shrink-0">בקרוב</span>
                 </div>
               ))}
             </div>
