@@ -28,7 +28,7 @@ async function logNotification(
   payload: Record<string, unknown>,
 ) {
   const supabaseAdmin = await getSupabaseAdmin();
-  await supabaseAdmin.from("attendance_notifications").insert({
+  await (supabaseAdmin as any).from("attendance_notifications").insert({
     record_id: recordId,
     kind,
     channel: "whatsapp",
@@ -162,7 +162,7 @@ export const startWorkday = createServerFn({ method: "POST" })
       })
       .eq("id", recordId!);
 
-    await supabase.from("attendance_events").insert({
+    await (supabase as any).from("attendance_events").insert({
       record_id: recordId!,
       kind: "start",
       actor_id: userId,
@@ -252,7 +252,7 @@ export const endWorkday = createServerFn({ method: "POST" })
         total_cost: totalCost,
       })
       .eq("id", data.recordId);
-    await supabase.from("attendance_events").insert({
+    await (supabase as any).from("attendance_events").insert({
       record_id: data.recordId,
       kind: "end",
       actor_id: userId,
@@ -315,7 +315,7 @@ export const reportException = createServerFn({ method: "POST" })
         exception_at: new Date().toISOString(),
       })
       .eq("id", data.recordId);
-    await supabase.from("attendance_events").insert({
+    await (supabase as any).from("attendance_events").insert({
       record_id: data.recordId,
       kind: "exception",
       actor_id: userId,
@@ -376,7 +376,7 @@ export const approveAttendance = createServerFn({ method: "POST" })
       .from("attendance_records")
       .update({ status: "approved", approved_by: userId })
       .eq("id", data.recordId);
-    await supabase.from("attendance_events").insert({
+    await (supabase as any).from("attendance_events").insert({
       record_id: data.recordId,
       kind: "approval",
       actor_id: userId,
@@ -429,7 +429,7 @@ export const rejectAttendance = createServerFn({ method: "POST" })
       .from("attendance_records")
       .update({ status: "rejected", rejection_reason: data.reason, approved_by: userId })
       .eq("id", data.recordId);
-    await supabase.from("attendance_events").insert({
+    await (supabase as any).from("attendance_events").insert({
       record_id: data.recordId,
       kind: "rejection",
       actor_id: userId,
@@ -483,14 +483,14 @@ export const requestCorrection = createServerFn({ method: "POST" })
     ) {
       throw new Error("אין לך הרשאה לבקש תיקון לרשומה זו");
     }
-    const { error } = await supabase.from("attendance_corrections").insert({
+    const { error } = await (supabase as any).from("attendance_corrections").insert({
       record_id: data.recordId,
       requested_by: userId,
       reason: data.reason,
       requested_change: data.requestedChange as never,
     });
     if (error) throw new Error(error.message);
-    await supabase.from("attendance_events").insert({
+    await (supabase as any).from("attendance_events").insert({
       record_id: data.recordId,
       kind: "correction_request",
       actor_id: userId,
@@ -993,7 +993,7 @@ export const startWorkdayByToken = createServerFn({ method: "POST" })
         workers_actual: data.workersActual,
       })
       .eq("id", recordId);
-    await supabaseAdmin.from("attendance_events").insert({
+    await (supabaseAdmin as any).from("attendance_events").insert({
       record_id: recordId,
       kind: "start",
       actor_id: team.team_leader_id,
@@ -1060,7 +1060,7 @@ export const endWorkdayByToken = createServerFn({ method: "POST" })
         total_cost: totalCost,
       })
       .eq("id", data.recordId);
-    await supabaseAdmin.from("attendance_events").insert({
+    await (supabaseAdmin as any).from("attendance_events").insert({
       record_id: data.recordId,
       kind: "end",
       actor_id: rec.team_leader_id,
