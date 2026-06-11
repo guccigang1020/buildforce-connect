@@ -4,25 +4,21 @@ import { maskedRequestId } from "@/lib/anonymize";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Clock,
-  Users,
-  Send,
-  Loader2,
-  ShieldCheck,
-  Coins,
-  AlertTriangle,
-  CheckCircle2,
-  Lock,
-  Eye,
-  TrendingUp,
-  Flame,
-} from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import GroupIcon from "@mui/icons-material/Group";
+import SendIcon from "@mui/icons-material/Send";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers } from "@/lib/job-requests.functions";
 import { submitOffer } from "@/lib/job-offers.functions";
@@ -85,7 +81,7 @@ function RequestPage() {
     return (
       <AppShell title="מכרז">
         <div className="grid place-items-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <CircularProgress size={24} color="inherit" className="text-muted-foreground" />
         </div>
       </AppShell>
     );
@@ -108,7 +104,7 @@ function RequestPage() {
       <AppShell title="מכרז">
         <div className="enterprise-card p-10 text-center animate-fade-up">
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-lg bg-destructive/10">
-            <AlertTriangle className="h-7 w-7 text-destructive" />
+            <WarningAmberIcon sx={{ fontSize: 28 }} className="text-destructive" />
           </div>
           <h2 className="text-xl font-semibold">המכרז לא נמצא</h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -129,7 +125,7 @@ function RequestPage() {
     return (
       <AppShell title="מכרז">
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <CircularProgress size={24} color="inherit" className="text-primary" />
         </div>
       </AppShell>
     );
@@ -178,7 +174,7 @@ function RequestPage() {
                   <span
                     className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold ${compLevel.color}`}
                   >
-                    <Flame className="h-3 w-3" />
+                    <LocalFireDepartmentIcon sx={{ fontSize: 12 }} />
                     {offersCount} הצעות · {compLevel.label}
                   </span>
                 )}
@@ -191,7 +187,7 @@ function RequestPage() {
                     <span
                       className={`font-semibold ${deadlineUrgent ? "text-destructive" : "text-status-pending"}`}
                     >
-                      <Clock className="inline h-3 w-3 me-0.5 align-[-1px]" />
+                      <ScheduleIcon sx={{ fontSize: 12 }} className="inline me-0.5 align-[-1px]" />
                       {deadlineUrgent
                         ? `נסגר בעוד ${deadlineHours} שעות`
                         : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`}
@@ -247,7 +243,7 @@ function RequestPage() {
                   דרישות כוח אדם
                 </h4>
                 <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-xs font-medium tabular-nums">
-                  <Users className="inline h-3 w-3 me-0.5 align-[-1px]" />
+                  <GroupIcon sx={{ fontSize: 12 }} className="inline me-0.5 align-[-1px]" />
                   {totalWorkers}
                 </span>
               </div>
@@ -284,7 +280,7 @@ function RequestPage() {
 
           {(req as { deadline_at?: string }).deadline_at && !deadlineUrgent && (
             <p className="mt-3 text-[11px] text-muted-foreground">
-              <Clock className="inline h-3 w-3 me-0.5 align-[-1px]" /> סגירת המכרז:{" "}
+              <ScheduleIcon sx={{ fontSize: 12 }} className="inline me-0.5 align-[-1px]" /> סגירת המכרז:{" "}
               {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
             </p>
           )}
@@ -308,14 +304,14 @@ function RequestPage() {
           {offersCount > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {[
-                { icon: Lock, label: "אנונימיות מלאה" },
-                { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
+                { icon: LockIcon, label: "אנונימיות מלאה" },
+                { icon: VisibilityIcon, label: "פרטים נחשפים רק אחרי בחירה" },
               ].map(({ icon: Icon, label }) => (
                 <span
                   key={label}
                   className="inline-flex items-center gap-1.5 rounded border border-border bg-muted/30 px-2.5 py-1 text-xs font-medium text-muted-foreground"
                 >
-                  <Icon className="h-3 w-3" /> {label}
+                  <Icon sx={{ fontSize: 12 }} /> {label}
                 </span>
               ))}
             </div>
@@ -326,15 +322,15 @@ function RequestPage() {
         {isOpen && isCorporation && !myOffer && (
           <div className="flex flex-wrap gap-2 animate-fade-up delay-100">
             {[
-              { icon: Lock, label: "אנונימיות מלאה" },
-              { icon: CheckCircle2, label: "זכייה לפי הצעה הטובה ביותר" },
-              { icon: Eye, label: "פרטים נחשפים רק אחרי בחירה" },
+              { icon: LockIcon, label: "אנונימיות מלאה" },
+              { icon: CheckCircleIcon, label: "זכייה לפי הצעה הטובה ביותר" },
+              { icon: VisibilityIcon, label: "פרטים נחשפים רק אחרי בחירה" },
             ].map(({ icon: Icon, label }) => (
               <span
                 key={label}
                 className="inline-flex items-center gap-1.5 rounded border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary"
               >
-                <Icon className="h-3.5 w-3.5" /> {label}
+                <Icon sx={{ fontSize: 14 }} /> {label}
               </span>
             ))}
           </div>
@@ -349,7 +345,7 @@ function RequestPage() {
         {myOffer && (
           <div className="enterprise-card border-primary/30 p-5 animate-fade-up delay-200">
             <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="h-4 w-4 text-primary" />
+              <VerifiedUserIcon sx={{ fontSize: 16 }} className="text-primary" />
               <span className="text-sm font-semibold">כבר הגשת הצעה למכרז זה</span>
             </div>
             <dl className="grid grid-cols-3 gap-4 text-sm">
@@ -408,9 +404,6 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
     String(totalWorkers > 0 ? totalWorkers : ""),
   );
   const [startDate, setStartDate] = useState("");
-  const [responseTimeHours, setResponseTimeHours] = useState("24");
-  const [warrantyDays, setWarrantyDays] = useState("30");
-  const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
 
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -469,9 +462,6 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
           pricePerHour: price,
           availableWorkers: workers,
           startDate: startDate.trim(),
-          responseTimeHours: Number(responseTimeHours) || 24,
-          warrantyDays: Number(warrantyDays) || 30,
-          insurance,
           note: note.trim() || undefined,
         },
       });
@@ -548,7 +538,7 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
       {dailyCostEstimate > 0 && (
         <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+            <TrendingUpIcon sx={{ fontSize: 14 }} className="shrink-0" />
             עלות יומית משוערת:{" "}
             <span className="text-foreground font-semibold" dir="ltr">
               ₪{dailyCostEstimate.toLocaleString()}
@@ -578,41 +568,6 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
         {dateError && <p className="text-xs text-destructive">{dateError}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="rt">זמן תגובה (שעות)</Label>
-          <Input
-            id="rt"
-            type="number"
-            min="1"
-            max="168"
-            value={responseTimeHours}
-            onChange={(e) => setResponseTimeHours(e.target.value)}
-            className="h-11"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="wd">אחריות (ימים)</Label>
-          <Input
-            id="wd"
-            type="number"
-            min="0"
-            max="365"
-            value={warrantyDays}
-            onChange={(e) => setWarrantyDays(e.target.value)}
-            className="h-11"
-          />
-        </div>
-      </div>
-
-      <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3">
-        <Checkbox id="ins" checked={insurance} onCheckedChange={(v) => setInsurance(v === true)} />
-        <span className="text-sm">
-          <span className="font-semibold">כלול ביטוח מלא</span>
-          <span className="text-muted-foreground"> — מגביר אמינות ההצעה</span>
-        </span>
-      </label>
-
       <div className="space-y-1.5">
         <Label htmlFor="note">הערות להצעה</Label>
         <Textarea
@@ -628,17 +583,17 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
       <Button type="submit" disabled={submitting} size="lg" className="w-full">
         {submitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> שולח…
+            <CircularProgress size={16} color="inherit" /> שולח…
           </>
         ) : (
           <>
-            <Send className="ml-1 h-4 w-4" /> שלח הצעה
+            <SendIcon sx={{ fontSize: 16 }} className="ml-1" /> שלח הצעה
           </>
         )}
       </Button>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+        <VerifiedUserIcon sx={{ fontSize: 14 }} className="text-primary" />
         ההצעה חסויה לחלוטין — הקבלן לא יראה את שמך עד שתיבחר
       </div>
     </form>

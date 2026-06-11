@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Receipt } from "lucide-react";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { ComingSoonPage } from "@/components/coming-soon-page";
 
 export const Route = createFileRoute("/corporation/accounts")({
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/corporation/accounts")({
         "חשבונית חודשית מוכנה ומגובה בראיות",
         "פירוט שעות מאושרות מול שעות במחלוקת",
       ]}
-      icon={Receipt}
+      icon={ReceiptLongIcon}
     />
   ),
 });

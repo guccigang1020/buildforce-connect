@@ -99,3 +99,10 @@ END $$;
 -- Now that duplicates are gone, enforce the invariant.
 CREATE UNIQUE INDEX IF NOT EXISTS user_roles_one_role_per_user
 ON public.user_roles (user_id);
+
+-- 5) One bid per corporation per request (enforced in submitOffer server fn
+--    as well — this index is the database-level guarantee). Withdrawn bids
+--    are excluded so a corporation may re-bid after withdrawing.
+CREATE UNIQUE INDEX IF NOT EXISTS job_offers_one_active_bid_per_corp
+ON public.job_offers (request_id, corporation_id)
+WHERE status <> 'withdrawn';

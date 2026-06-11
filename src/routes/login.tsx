@@ -3,7 +3,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Lock, Loader2, AlertCircle } from "lucide-react";
+import MailOutlineIcon from "@mui/icons-material/MailOutlined";
+import LockIcon from "@mui/icons-material/Lock";
+import CircularProgress from "@mui/material/CircularProgress";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -104,7 +107,7 @@ function LoginPage() {
 
           {formError && (
             <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
               <span>{formError}</span>
             </div>
           )}
@@ -115,7 +118,7 @@ function LoginPage() {
                 כתובת אימייל
               </Label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <MailOutlineIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
@@ -132,7 +135,7 @@ function LoginPage() {
               </div>
               {errors.email && (
                 <p className="flex items-center gap-1 text-xs font-medium text-destructive">
-                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
                   {errors.email.message}
                 </p>
               )}
@@ -151,7 +154,7 @@ function LoginPage() {
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <LockIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
                   type="password"
@@ -168,7 +171,7 @@ function LoginPage() {
               </div>
               {errors.password && (
                 <p className="flex items-center gap-1 text-xs font-medium text-destructive">
-                  <AlertCircle className="h-3 w-3 shrink-0" />
+                  <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
                   {errors.password.message}
                 </p>
               )}
@@ -177,7 +180,7 @@ function LoginPage() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מתחבר…
+                  <CircularProgress size={16} color="inherit" className="ms-2" /> מתחבר…
                 </>
               ) : (
                 "התחבר לחשבון"

@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { Mail, Loader2 } from "lucide-react";
+import MailOutlineIcon from "@mui/icons-material/MailOutlined";
+import CircularProgress from "@mui/material/CircularProgress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ function ForgotPasswordPage() {
                   אימייל
                 </Label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <MailOutlineIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
@@ -83,7 +84,7 @@ function ForgotPasswordPage() {
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? (
                   <>
-                    <Loader2 className="ms-2 h-4 w-4 animate-spin" /> שולח…
+                    <CircularProgress size={16} color="inherit" className="ms-2" /> שולח…
                   </>
                 ) : (
                   "שלח קישור איפוס"

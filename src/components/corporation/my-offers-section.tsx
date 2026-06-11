@@ -3,7 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Send, Trophy, XCircle, Ban, Loader2, Eye, Undo2 } from "lucide-react";
+import CancelIcon from "@mui/icons-material/Cancel";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import UndoIcon from "@mui/icons-material/Undo";
+import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
 import { listMyOffers, withdrawOffer } from "@/lib/job-offers.functions";
 import { maskedRequestId } from "@/lib/anonymize";
@@ -90,7 +93,7 @@ export function MyOffersSection() {
         </div>
       ) : error ? (
         <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-5 text-sm">
-          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <CancelIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-destructive" />
           <div>
             <p className="font-semibold text-destructive">לא הצלחנו לטעון את ההצעות שלך</p>
             <p className="mt-1 text-muted-foreground">נסה לרענן את הדף, או לחזור אליו מאוחר יותר.</p>
@@ -159,7 +162,7 @@ export function MyOffersSection() {
                         <div className="flex items-center justify-end gap-2">
                           <Button asChild variant="ghost" size="sm">
                             <Link to="/requests/$id" params={{ id: o.request_id }}>
-                              <Eye className="h-3.5 w-3.5" />
+                              <VisibilityIcon sx={{ fontSize: 14 }} />
                             </Link>
                           </Button>
                           {o.status === "submitted" && (
@@ -170,9 +173,9 @@ export function MyOffersSection() {
                               disabled={withdrawingId === o.id}
                             >
                               {withdrawingId === o.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <CircularProgress size={14} color="inherit" />
                               ) : (
-                                <Undo2 className="h-3.5 w-3.5" />
+                                <UndoIcon sx={{ fontSize: 14 }} />
                               )}
                             </Button>
                           )}
@@ -225,7 +228,7 @@ export function MyOffersSection() {
                     <div className="flex items-center gap-1.5">
                       <Button asChild variant="ghost" size="sm" className="h-8">
                         <Link to="/requests/$id" params={{ id: o.request_id }}>
-                          <Eye className="h-3.5 w-3.5" />
+                          <VisibilityIcon sx={{ fontSize: 14 }} />
                         </Link>
                       </Button>
                       {o.status === "submitted" && (
@@ -237,9 +240,9 @@ export function MyOffersSection() {
                           disabled={withdrawingId === o.id}
                         >
                           {withdrawingId === o.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <CircularProgress size={14} color="inherit" />
                           ) : (
-                            <Undo2 className="h-3.5 w-3.5" />
+                            <UndoIcon sx={{ fontSize: 14 }} />
                           )}
                         </Button>
                       )}

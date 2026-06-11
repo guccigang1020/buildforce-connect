@@ -2,19 +2,15 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  ShieldCheck,
-  Users,
-  FileCheck2,
-  FileX2,
-  Loader2,
-  ExternalLink,
-  Search,
-  Building2,
-  HardHat,
-  Activity,
-  AlertCircle,
-} from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import SearchIcon from "@mui/icons-material/Search";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { useServerFn } from "@tanstack/react-start";
 import {
   adminGetDashboardData,
@@ -83,7 +79,7 @@ function AdminPage() {
     return (
       <AppShell title="מנהל מערכת">
         <div className="grid place-items-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <CircularProgress size={24} color="inherit" className="text-muted-foreground" />
         </div>
       </AppShell>
     );
@@ -142,9 +138,17 @@ function AdminDashboard() {
     return m;
   }, [roles]);
 
+  // Verification applies ONLY to corporations (manpower suppliers).
+  // Contractors don't need admin approval — listing them in this queue was
+  // confusing ("why is a contractor pending?").
+  const corporations = useMemo(
+    () => profiles.filter((p) => (rolesByUser.get(p.user_id) ?? []).includes("corporation")),
+    [profiles, rolesByUser],
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return profiles.filter((p) => {
+    return corporations.filter((p) => {
       if (tab === "pending" && p.verification_status !== "pending") return false;
       if (tab === "approved" && p.verification_status !== "approved") return false;
       if (tab === "rejected" && p.verification_status !== "rejected") return false;
@@ -158,16 +162,19 @@ function AdminDashboard() {
         p.city,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [profiles, tab, search]);
+  }, [corporations, tab, search]);
 
   const stats = useMemo(
     () => ({
       total: profiles.length,
-      pending: profiles.filter((p) => p.verification_status === "pending").length,
-      approved: profiles.filter((p) => p.verification_status === "approved").length,
-      rejected: profiles.filter((p) => p.verification_status !== "approved" && p.verification_status !== "pending").length,
+      corps: corporations.length,
+      pending: corporations.filter((p) => p.verification_status === "pending").length,
+      approved: corporations.filter((p) => p.verification_status === "approved").length,
+      rejected: corporations.filter(
+        (p) => p.verification_status !== "approved" && p.verification_status !== "pending",
+      ).length,
     }),
-    [profiles],
+    [profiles, corporations],
   );
 
   const refresh = () => {
@@ -179,7 +186,7 @@ function AdminDashboard() {
       title="מנהל מערכת"
       action={
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+          <VerifiedUserIcon sx={{ fontSize: 14 }} className="text-primary" />
           <span className="font-semibold text-primary">אדמין</span>
           {profile?.full_name && <span>· {profile.full_name}</span>}
         </div>
@@ -190,8 +197,8 @@ function AdminDashboard() {
         <div>
           <h2 className="text-xl font-semibold text-foreground">לוח בקרה — מנהל מערכת</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {stats.pending > 0 ? `${stats.pending} ממתינים לאישור · ` : ""}
-            {stats.total} משתמשים רשומים
+            {stats.pending > 0 ? `${stats.pending} תאגידים ממתינים לאישור · ` : ""}
+            {stats.corps} תאגידים · {stats.total} משתמשים רשומים
           </p>
         </div>
       </div>
@@ -258,14 +265,14 @@ function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
             <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
-            <TabsTrigger value="all">הכל ({stats.total})</TabsTrigger>
+            <TabsTrigger value="all">כל התאגידים ({stats.corps})</TabsTrigger>
             <TabsTrigger value="activity">
-              <Activity className="me-1 h-3.5 w-3.5" /> פעולות
+              <ShowChartIcon sx={{ fontSize: 14 }} className="me-1" /> פעולות
             </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className={`relative w-full md:w-72 ${tab === "activity" ? "invisible" : ""}`}>
-          <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -281,7 +288,7 @@ function AdminDashboard() {
       ) : error ? (
         <div className="empty-state border-destructive/30 bg-destructive/5">
           <div className="empty-state-icon border-destructive/20 bg-destructive/10">
-            <AlertCircle className="h-8 w-8 text-destructive" />
+            <ErrorOutlineIcon sx={{ fontSize: 32 }} className="text-destructive" />
           </div>
           <h3 className="font-bold">שגיאה בטעינת נתוני הניהול</h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
@@ -300,7 +307,7 @@ function AdminDashboard() {
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">
-            <Users className="h-8 w-8 text-primary" />
+            <GroupIcon sx={{ fontSize: 32 }} className="text-primary" />
           </div>
           <h3 className="font-bold">אין משתמשים בקטגוריה זו</h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
@@ -357,7 +364,7 @@ function ActivityLog({ entries, isLoading }: { entries: AuditEntry[]; isLoading:
     return (
       <div className="empty-state">
         <div className="empty-state-icon">
-          <Activity className="h-8 w-8 text-primary" />
+          <ShowChartIcon sx={{ fontSize: 32 }} className="text-primary" />
         </div>
         <h3 className="font-bold">אין פעולות להצגה</h3>
         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -581,7 +588,7 @@ function ReviewDialog({
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-medium"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" /> צפה
+                      <OpenInNewIcon sx={{ fontSize: 14 }} /> צפה
                     </a>
                   ) : (
                     <span className="text-xs text-muted-foreground">לא הועלה</span>
@@ -635,19 +642,19 @@ function ReviewDialog({
           </Button>
           <Button variant="destructive" onClick={() => setStatus("rejected")} disabled={busy}>
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <CircularProgress size={16} color="inherit" />
             ) : (
               <>
-                <FileX2 className="me-1 h-4 w-4" /> דחה
+                <HighlightOffIcon sx={{ fontSize: 16 }} className="me-1" /> דחה
               </>
             )}
           </Button>
           <Button onClick={() => setStatus("approved")} disabled={busy}>
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <CircularProgress size={16} color="inherit" />
             ) : (
               <>
-                <FileCheck2 className="me-1 h-4 w-4" /> אשר
+                <FactCheckIcon sx={{ fontSize: 16 }} className="me-1" /> אשר
               </>
             )}
           </Button>

@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { Lock, Loader2 } from "lucide-react";
+import LockIcon from "@mui/icons-material/Lock";
+import CircularProgress from "@mui/material/CircularProgress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,7 @@ function ResetPasswordPage() {
         <div className="rounded-lg border border-border p-6">
           {!ready ? (
             <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> מאמת את הקישור…
+              <CircularProgress size={16} color="inherit" /> מאמת את הקישור…
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -90,7 +91,7 @@ function ResetPasswordPage() {
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? (
                   <>
-                    <Loader2 className="ms-2 h-4 w-4 animate-spin" /> מעדכן…
+                    <CircularProgress size={16} color="inherit" className="ms-2" /> מעדכן…
                   </>
                 ) : (
                   "עדכן סיסמה"
@@ -127,7 +128,7 @@ function PasswordField({
         {label}
       </Label>
       <div className="relative">
-        <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <LockIcon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           id={id}
           type="password"

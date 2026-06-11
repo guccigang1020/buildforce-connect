@@ -1,5 +1,4 @@
-import type { LucideIcon } from "lucide-react";
-import { Clock } from "lucide-react";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 
 /**
  * Canonical "coming-soon" card. Used on screens whose features activate once
@@ -13,7 +12,7 @@ export function NextStageNotice({
   description,
   steps,
 }: {
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string; sx?: object }>;
   badge?: string;
   title: string;
   description: string;
@@ -24,13 +23,13 @@ export function NextStageNotice({
       <div className="coming-soon-card">
         {/* Icon — neutral, calm; no primary gradient (not a primary action) */}
         <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-          <Icon className="h-7 w-7" />
+          <Icon sx={{ fontSize: 28 }} />
         </div>
 
         {/* "בקרוב" chip */}
         <div className="mt-4">
           <span className="status-chip-muted">
-            <Clock className="h-3 w-3" />
+            <ScheduleIcon sx={{ fontSize: 12 }} />
             בקרוב
           </span>
         </div>

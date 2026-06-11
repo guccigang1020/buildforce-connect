@@ -1,41 +1,39 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, type ElementType } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Hammer,
-  Layers,
-  PaintRoller,
-  Wrench,
-  Building2,
-  Sparkles,
-  ShieldCheck,
-  Zap,
-  Star,
-  ArrowLeft,
-  CheckCircle2,
-  Mail,
-  Users,
-  Clock,
-  TrendingUp,
-  BadgeCheck,
-  Lock,
-  FileCheck2,
-  Headphones,
-  TrendingDown,
-  Gavel,
-  Trophy,
-  MapPin,
-  Camera,
-  ClipboardCheck,
-  Smile,
-  Eye,
-  MessageCircle,
-  FileBarChart,
-  HardHat,
-  Briefcase,
-  AlertTriangle,
-} from "lucide-react";
+import ConstructionIcon from "@mui/icons-material/Construction";
+import LayersIcon from "@mui/icons-material/Layers";
+import FormatPaintIcon from "@mui/icons-material/FormatPaint";
+import BuildIcon from "@mui/icons-material/Build";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import BoltIcon from "@mui/icons-material/Bolt";
+import StarIcon from "@mui/icons-material/Star";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import MailOutlineIcon from "@mui/icons-material/MailOutlined";
+import GroupIcon from "@mui/icons-material/Group";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import LockIcon from "@mui/icons-material/Lock";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import GavelIcon from "@mui/icons-material/Gavel";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import PlaceIcon from "@mui/icons-material/Place";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import SentimentSatisfiedIcon from "@mui/icons-material/SentimentSatisfied";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import EngineeringIcon from "@mui/icons-material/Engineering";
+import WorkIcon from "@mui/icons-material/Work";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Button } from "@/components/ui/button";
 import heroImg from "@/assets/hero-construction.jpg";
 import { SiteNav } from "@/components/site-nav";
@@ -123,7 +121,7 @@ function Hero() {
             <Button asChild size="lg" className="h-12 px-8 text-base font-semibold shadow-elegant">
               <Link to={heroCta}>
                 פרסם בקשת כוח אדם
-                <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-2 transition-transform group-hover:-translate-x-1" />
               </Link>
             </Button>
             <Button
@@ -139,13 +137,13 @@ function Hero() {
           </div>
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" /> שימוש חינם לקבלנים
+              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-primary" /> שימוש חינם לקבלנים
             </span>
             <span className="inline-flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" /> תאגידים מאומתים בלבד
+              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-primary" /> תאגידים מאומתים בלבד
             </span>
             <span className="inline-flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" /> נתונים מאובטחים בתקן בנקאי
+              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-primary" /> נתונים מאובטחים בתקן בנקאי
             </span>
           </div>
         </div>
@@ -169,13 +167,13 @@ function Hero() {
                 <p className="mt-1 text-sm text-muted-foreground">3 חודשים · התחלה 1 ביוני</p>
               </div>
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Hammer className="h-5 w-5" />
+                <ConstructionIcon sx={{ fontSize: 20 }} />
               </div>
             </div>
 
             <div className="mt-5 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/8 px-3 py-2 text-xs font-semibold text-status-approved">
               <span className="inline-flex items-center gap-1.5">
-                <TrendingDown className="h-3.5 w-3.5" /> המחיר ירד ב-7% מאז הפרסום
+                <TrendingDownIcon sx={{ fontSize: 14 }} /> המחיר ירד ב-7% מאז הפרסום
               </span>
               <span dir="ltr" className="savings-badge">
                 חיסכון: ₪14/שעה
@@ -186,7 +184,7 @@ function Hero() {
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <span>הצעות שהתקבלו · 4</span>
                 <span className="inline-flex items-center gap-1 normal-case text-status-approved">
-                  <Trophy className="h-3 w-3" /> מובילה
+                  <EmojiEventsIcon sx={{ fontSize: 12 }} /> מובילה
                 </span>
               </div>
               {[
@@ -213,10 +211,10 @@ function Hero() {
                         <span className="truncate" dir="ltr">
                           {c.name}
                         </span>
-                        {c.badge && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
+                        {c.badge && <VerifiedIcon sx={{ fontSize: 16 }} className="shrink-0 text-primary" />}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Star className="h-3 w-3 fill-primary text-primary" /> {c.rating}
+                        <StarIcon sx={{ fontSize: 12 }} className="text-primary" /> {c.rating}
                       </div>
                     </div>
                   </div>
@@ -233,7 +231,7 @@ function Hero() {
                       title="הזהות נחשפת רק אחרי בחירת זוכה"
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-secondary text-muted-foreground ring-1 ring-border/60"
                     >
-                      <Lock className="h-4 w-4" />
+                      <LockIcon sx={{ fontSize: 16 }} />
                     </span>
                   </div>
                 </div>
@@ -253,10 +251,10 @@ function Hero() {
 /* ---------- LIVE STATS BAR ---------- */
 function LiveStatsBar() {
   const stats = [
-    { value: "מכרז הפוך", label: "תאגידים מתחרים על המחיר שלך", icon: Users },
-    { value: "מאומתים", label: "רק תאגידים שעברו בדיקה", icon: BadgeCheck },
-    { value: "< 24h", label: "עד הצעה ראשונה", icon: Clock },
-    { value: "₪0", label: "עלות לקבלן", icon: TrendingUp },
+    { value: "מכרז הפוך", label: "תאגידים מתחרים על המחיר שלך", icon: GroupIcon },
+    { value: "מאומתים", label: "רק תאגידים שעברו בדיקה", icon: VerifiedIcon },
+    { value: "< 24h", label: "עד הצעה ראשונה", icon: ScheduleIcon },
+    { value: "₪0", label: "עלות לקבלן", icon: TrendingUpIcon },
   ];
   return (
     <div className="border-y border-border bg-card/50">
@@ -267,7 +265,7 @@ function LiveStatsBar() {
             className={`flex items-center gap-3 px-6 py-5 ${i < stats.length - 1 ? "border-l border-border/60" : ""}`}
           >
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <s.icon className="h-4 w-4" />
+              <s.icon sx={{ fontSize: 16 }} />
             </div>
             <div>
               <div
@@ -293,24 +291,24 @@ function CompetitionAdvantage() {
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {
-              icon: Gavel,
+              icon: GavelIcon,
               title: "תאגיד אחד מפרסם — כולם מתחרים",
               desc: "במקום שאתה תרדוף אחרי הצעות, התאגידים מתחרים זה בזה על הזכות לעבוד איתך.",
             },
             {
-              icon: TrendingDown,
+              icon: TrendingDownIcon,
               title: "המחיר רק יורד",
               desc: "כל הצעה חדשה רואה את המתחרות ושואפת להיות טובה יותר. אתה מקבל את המחיר האמיתי של השוק.",
             },
             {
-              icon: Trophy,
+              icon: EmojiEventsIcon,
               title: "אתה הבוחר היחיד",
               desc: "מחיר, דירוג, ניסיון, זמינות — אתה מחליט לפי מה שחשוב לך. בלי לחץ, בלי טלפונים.",
             },
           ].map((it) => (
             <div key={it.title} className="enterprise-card rounded-2xl p-6">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                <it.icon className="h-5 w-5" />
+                <it.icon sx={{ fontSize: 20 }} />
               </div>
               <h3 className="mt-4 text-base font-semibold">{it.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.desc}</p>
@@ -326,14 +324,14 @@ function CompetitionAdvantage() {
 function TrustBar() {
   const items = [
     {
-      icon: ShieldCheck,
+      icon: VerifiedUserIcon,
       title: "תאגידים מאומתים",
       desc: "רישוי, ביטוח ותעודות נבדקים ידנית לפני אישור.",
     },
-    { icon: Lock, title: "אבטחת נתונים", desc: "הצפנה מקצה לקצה והרשאות מבוססות תפקיד (RLS)." },
-    { icon: FileCheck2, title: "תיעוד מלא", desc: "כל בקשה, הצעה ובחירה נשמרות עם חותמת זמן." },
+    { icon: LockIcon, title: "אבטחת נתונים", desc: "הצפנה מקצה לקצה והרשאות מבוססות תפקיד (RLS)." },
+    { icon: FactCheckIcon, title: "תיעוד מלא", desc: "כל בקשה, הצעה ובחירה נשמרות עם חותמת זמן." },
     {
-      icon: Headphones,
+      icon: SupportAgentIcon,
       title: "תמיכה אנושית",
       desc: "ליווי ישיר מצוות BuildForce בכל שלב בתהליך.",
     },
@@ -344,7 +342,7 @@ function TrustBar() {
         {items.map((it) => (
           <div key={it.title} className="flex items-start gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <it.icon className="h-4 w-4" />
+              <it.icon sx={{ fontSize: 16 }} />
             </div>
             <div>
               <div className="text-sm font-semibold">{it.title}</div>
@@ -413,12 +411,12 @@ function HowItWorks() {
 /* ---------- CATEGORIES ---------- */
 function Categories() {
   const cats = [
-    { icon: Hammer, name: "טפסנים", desc: "טפסנות מודולרית, יציקות, קונסטרוקציה." },
-    { icon: Wrench, name: "ברזלנים", desc: "כיפוף, קשירה, רשתות, מוטות מאמץ." },
-    { icon: Layers, name: "רצפים", desc: "קרמיקה, גרניט פורצלן, אבן טבעית." },
-    { icon: PaintRoller, name: "טייחים", desc: "טיח פנים, חוץ, שכבות יסוד וגמר." },
+    { icon: ConstructionIcon, name: "טפסנים", desc: "טפסנות מודולרית, יציקות, קונסטרוקציה." },
+    { icon: BuildIcon, name: "ברזלנים", desc: "כיפוף, קשירה, רשתות, מוטות מאמץ." },
+    { icon: LayersIcon, name: "רצפים", desc: "קרמיקה, גרניט פורצלן, אבן טבעית." },
+    { icon: FormatPaintIcon, name: "טייחים", desc: "טיח פנים, חוץ, שכבות יסוד וגמר." },
     {
-      icon: Building2,
+      icon: ApartmentIcon,
       name: "עובדי גמר",
       desc: "גבס, צבע, מסגרות פנים, עבודות עדינות.",
     },
@@ -452,7 +450,7 @@ function Categories() {
                 {i + 1}
               </div>
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                <c.icon className="h-4 w-4" />
+                <c.icon sx={{ fontSize: 16 }} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-3">
@@ -475,32 +473,32 @@ function Categories() {
 function WhyTrust() {
   const items = [
     {
-      icon: ShieldCheck,
+      icon: VerifiedUserIcon,
       title: "תאגידים מאומתים בלבד",
       desc: "כל תאגיד עובר בדיקת רישוי, אישורים, ביטוח ותקני בטיחות לפני אישור לפלטפורמה.",
     },
     {
-      icon: Zap,
+      icon: BoltIcon,
       title: "הצעות במהירות שיא",
       desc: "ממוצע של פחות מ-24 שעות מפרסום בקשה ועד קבלת 3+ הצעות תחרותיות.",
     },
     {
-      icon: Star,
+      icon: StarIcon,
       title: "דירוגים אמיתיים",
       desc: "כל דירוג מגיע מקבלן שעבד בפועל. אין דירוגים מזויפים. שקיפות מלאה.",
     },
     {
-      icon: Users,
+      icon: GroupIcon,
       title: "ניהול במקום אחד",
       desc: "בקשות, חוזים, תקשורת ותשלומים — לוח בקרה אחד נקי לכל הפרויקטים שלך.",
     },
     {
-      icon: Clock,
+      icon: ScheduleIcon,
       title: "סטטוס זמינות חי",
       desc: "ראה מי זמין השבוע, החודש, או בתאריך ספציפי — בלי שיחות מיותרות.",
     },
     {
-      icon: TrendingUp,
+      icon: TrendingUpIcon,
       title: "מחירי שוק שקופים",
       desc: "אנליטיקה מובנית שמראה לך אם ההצעה שקיבלת תחרותית או מחוץ לשוק.",
     },
@@ -555,7 +553,7 @@ function WhyTrust() {
                 className={`flex items-start gap-4 py-5 ${i < items.length - 1 ? "border-b border-border/40" : ""}`}
               >
                 <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <it.icon className="h-4 w-4" />
+                  <it.icon sx={{ fontSize: 16 }} />
                 </div>
                 <div>
                   <div className="text-sm font-semibold">{it.title}</div>
@@ -587,7 +585,7 @@ function SavingsShowcase() {
           {/* Big number — the ONLY hero-sized orange metric on screen */}
           <div className="relative overflow-hidden rounded-2xl border border-savings/25 bg-savings-soft p-8 lg:col-span-3">
             <div className="savings-badge inline-flex items-center gap-1.5">
-              <TrendingDown className="h-3.5 w-3.5" /> חיסכון חודשי לדוגמה
+              <TrendingDownIcon sx={{ fontSize: 14 }} /> חיסכון חודשי לדוגמה
             </div>
             <div className="mt-4 text-6xl font-black tracking-tight text-savings md:text-7xl">
               <span dir="ltr">₪18,000</span>
@@ -613,7 +611,7 @@ function SavingsShowcase() {
           <div className="flex flex-col gap-4 lg:col-span-2">
             <div className="rounded-lg border border-border bg-card p-5">
               <div className="flex items-center gap-2 text-sm font-semibold">
-                <Sparkles className="h-4 w-4 text-primary" /> על כל הצעה
+                <AutoAwesomeIcon sx={{ fontSize: 16 }} className="text-primary" /> על כל הצעה
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
                 "ההצעה הזו זולה ב-6 ₪/שעה מההצעה היקרה ביותר" — כך הערך מוחשי לכל אורך הדרך.
@@ -621,7 +619,7 @@ function SavingsShowcase() {
             </div>
             <div className="rounded-lg border border-border bg-card p-5">
               <div className="flex items-center gap-2 text-sm font-semibold">
-                <FileBarChart className="h-4 w-4 text-primary" /> בסיכום החודשי
+                <AssessmentIcon sx={{ fontSize: 16 }} className="text-primary" /> בסיכום החודשי
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
                 סך החיסכון שצברת מוצג בשקלים — ומגובה בנתוני נוכחות אמיתיים מהשטח.
@@ -630,7 +628,7 @@ function SavingsShowcase() {
             <Button asChild size="lg" className="h-12 text-sm font-semibold">
               <Link to="/signup">
                 התחל לחסוך — חינם לקבלן
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-2" />
               </Link>
             </Button>
           </div>
@@ -644,17 +642,17 @@ function SavingsShowcase() {
 function EarlyAccess() {
   const benefits = [
     {
-      icon: BadgeCheck,
+      icon: VerifiedIcon,
       title: "ללא עלות בתקופת ההשקה",
       desc: "קבלנים משתמשים בפלטפורמה ללא עמלה ובלי הגבלת בקשות.",
     },
     {
-      icon: Users,
+      icon: GroupIcon,
       title: "ליווי אישי",
       desc: "צוות BuildForce מסייע בפרסום הבקשות הראשונות ובאיתור ספקים.",
     },
     {
-      icon: TrendingUp,
+      icon: TrendingUpIcon,
       title: "השפעה על המוצר",
       desc: "המשובים שלכם מעצבים את הפיצ׳רים הבאים שייצאו לשוק.",
     },
@@ -674,7 +672,7 @@ function EarlyAccess() {
               className="enterprise-card rounded-xl p-6"
             >
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                <b.icon className="h-5 w-5" />
+                <b.icon sx={{ fontSize: 20 }} />
               </div>
               <h3 className="mt-4 text-base font-semibold">{b.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{b.desc}</p>
@@ -705,7 +703,7 @@ function CTABanner() {
             <Button asChild size="lg" className="h-12 px-7 text-base font-semibold">
               <Link to={bannerCta}>
                 פרסם בקשה עכשיו
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-2" />
               </Link>
             </Button>
             <Button
@@ -715,7 +713,7 @@ function CTABanner() {
               className="h-12 px-7 text-base"
             >
               <a href="mailto:support@buildforceprime.com" aria-label="צור קשר עם הצוות במייל">
-                <Mail className="ml-2 h-4 w-4" /> צור קשר עם הצוות
+                <MailOutlineIcon sx={{ fontSize: 16 }} className="ml-2" /> צור קשר עם הצוות
               </a>
             </Button>
           </div>
@@ -752,22 +750,22 @@ function SectionHeader({
 function SiteAttendance() {
   const steps = [
     {
-      icon: MapPin,
+      icon: PlaceIcon,
       title: "הקבלן מסמן את מיקום האתר",
       desc: "מיד לאחר הזכייה במכרז, הקבלן ממלא את פרטי הפרויקט ומסמן את מיקום האתר על המפה. רק שם תתאפשר רישום כניסה ויציאה.",
     },
     {
-      icon: Camera,
+      icon: PhotoCameraIcon,
       title: "כניסה ויציאה רק באתר",
       desc: 'ראש הצוות לוחץ "פתח יום עבודה" — המערכת מאמתת GPS ומצלמת תמונה חיה עם חותמת זמן ומיקום. אין אפשרות לרשום נוכחות מהבית או מהדרך.',
     },
     {
-      icon: ClipboardCheck,
+      icon: AssignmentTurnedInIcon,
       title: "אישור יומי משני הצדדים",
       desc: "בסוף כל יום הקבלן והתאגיד מאשרים את היום. הרשומה מוקפאת — מקור אמת אחד לשני הצדדים, בלי וויכוחים בסוף החודש.",
     },
     {
-      icon: Smile,
+      icon: SentimentSatisfiedIcon,
       title: "אנחנו דואגים לסדר ולראש שקט",
       desc: "לא רק מספקים פועלים — אנחנו מספקים סדר, תיעוד יומי, דוחות חודשיים מאושרים, וראש שקט אמיתי לשני הצדדים.",
     },
@@ -787,7 +785,7 @@ function SiteAttendance() {
               className="enterprise-card rounded-xl p-6 transition-all hover:-translate-y-1"
             >
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                <s.icon className="h-5 w-5" />
+                <s.icon sx={{ fontSize: 20 }} />
               </div>
               <h3 className="mt-4 text-sm font-semibold">{s.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
@@ -796,17 +794,17 @@ function SiteAttendance() {
         </div>
         <div className="mt-12 grid gap-4 rounded-xl border border-border bg-card p-6 md:grid-cols-3 md:p-8">
           <Benefit
-            icon={ShieldCheck}
+            icon={VerifiedUserIcon}
             title="בלי וויכוחים בסוף החודש"
             desc="כל יום סגור, מאושר ומוקפא. אי אפשר לשנות בדיעבד."
           />
           <Benefit
-            icon={FileCheck2}
+            icon={FactCheckIcon}
             title="דוח חודשי אחד אמין"
             desc="שני הצדדים רואים את אותו דוח. מוכן להנהלת חשבונות."
           />
           <Benefit
-            icon={Headphones}
+            icon={SupportAgentIcon}
             title="ראש שקט אמיתי"
             desc="לא צריך לרדוף אחרי טלפונים, וואטסאפים ותמונות. הכל בפלטפורמה."
           />
@@ -821,14 +819,14 @@ function Benefit({
   title,
   desc,
 }: {
-  icon: typeof MapPin;
+  icon: ElementType;
   title: string;
   desc: string;
 }) {
   return (
     <div className="flex items-start gap-3">
       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
+        <Icon sx={{ fontSize: 16 }} />
       </div>
       <div>
         <div className="text-sm font-semibold">{title}</div>
@@ -842,44 +840,44 @@ function Benefit({
 function PeaceOfMind() {
   const contractor = [
     {
-      icon: Eye,
+      icon: VisibilityIcon,
       title: "רואה כל יום מי הגיע, מתי ולכמה זמן",
       desc: "תמונה חיה של כל הצוות באתר עם שעה ומיקום. בלי ניחושים, בלי וואטסאפים.",
     },
     {
-      icon: AlertTriangle,
+      icon: WarningAmberIcon,
       title: "חריגות מדווחות באותו רגע",
       desc: "פועל עזב? צוות יצא באמצע? מקבל התראה מיידית עם הסבר — לפני שזה הופך לדרמה בסוף החודש.",
     },
     {
-      icon: FileBarChart,
+      icon: AssessmentIcon,
       title: "דוח חודשי מוכן לחשבונית",
       desc: "כל יום מאושר משני הצדדים. בסוף החודש מוריד דוח אחד אמין — מוכן להנהלת חשבונות.",
     },
     {
-      icon: TrendingDown,
+      icon: TrendingDownIcon,
       title: "חוסך אלפי שקלים בחודש",
       desc: "פחות שעות סרק, פחות חשבוניות מנופחות, פחות שעות של בירור.",
     },
   ];
   const supplier = [
     {
-      icon: BadgeCheck,
+      icon: VerifiedIcon,
       title: "כל יום נסגר ומאושר",
       desc: "ראש הצוות שלך מצלם, מדווח, והקבלן מאשר. אין מה לפרק את החודש בדיעבד.",
     },
     {
-      icon: ShieldCheck,
+      icon: VerifiedUserIcon,
       title: "הוכחת עבודה חתומה דיגיטלית",
       desc: "תמונות חיות + GPS + שעה. אם יש מחלוקת — יש ראיה.",
     },
     {
-      icon: MessageCircle,
+      icon: ChatBubbleOutlineIcon,
       title: "פחות שיחות, יותר עבודה",
       desc: "ראש הצוות לוחץ כפתור אחד. הקבלן מקבל הודעת WhatsApp ומאשר. זהו.",
     },
     {
-      icon: TrendingUp,
+      icon: TrendingUpIcon,
       title: "תזרים ברור וצפוי",
       desc: "יודע בדיוק כמה הוא צובר כל יום. החשבונית בסוף החודש לא מפתיעה אף אחד.",
     },
@@ -913,14 +911,14 @@ function PeaceOfMind() {
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           <SideCard
-            icon={HardHat}
+            icon={EngineeringIcon}
             audience="לקבלן"
             headline="שליטה מלאה במה שקורה באתר — בלי לעמוד שם בעצמך"
             color="primary"
             items={contractor}
           />
           <SideCard
-            icon={Briefcase}
+            icon={WorkIcon}
             audience="לתאגיד כוח האדם"
             headline="הוכחה דיגיטלית לכל יום עבודה — ותזרים שאי אפשר לערער עליו"
             color="emerald"
@@ -959,7 +957,7 @@ function PeaceOfMind() {
           </p>
           <Link to="/signup" className="mt-6 inline-block">
             <Button size="lg" className="h-12 px-8 text-base">
-              התחל לעבוד עם ראש שקט <ArrowLeft className="mr-2 h-5 w-5" />
+              התחל לעבוד עם ראש שקט <ArrowBackIcon sx={{ fontSize: 20 }} className="mr-2" />
             </Button>
           </Link>
         </div>
@@ -975,11 +973,11 @@ function SideCard({
   items,
   color,
 }: {
-  icon: typeof MapPin;
+  icon: ElementType;
   audience: string;
   headline: string;
   color: "primary" | "emerald";
-  items: { icon: typeof MapPin; title: string; desc: string }[];
+  items: { icon: ElementType; title: string; desc: string }[];
 }) {
   const iconCls =
     color === "primary"
@@ -989,7 +987,7 @@ function SideCard({
     <div className="enterprise-card rounded-xl p-6 md:p-8">
       <div className="flex items-center gap-3">
         <div className={`grid h-10 w-10 place-items-center rounded-lg ${iconCls}`}>
-          <Icon className="h-5 w-5" />
+          <Icon sx={{ fontSize: 20 }} />
         </div>
         <div>
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1002,7 +1000,7 @@ function SideCard({
         {items.map((it) => (
           <li key={it.title} className="flex items-start gap-3">
             <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${iconCls}`}>
-              <it.icon className="h-4 w-4" />
+              <it.icon sx={{ fontSize: 16 }} />
             </div>
             <div>
               <div className="text-sm font-semibold">{it.title}</div>

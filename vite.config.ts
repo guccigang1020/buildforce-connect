@@ -33,5 +33,10 @@ export default defineConfig({
         entities: path.resolve(process.cwd(), "node_modules/entities"),
       },
     },
+    // MUI + emotion ship CJS that breaks Node's ESM directory imports during
+    // SSR (react-transition-group). Bundling them into the SSR build fixes it.
+    ssr: {
+      noExternal: [/^@mui\//, /^@emotion\//, "react-transition-group", "stylis-plugin-rtl"],
+    },
   },
 });

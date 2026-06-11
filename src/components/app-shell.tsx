@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Building2,
-  CheckCircle2,
-  FolderOpen,
-  ShieldCheck,
-  Users,
-  Menu,
-  X,
-  LogOut,
-  ClipboardList,
-  HardHat,
-  Receipt,
-} from "lucide-react";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import LogoutIcon from "@mui/icons-material/Logout";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import EngineeringIcon from "@mui/icons-material/Engineering";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 
@@ -27,7 +25,7 @@ export interface AppShellProps {
 type NavItem = {
   to: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; sx?: object }>;
   exact?: boolean;
   /** Feature exists as a polished placeholder only — shown with a "בקרוב" tag. */
   comingSoon?: boolean;
@@ -72,7 +70,7 @@ export function AppShell({ children, title, action, noPad }: AppShellProps) {
             className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
             onClick={() => setMobileOpen(true)}
           >
-            <Menu className="h-5 w-5" />
+            <MenuIcon sx={{ fontSize: 20 }} />
           </button>
 
           {title && (
@@ -110,17 +108,17 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
   if (hasRole("contractor")) {
     sections.push({
       label: "מכרזים",
-      items: [{ to: "/dashboard", label: "לוח בקרה", icon: LayoutDashboard, exact: true }],
+      items: [{ to: "/dashboard", label: "לוח בקרה", icon: DashboardIcon, exact: true }],
     });
     sections.push({
       label: "ביצוע",
       items: [
-        { to: "/contractor/projects", label: "פרויקטים", icon: FolderOpen, comingSoon: true },
-        { to: "/contractor/attendance", label: "נוכחות", icon: CheckCircle2, comingSoon: true },
+        { to: "/contractor/projects", label: "פרויקטים", icon: FolderOpenIcon, comingSoon: true },
+        { to: "/contractor/attendance", label: "נוכחות", icon: CheckCircleIcon, comingSoon: true },
         {
           to: "/contractor/accounts",
           label: "חשבון יומי",
-          icon: ClipboardList,
+          icon: AssignmentIcon,
           comingSoon: true,
         },
       ],
@@ -131,7 +129,7 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
     sections.push({
       label: "מכרזים",
       items: [
-        { to: "/corporation-dashboard", label: "לוח תאגיד", icon: Building2, exact: true },
+        { to: "/corporation-dashboard", label: "לוח תאגיד", icon: ApartmentIcon, exact: true },
       ],
     });
     sections.push({
@@ -140,10 +138,10 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
         {
           to: "/corporation/attendance",
           label: "נוכחות צוותים",
-          icon: HardHat,
+          icon: EngineeringIcon,
           comingSoon: true,
         },
-        { to: "/corporation/accounts", label: "חשבונות", icon: Receipt, comingSoon: true },
+        { to: "/corporation/accounts", label: "חשבונות", icon: ReceiptLongIcon, comingSoon: true },
       ],
     });
   }
@@ -151,14 +149,14 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
   if (hasRole("team_leader")) {
     sections.push({
       label: "צוות",
-      items: [{ to: "/team-leader", label: "ראש צוות", icon: Users, comingSoon: true }],
+      items: [{ to: "/team-leader", label: "ראש צוות", icon: GroupIcon, comingSoon: true }],
     });
   }
 
   if (hasRole("admin")) {
     sections.push({
       label: "ניהול",
-      items: [{ to: "/admin", label: "מנהל מערכת", icon: ShieldCheck, exact: true }],
+      items: [{ to: "/admin", label: "מנהל מערכת", icon: VerifiedUserIcon, exact: true }],
     });
   }
 
@@ -192,7 +190,7 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
           className="grid h-10 w-10 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
           onClick={onClose}
         >
-          <X className="h-4 w-4" />
+          <CloseIcon sx={{ fontSize: 16 }} />
         </button>
       </div>
 
@@ -238,7 +236,7 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
             aria-label="התנתק"
             className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted-foreground/70 transition-colors hover:bg-muted hover:text-destructive"
           >
-            <LogOut className="h-4 w-4" />
+            <LogoutIcon sx={{ fontSize: 16 }} />
           </button>
         </div>
       </div>
@@ -285,7 +283,8 @@ function NavLink({
       }`}
     >
       <Icon
-        className={`h-4 w-4 shrink-0 ${active ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"}`}
+        sx={{ fontSize: 16 }}
+        className={`shrink-0 ${active ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"}`}
       />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
       {item.comingSoon && (

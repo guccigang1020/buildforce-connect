@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Clock, CheckCircle2, type LucideIcon } from "lucide-react";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
 
@@ -19,7 +20,7 @@ export function ComingSoonPage({
   title: string;
   description: string;
   bullets?: string[];
-  icon: LucideIcon;
+  icon: React.ComponentType<{ sx?: object; className?: string }>;
 }) {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
@@ -33,10 +34,10 @@ export function ComingSoonPage({
       <div className="mx-auto max-w-2xl pt-8">
         <div className="coming-soon-card">
           <div className="mx-auto grid h-12 w-12 place-items-center rounded-lg border border-border bg-muted text-muted-foreground">
-            <Icon className="h-5 w-5" />
+            <Icon sx={{ fontSize: 20 }} />
           </div>
           <span className="status-chip-muted mt-4 inline-flex">
-            <Clock className="h-3 w-3" /> בקרוב
+            <ScheduleIcon sx={{ fontSize: 12 }} /> בקרוב
           </span>
           <h2 className="mt-3 text-lg font-semibold text-foreground">{title}</h2>
           <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -47,7 +48,7 @@ export function ComingSoonPage({
             <div className="mx-auto mt-6 max-w-sm space-y-2 text-right">
               {bullets.map((b) => (
                 <div key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  <CheckCircleIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-muted-foreground/50" />
                   <span>{b}</span>
                 </div>
               ))}

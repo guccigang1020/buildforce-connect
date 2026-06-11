@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FolderOpen } from "lucide-react";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import { ComingSoonPage } from "@/components/coming-soon-page";
 
 // Full implementation (site geofence, site manager, teams + QR) exists in git
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/contractor/projects")({
         "הגדרת מיקום האתר ורדיוס נוכחות (GPS)",
         "צוותי עבודה עם קוד QR לראש הצוות",
       ]}
-      icon={FolderOpen}
+      icon={FolderOpenIcon}
     />
   ),
 });

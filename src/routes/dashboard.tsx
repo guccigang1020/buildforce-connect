@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, ShieldCheck, AlertTriangle, Inbox } from "lucide-react";
+import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import InboxIcon from "@mui/icons-material/Inbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppShell } from "@/components/app-shell";
@@ -135,7 +139,7 @@ function DashboardPage() {
             </h2>
             {isAdmin && (
               <span className="role-badge">
-                <ShieldCheck className="h-3 w-3" /> מנהל מערכת
+                <VerifiedUserIcon sx={{ fontSize: 12 }} /> מנהל מערכת
               </span>
             )}
           </div>
@@ -149,7 +153,7 @@ function DashboardPage() {
         </div>
         <Button asChild size="sm">
           <Link to="/new-request">
-            <Plus className="h-4 w-4" /> בקשה חדשה
+            <AddIcon sx={{ fontSize: 16 }} /> בקשה חדשה
           </Link>
         </Button>
       </div>
@@ -238,7 +242,7 @@ function DashboardPage() {
               ))}
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <SearchIcon sx={{ fontSize: 16 }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
@@ -260,7 +264,7 @@ function DashboardPage() {
       ) : error ? (
         <div className="empty-state">
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-lg border border-destructive/20 bg-destructive/10">
-            <AlertTriangle className="h-7 w-7 text-destructive" />
+            <WarningAmberIcon sx={{ fontSize: 28 }} className="text-destructive" />
           </div>
           <h3 className="text-lg font-semibold">שגיאה בטעינת הבקשות</h3>
           <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
@@ -383,7 +387,7 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
   return (
     <div className="empty-state">
       <div className="empty-state-icon mx-auto">
-        <Inbox className="h-8 w-8 text-primary" />
+        <InboxIcon sx={{ fontSize: 32 }} className="text-primary" />
       </div>
       <h3 className="text-lg font-semibold">
         {hasAny ? "אין בקשות מתאימות לסינון" : "ברוך הבא ל-BuildForce"}
@@ -397,7 +401,7 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button asChild>
             <Link to="/new-request">
-              <Plus className="ms-1 h-4 w-4" /> פרסם בקשת כוח אדם
+              <AddIcon sx={{ fontSize: 16 }} className="ms-1" /> פרסם בקשת כוח אדם
             </Link>
           </Button>
         </div>

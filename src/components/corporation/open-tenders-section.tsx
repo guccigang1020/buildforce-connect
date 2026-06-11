@@ -3,12 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Clock, Send, Loader2, Lock } from "lucide-react";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import SendIcon from "@mui/icons-material/Send";
+import LockIcon from "@mui/icons-material/Lock";
+import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -127,7 +129,7 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                             }`}
                             dir="ltr"
                           >
-                            <Clock className="h-3 w-3 shrink-0" /> {dl.text}
+                            <ScheduleIcon sx={{ fontSize: 12 }} className="shrink-0" /> {dl.text}
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
@@ -190,38 +192,53 @@ function SubmitOfferDialog({
   const [pricePerHour, setPricePerHour] = useState("");
   const [availableWorkers, setAvailableWorkers] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [responseTimeHours, setResponseTimeHours] = useState("24");
-  const [warrantyDays, setWarrantyDays] = useState("30");
-  const [insurance, setInsurance] = useState(true);
   const [note, setNote] = useState("");
-  const [requiresPersonalGuarantee, setRequiresPersonalGuarantee] = useState(false);
-  const [requiresSecurityCheck, setRequiresSecurityCheck] = useState(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [workersError, setWorkersError] = useState<string | null>(null);
+  const [dateError, setDateError] = useState<string | null>(null);
 
   const qc = useQueryClient();
   const submitFn = useServerFn(submitOffer);
+  const todayISO = new Date().toISOString().slice(0, 10);
 
   const reset = () => {
     setPricePerHour("");
     setAvailableWorkers("");
     setStartDate("");
-    setResponseTimeHours("24");
-    setWarrantyDays("30");
-    setInsurance(true);
     setNote("");
-    setRequiresPersonalGuarantee(false);
-    setRequiresSecurityCheck(false);
+    setPriceError(null);
+    setWorkersError(null);
+    setDateError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPriceError(null);
+    setWorkersError(null);
+    setDateError(null);
+
     const price = Number(pricePerHour);
     const workers = Number(availableWorkers);
-    const respTime = Number(responseTimeHours);
-    const warranty = Number(warrantyDays);
-    if (!price || price < 50) return toast.error("מחיר לשעה חייב להיות לפחות ₪50");
-    if (price > 500) return toast.error("מחיר לשעה לא יכול לעלות על ₪500");
-    if (!workers || workers <= 0) return toast.error("יש להזין מספר עובדים זמינים");
-    if (!startDate.trim()) return toast.error("יש להזין תאריך התחלה אפשרי");
+    let hasErrors = false;
+    if (!price || price < 50) {
+      setPriceError("מחיר לשעה חייב להיות לפחות ₪50");
+      hasErrors = true;
+    } else if (price > 500) {
+      setPriceError("מחיר לשעה לא יכול לעלות על ₪500");
+      hasErrors = true;
+    }
+    if (!workers || workers <= 0) {
+      setWorkersError("יש להזין מספר עובדים זמינים");
+      hasErrors = true;
+    }
+    if (!startDate) {
+      setDateError("יש להזין תאריך התחלה אפשרי");
+      hasErrors = true;
+    } else if (startDate < todayISO) {
+      setDateError("תאריך ההתחלה לא יכול להיות בעבר");
+      hasErrors = true;
+    }
+    if (hasErrors) return;
 
     setSubmitting(true);
     try {
@@ -230,13 +247,8 @@ function SubmitOfferDialog({
           requestId,
           pricePerHour: price,
           availableWorkers: workers,
-          startDate: startDate.trim(),
-          responseTimeHours: respTime || 24,
-          warrantyDays: warranty || 30,
-          insurance,
+          startDate,
           note: note.trim() || undefined,
-          requiresPersonalGuarantee,
-          requiresSecurityCheck,
         },
       });
       if (result && typeof result === "object" && "error" in result) {
@@ -263,7 +275,7 @@ function SubmitOfferDialog({
         title="החשבון ממתין לאימות אדמין — לא ניתן להגיש הצעות עדיין"
         variant="outline"
       >
-        <Lock className="h-3.5 w-3.5" />
+        <LockIcon sx={{ fontSize: 14 }} />
         {!compact && " ממתין לאישור"}
       </Button>
     );
@@ -273,7 +285,7 @@ function SubmitOfferDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size={compact ? "sm" : "default"} className="gap-1.5 shrink-0">
-          <Send className="h-3.5 w-3.5" />
+          <SendIcon sx={{ fontSize: 14 }} />
           {compact ? "הגש" : "הגש הצעה"}
         </Button>
       </DialogTrigger>
@@ -292,16 +304,24 @@ function SubmitOfferDialog({
             <Input
               id="price"
               type="number"
-              min="1"
+              min="50"
+              max="500"
               step="0.5"
               dir="ltr"
               value={pricePerHour}
-              onChange={(e) => setPricePerHour(e.target.value)}
+              onChange={(e) => {
+                setPricePerHour(e.target.value);
+                setPriceError(null);
+              }}
               required
-              className="h-11 text-base font-semibold"
+              className={`h-11 text-base font-semibold ${priceError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               placeholder="₪ לשעה"
             />
-            <p className="text-xs text-muted-foreground">טווח: ₪50–₪500. הצעה חסויה לחלוטין.</p>
+            {priceError ? (
+              <p className="text-xs text-destructive">{priceError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">טווח: ₪50–₪500. הצעה חסויה לחלוטין.</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -313,87 +333,31 @@ function SubmitOfferDialog({
                 min="1"
                 dir="ltr"
                 value={availableWorkers}
-                onChange={(e) => setAvailableWorkers(e.target.value)}
+                onChange={(e) => {
+                  setAvailableWorkers(e.target.value);
+                  setWorkersError(null);
+                }}
                 required
-                className="h-11"
+                className={`h-11 ${workersError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
+              {workersError && <p className="text-xs text-destructive">{workersError}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="sd">תאריך התחלה *</Label>
               <Input
                 id="sd"
-                placeholder="למשל: 01/06/2026"
+                type="date"
+                min={todayISO}
+                dir="ltr"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setDateError(null);
+                }}
                 required
-                className="h-11"
+                className={`h-11 ${dateError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="rt">זמן תגובה (שעות)</Label>
-              <Input
-                id="rt"
-                type="number"
-                min="1"
-                max="168"
-                dir="ltr"
-                value={responseTimeHours}
-                onChange={(e) => setResponseTimeHours(e.target.value)}
-                className="h-11"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="wd">אחריות (ימים)</Label>
-              <Input
-                id="wd"
-                type="number"
-                min="0"
-                max="365"
-                dir="ltr"
-                value={warrantyDays}
-                onChange={(e) => setWarrantyDays(e.target.value)}
-                className="h-11"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="ins"
-              checked={insurance}
-              onCheckedChange={(v) => setInsurance(v === true)}
-            />
-            <Label htmlFor="ins" className="cursor-pointer">
-              כלול ביטוח מלא
-            </Label>
-          </div>
-
-          <div className="space-y-2 rounded-lg border border-border p-3">
-            <div className="text-xs font-semibold text-muted-foreground">
-              דרישות ערבות (במידה וההצעה תיבחר)
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="pg"
-                checked={requiresPersonalGuarantee}
-                onCheckedChange={(v) => setRequiresPersonalGuarantee(v === true)}
-              />
-              <Label htmlFor="pg" className="cursor-pointer text-sm">
-                דורש ערבות אישית מהקבלן
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="sc"
-                checked={requiresSecurityCheck}
-                onCheckedChange={(v) => setRequiresSecurityCheck(v === true)}
-              />
-              <Label htmlFor="sc" className="cursor-pointer text-sm">
-                דורש צ׳ק לבטחון מהקבלן
-              </Label>
+              {dateError && <p className="text-xs text-destructive">{dateError}</p>}
             </div>
           </div>
 
@@ -421,7 +385,7 @@ function SubmitOfferDialog({
             <Button type="submit" disabled={submitting}>
               {submitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> שולח...
+                  <CircularProgress size={16} color="inherit" /> שולח...
                 </>
               ) : (
                 "שלח הצעה סגורה"

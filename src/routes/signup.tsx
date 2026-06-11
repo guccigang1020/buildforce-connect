@@ -3,25 +3,23 @@ import { useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Building2,
-  MapPin,
-  Loader2,
-  HardHat,
-  Briefcase,
-  FileText,
-  ShieldCheck,
-  BookOpen,
-  Hash,
-  Award,
-  Upload,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import MailOutlineIcon from "@mui/icons-material/MailOutlined";
+import LockIcon from "@mui/icons-material/Lock";
+import PersonIcon from "@mui/icons-material/Person";
+import PhoneIcon from "@mui/icons-material/Phone";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import PlaceIcon from "@mui/icons-material/Place";
+import CircularProgress from "@mui/material/CircularProgress";
+import EngineeringIcon from "@mui/icons-material/Engineering";
+import WorkIcon from "@mui/icons-material/Work";
+import DescriptionIcon from "@mui/icons-material/Description";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import TagIcon from "@mui/icons-material/Tag";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import UploadIcon from "@mui/icons-material/Upload";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -277,14 +275,14 @@ function SignupPage() {
               <RoleCard
                 active={role === "contractor"}
                 onClick={() => setValue("role", "contractor", { shouldValidate: true })}
-                icon={HardHat}
+                icon={EngineeringIcon}
                 title="קבלן / יזם"
                 sub="פותח בקשות לפועלים"
               />
               <RoleCard
                 active={role === "corporation"}
                 onClick={() => setValue("role", "corporation", { shouldValidate: true })}
-                icon={Briefcase}
+                icon={WorkIcon}
                 title="תאגיד כוח אדם"
                 sub="שולח הצעות לקבלנים"
               />
@@ -309,7 +307,7 @@ function SignupPage() {
 
           {formError && (
             <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
               <span>{formError}</span>
             </div>
           )}
@@ -318,7 +316,7 @@ function SignupPage() {
             <Field
               id="full_name"
               label="שם מלא"
-              icon={User}
+              icon={PersonIcon}
               required
               registration={register("full_name")}
               error={errors.full_name?.message}
@@ -328,7 +326,7 @@ function SignupPage() {
                 id="email"
                 label="אימייל"
                 type="email"
-                icon={Mail}
+                icon={MailOutlineIcon}
                 required
                 registration={register("email")}
                 error={errors.email?.message}
@@ -337,7 +335,7 @@ function SignupPage() {
                 id="phone"
                 label="טלפון"
                 type="tel"
-                icon={Phone}
+                icon={PhoneIcon}
                 required
                 registration={register("phone")}
                 error={errors.phone?.message}
@@ -348,7 +346,7 @@ function SignupPage() {
               id="password"
               label="סיסמה"
               type="password"
-              icon={Lock}
+              icon={LockIcon}
               required
               registration={register("password")}
               error={errors.password?.message}
@@ -358,14 +356,14 @@ function SignupPage() {
             {/* Business details */}
             <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <ApartmentIcon sx={{ fontSize: 16 }} className="text-muted-foreground" />
                 פרטי העסק
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
                   id="business_name"
                   label={role === "corporation" ? "שם התאגיד" : "שם העסק"}
-                  icon={Building2}
+                  icon={ApartmentIcon}
                   required
                   registration={register("business_name")}
                   error={errors.business_name?.message}
@@ -373,7 +371,7 @@ function SignupPage() {
                 <Field
                   id="business_id"
                   label="ח.פ / ע.מ"
-                  icon={Hash}
+                  icon={TagIcon}
                   required
                   registration={register("business_id")}
                   error={errors.business_id?.message}
@@ -383,7 +381,7 @@ function SignupPage() {
               <Field
                 id="city"
                 label="עיר"
-                icon={MapPin}
+                icon={PlaceIcon}
                 required
                 registration={register("city")}
                 error={errors.city?.message}
@@ -394,7 +392,7 @@ function SignupPage() {
             {role === "contractor" && (
               <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
                 <div className="flex items-start gap-2.5">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <VerifiedUserIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-muted-foreground" />
                   <div>
                     <div className="text-sm font-medium">אימות קבלן רשום (חובה)</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
@@ -406,7 +404,7 @@ function SignupPage() {
                   <Field
                     id="contractor_license_number"
                     label="מס' קבלן רשום"
-                    icon={Award}
+                    icon={WorkspacePremiumIcon}
                     required
                     registration={register("contractor_license_number")}
                     error={errors.contractor_license_number?.message}
@@ -415,7 +413,7 @@ function SignupPage() {
                   <Field
                     id="contractor_classification"
                     label="סיווג"
-                    icon={Briefcase}
+                    icon={WorkIcon}
                     required
                     registration={register("contractor_classification")}
                     error={errors.contractor_classification?.message}
@@ -425,7 +423,7 @@ function SignupPage() {
                 <FileField
                   id="license_file"
                   label="תעודת קבלן רשום"
-                  icon={FileText}
+                  icon={DescriptionIcon}
                   required
                   file={licenseFile}
                   onFile={pickFile(setLicenseFile, setLicenseError)}
@@ -435,7 +433,7 @@ function SignupPage() {
                 <FileField
                   id="books_file"
                   label="אישור ניהול ספרים"
-                  icon={BookOpen}
+                  icon={MenuBookIcon}
                   required
                   file={booksFile}
                   onFile={pickFile(setBooksFile, setBooksError)}
@@ -469,7 +467,7 @@ function SignupPage() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="ms-2 h-4 w-4 animate-spin" /> יוצר חשבון…
+                  <CircularProgress size={16} color="inherit" className="ms-2" /> יוצר חשבון…
                 </>
               ) : (
                 "צור חשבון בחינם"
@@ -501,7 +499,7 @@ function RoleCard({
 }: {
   active: boolean;
   onClick: () => void;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; sx?: object }>;
   title: string;
   sub: string;
 }) {
@@ -516,7 +514,7 @@ function RoleCard({
       }`}
     >
       <div className="mb-1.5 text-muted-foreground">
-        <Icon className="h-4 w-4" />
+        <Icon sx={{ fontSize: 16 }} />
       </div>
       <div className="text-sm font-semibold">{title}</div>
       <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>
@@ -527,7 +525,7 @@ function RoleCard({
 function FieldError({ message }: { message: string }) {
   return (
     <p className="flex items-center gap-1 text-xs font-medium text-destructive">
-      <AlertCircle className="h-3 w-3 shrink-0" />
+      <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
       {message}
     </p>
   );
@@ -545,7 +543,7 @@ function Field({
 }: {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; sx?: object }>;
   type?: string;
   required?: boolean;
   registration: UseFormRegisterReturn;
@@ -559,7 +557,7 @@ function Field({
         {required && <span className="ms-1 text-destructive">*</span>}
       </Label>
       <div className="relative">
-        <Icon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Icon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
           id={id}
           type={type}
@@ -601,7 +599,7 @@ function FileField({
 }: {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; sx?: object }>;
   required?: boolean;
   file: File | null;
   onFile: (f: File | null) => void;
@@ -625,11 +623,11 @@ function FileField({
         }`}
       >
         {file ? (
-          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <CheckCircleIcon sx={{ fontSize: 16 }} className="text-emerald-500" />
         ) : (
-          <Upload className="h-4 w-4 text-muted-foreground" />
+          <UploadIcon sx={{ fontSize: 16 }} className="text-muted-foreground" />
         )}
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon sx={{ fontSize: 16 }} className="text-muted-foreground" />
         <span className="flex-1 truncate text-xs text-muted-foreground">
           {file ? file.name : "בחר קובץ (PDF / תמונה, עד 5MB)"}
         </span>

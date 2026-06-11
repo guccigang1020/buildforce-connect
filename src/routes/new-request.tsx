@@ -3,20 +3,18 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { createJobRequest } from "@/lib/job-requests.functions";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  MapPin,
-  Calendar,
-  ShieldCheck,
-  Plus,
-  Trash2,
-  Lock,
-  Globe2,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PlaceIcon from "@mui/icons-material/Place";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import LockIcon from "@mui/icons-material/Lock";
+import PublicIcon from "@mui/icons-material/Public";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import BoltIcon from "@mui/icons-material/Bolt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -230,7 +228,7 @@ function NewRequestPage() {
       <AppShell title="בקשה חדשה">
         <div className="flex flex-col items-center py-16 text-center">
           <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-primary bg-primary/10">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
+            <CheckCircleIcon sx={{ fontSize: 32 }} className="text-primary" />
           </div>
           <h2 className="mt-6 text-xl font-semibold">הבקשה פורסמה בהצלחה</h2>
           <p className="mt-3 max-w-md text-sm text-muted-foreground">
@@ -358,7 +356,7 @@ function NewRequestPage() {
                     onClick={addItem}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
                   >
-                    <Plus className="h-4 w-4" /> הוסף שורת בקשה נוספת
+                    <AddIcon sx={{ fontSize: 16 }} /> הוסף שורת בקשה נוספת
                   </button>
                 </div>
                 {totalWorkers > 0 && (
@@ -499,14 +497,14 @@ function NewRequestPage() {
                   </div>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-secondary/40 p-4 text-sm text-muted-foreground">
-                  <ShieldCheck className="mb-2 h-5 w-5 text-primary" />
+                  <VerifiedUserIcon sx={{ fontSize: 20 }} className="mb-2 text-primary" />
                   הפרטים שלך מוגנים. נשלח אותם רק לתאגידים שתאשר באופן מפורש.
                 </div>
 
                 {/* Summary preview before non-circumvention */}
                 <div className="rounded-lg border border-border/60 bg-secondary/20 p-4 space-y-3">
                   <div className="flex items-center gap-2 text-sm font-semibold">
-                    <Zap className="h-4 w-4 text-primary" />
+                    <BoltIcon sx={{ fontSize: 16 }} className="text-primary" />
                     סיכום הבקשה לפני פרסום
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
@@ -570,7 +568,7 @@ function NewRequestPage() {
                 variant="ghost"
                 onClick={() => (step === 1 ? navigate({ to: "/" }) : setStep(step - 1))}
               >
-                <ArrowRight className="ml-1 h-4 w-4" />
+                <ArrowForwardIcon sx={{ fontSize: 16 }} className="ml-1" />
                 {step === 1 ? "ביטול" : "הקודם"}
               </Button>
               {step < STEPS.length ? (
@@ -582,7 +580,7 @@ function NewRequestPage() {
                     className="disabled:opacity-50"
                   >
                     הבא
-                    <ArrowLeft className="mr-1 h-4 w-4" />
+                    <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-1" />
                   </Button>
                   {nextHint && (
                     <p className="text-end text-xs font-medium text-destructive">{nextHint}</p>
@@ -596,7 +594,7 @@ function NewRequestPage() {
                     className="disabled:opacity-50"
                   >
                     {submitting ? "שולח..." : "פרסם בקשה"}
-                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                    <CheckCircleIcon sx={{ fontSize: 16 }} className="mr-1" />
                   </Button>
                   {nextHint && (
                     <p className="text-end text-xs font-medium text-destructive">{nextHint}</p>
@@ -627,10 +625,10 @@ function NewRequestPage() {
               ))}
             </div>
             <ul className="mt-4 space-y-2.5 text-sm">
-              <PreviewRow icon={MapPin} label="מיקום" value={form.location || "—"} />
-              <PreviewRow icon={Calendar} label="התחלה" value={form.startDate || "—"} ltr />
+              <PreviewRow icon={PlaceIcon} label="מיקום" value={form.location || "—"} />
+              <PreviewRow icon={CalendarMonthIcon} label="התחלה" value={form.startDate || "—"} ltr />
               <PreviewRow
-                icon={Lock}
+                icon={LockIcon}
                 label="משך"
                 value={form.commitmentMonths ? `${form.commitmentMonths} חודשים` : "—"}
               />
@@ -640,7 +638,7 @@ function NewRequestPage() {
             {totalWorkers > 0 && (
               <div className="mt-5 rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-                  <TrendingUp className="h-4 w-4" />
+                  <TrendingUpIcon sx={{ fontSize: 16 }} />
                   הערכת עלות (מחיר שוק <span dir="ltr">₪{MARKET_RATE}</span> לשעה)
                 </div>
                 <div className="flex items-center justify-between text-xs">
@@ -695,7 +693,7 @@ function ItemRow({
             onClick={onRemove}
             className="inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-destructive"
           >
-            <Trash2 className="h-3 w-3" /> הסר
+            <DeleteIcon sx={{ fontSize: 12 }} /> הסר
           </button>
         )}
       </div>
@@ -717,7 +715,7 @@ function ItemRow({
         </div>
         <div>
           <Label className="mb-1.5 block text-[11px]">
-            <Globe2 className="ml-1 inline h-3 w-3 text-primary" />
+            <PublicIcon sx={{ fontSize: 12 }} className="ml-1 inline text-primary" />
             לאום עובדים
           </Label>
           <select
@@ -764,7 +762,7 @@ function PreviewRow({
   value,
   ltr,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ sx?: object; className?: string }>;
   label: string;
   value: string;
   ltr?: boolean;
@@ -772,7 +770,7 @@ function PreviewRow({
   return (
     <li className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 last:border-0">
       <span className="inline-flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4" /> {label}
+        <Icon sx={{ fontSize: 16 }} /> {label}
       </span>
       <span className="font-medium text-foreground" dir={ltr ? "ltr" : undefined}>
         {value}

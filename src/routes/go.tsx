@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useAuth } from "@/hooks/use-auth";
 
 // Post-auth router: waits for the session + roles to load, then sends the
@@ -32,7 +32,7 @@ function GoPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-background" dir="rtl">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <CircularProgress size={24} color="inherit" className="text-primary" />
         <span className="text-sm text-muted-foreground">מעביר אותך לאזור שלך…</span>
       </div>
     </div>

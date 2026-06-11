@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ClipboardList } from "lucide-react";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import { ComingSoonPage } from "@/components/coming-soon-page";
 
 // Daily-account aggregation + CSV export exist in git history — gated until
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/contractor/accounts")({
         "ייצוא לקובץ CSV להנהלת החשבונות",
         "חשבונית חודשית מגובה בנתוני נוכחות",
       ]}
-      icon={ClipboardList}
+      icon={AssignmentIcon}
     />
   ),
 });

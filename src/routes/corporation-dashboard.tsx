@@ -3,14 +3,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  BadgeCheck,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  TrendingUp,
-} from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { AppShell } from "@/components/app-shell";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
@@ -101,7 +99,7 @@ function CorporationDashboard() {
     return (
       <AppShell title="לוח תאגיד">
         <div className="grid place-items-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <CircularProgress size={24} color="inherit" className="text-muted-foreground" />
         </div>
       </AppShell>
     );
@@ -119,7 +117,7 @@ function CorporationDashboard() {
           <h2 className="text-xl font-semibold text-foreground">{companyName}</h2>
           {isApproved && (
             <span className="status-chip-approved">
-              <BadgeCheck className="h-3 w-3" /> מאומת
+              <VerifiedIcon sx={{ fontSize: 12 }} /> מאומת
             </span>
           )}
         </div>
@@ -133,13 +131,13 @@ function CorporationDashboard() {
       {/* ── Status alerts ── */}
       {!isCorporation && (
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm status-bar-pending">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+          <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-amber-500" />
           <span>חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין להפעלת התפקיד.</span>
         </div>
       )}
       {isCorporation && !isApproved && (
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm status-bar-pending">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+          <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-amber-500" />
           <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.</span>
         </div>
       )}
@@ -230,7 +228,7 @@ function PriceIntelligencePanel({
         <h3 className="text-sm font-semibold">ניתוח תמחור</h3>
         {bestBand?.rate != null && (
           <span className="status-chip-approved">
-            <TrendingUp className="h-3 w-3" />
+            <TrendingUpIcon sx={{ fontSize: 12 }} />
             <span dir="ltr">{bestBand.label}</span> —{" "}
             <span dir="ltr">{bestBand.rate}%</span> זכיות
           </span>
@@ -274,7 +272,7 @@ function PriceIntelligencePanel({
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-border bg-muted/20 px-4 py-3">
           {avgWinPrice != null && (
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+              <CheckCircleIcon sx={{ fontSize: 12 }} className="text-emerald-500" />
               <span className="text-[11px] text-muted-foreground">ממוצע בזכיות:</span>
               <span className="text-xs font-semibold text-status-approved">
                 <span dir="ltr">₪{avgWinPrice}</span> לשעה
@@ -283,7 +281,7 @@ function PriceIntelligencePanel({
           )}
           {avgLossPrice != null && avgWinPrice != null && (
             <div className="flex items-center gap-1.5">
-              <XCircle className="h-3 w-3 text-muted-foreground" />
+              <CancelIcon sx={{ fontSize: 12 }} className="text-muted-foreground" />
               <span className="text-[11px] text-muted-foreground">ממוצע בהפסדים:</span>
               <span className="text-xs font-semibold">
                 <span dir="ltr">₪{avgLossPrice}</span> לשעה

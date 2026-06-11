@@ -49,13 +49,19 @@ function TabsTrigger({
   value,
   className,
   children,
+  ...muiInjected
 }: {
   value: string;
   className?: string;
   children: React.ReactNode;
-}) {
+} & Record<string, unknown>) {
+  // MUI <Tabs> clones its children and injects selection props (selected,
+  // onChange, onClick, indicator …). Because this wrapper sits between Tabs
+  // and Tab, those injected props MUST be forwarded — otherwise clicks are
+  // swallowed and the tabs never switch.
   return (
     <MuiTab
+      {...muiInjected}
       value={value}
       label={<span className="inline-flex items-center gap-1.5 text-[13px]">{children}</span>}
       className={cn("!min-h-10 !px-3 !font-semibold !normal-case", className)}

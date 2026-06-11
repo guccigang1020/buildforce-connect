@@ -1,5 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Flame, ShieldCheck, Users, ArrowLeft, PlayCircle, TrendingDown, Eye } from "lucide-react";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import PlayCircleIcon from "@mui/icons-material/PlayCircle";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import featureAuction from "@/assets/feature-auction.jpg";
 import featureWorkers from "@/assets/feature-workers.jpg";
 import featureChat from "@/assets/feature-secure-chat.jpg";
@@ -13,12 +19,12 @@ const FEATURES = [
     soon: false,
     bullets: [
       {
-        icon: Flame,
+        icon: LocalFireDepartmentIcon,
         text: "ספירה לאחור חיה — ככל שמתקרבים לדדליין, ההצעות הופכות אגרסיביות יותר",
         soon: false,
       },
-      { icon: TrendingDown, text: "גרף ירידת מחיר אנימטיבי בזמן אמת", soon: false },
-      { icon: Eye, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו", soon: false },
+      { icon: TrendingDownIcon, text: "גרף ירידת מחיר אנימטיבי בזמן אמת", soon: false },
+      { icon: VisibilityIcon, text: "ראה כמה תאגידים צופים בבקשה שלך עכשיו", soon: false },
     ],
     accent: "from-primary to-primary-glow",
     glow: "shadow-[0_30px_120px_-20px_rgba(29,78,216,0.35)]",
@@ -30,9 +36,9 @@ const FEATURES = [
     image: featureWorkers,
     soon: false,
     bullets: [
-      { icon: ShieldCheck, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות", soon: true },
-      { icon: Users, text: "דירוג פועל-לפי-פועל, לא רק תאגיד", soon: true },
-      { icon: Flame, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה', soon: true },
+      { icon: VerifiedUserIcon, text: "ביטוח חוסר-הופעה — מחליף בתוך 4 שעות", soon: true },
+      { icon: GroupIcon, text: "דירוג פועל-לפי-פועל, לא רק תאגיד", soon: true },
+      { icon: LocalFireDepartmentIcon, text: '"Crew Memory" — בקש את אותו צוות שוב בלחיצה', soon: true },
     ],
     accent: "from-emerald-500 to-teal-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(45,212,168,0.45)]",
@@ -44,9 +50,9 @@ const FEATURES = [
     image: featureChat,
     soon: true,
     bullets: [
-      { icon: ShieldCheck, text: "מסיכת זהות עד חתימת הסכם", soon: true },
-      { icon: Flame, text: "חסימה אוטומטית של פרטי קשר חיצוניים", soon: true },
-      { icon: Eye, text: "Audit trail מלא: זמן, IP, חתימה דיגיטלית", soon: true },
+      { icon: VerifiedUserIcon, text: "מסיכת זהות עד חתימת הסכם", soon: true },
+      { icon: LocalFireDepartmentIcon, text: "חסימה אוטומטית של פרטי קשר חיצוניים", soon: true },
+      { icon: VisibilityIcon, text: "Audit trail מלא: זמן, IP, חתימה דיגיטלית", soon: true },
     ],
     accent: "from-fuchsia-500 to-violet-400",
     glow: "shadow-[0_30px_120px_-20px_rgba(217,70,239,0.45)]",
@@ -75,7 +81,7 @@ export function PlatformShowcase() {
         {/* Section header */}
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-primary">
-            <PlayCircle className="h-3.5 w-3.5" /> פלטפורמה בפעולה
+            <PlayCircleIcon sx={{ fontSize: 14 }} /> פלטפורמה בפעולה
           </div>
           <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
             איך BuildForce{" "}
@@ -162,7 +168,7 @@ export function PlatformShowcase() {
                       <span
                         className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${f.accent} text-primary-foreground shadow-elegant`}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon sx={{ fontSize: 16 }} />
                       </span>
                       <span className="flex flex-1 flex-wrap items-center justify-between gap-2 pt-1.5">
                         <span className="text-sm font-medium">{text}</span>
@@ -183,7 +189,7 @@ export function PlatformShowcase() {
             className="inline-flex items-center gap-2 rounded-2xl bg-gradient-primary px-8 py-4 text-base font-extrabold text-primary-foreground shadow-elegant transition-transform hover:scale-105"
           >
             פתח בקשה ותראה איך תאגידים נלחמים עליך
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowBackIcon sx={{ fontSize: 20 }} />
           </Link>
         </div>
       </div>

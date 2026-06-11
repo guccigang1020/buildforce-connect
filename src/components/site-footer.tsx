@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { HardHat } from "lucide-react";
+import EngineeringIcon from "@mui/icons-material/Engineering";
 
 export function SiteFooter() {
   return (
@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="md:col-span-2">
           <Link to="/" className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary">
-              <HardHat className="h-5 w-5 text-primary-foreground" />
+              <EngineeringIcon sx={{ fontSize: 20 }} className="text-primary-foreground" />
             </div>
             <span className="text-lg font-extrabold">
               Build<span className="text-primary">Force</span>

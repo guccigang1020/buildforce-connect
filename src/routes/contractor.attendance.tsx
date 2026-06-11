@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2 } from "lucide-react";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { ComingSoonPage } from "@/components/coming-soon-page";
 
 // Full implementation (entry/exit approval, exceptions, corrections, audit
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/contractor/attendance")({
         "אישור או דחייה של דיווחי נוכחות",
         "דיווח חריגים ובקשות תיקון עם תיעוד מלא",
       ]}
-      icon={CheckCircle2}
+      icon={CheckCircleIcon}
     />
   ),
 });

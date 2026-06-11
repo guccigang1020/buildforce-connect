@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HardHat } from "lucide-react";
+import EngineeringIcon from "@mui/icons-material/Engineering";
 import { ComingSoonPage } from "@/components/coming-soon-page";
 
 // Corporation-side attendance review exists in git history — gated until the
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/corporation/attendance")({
         "התראות על חריגים ודחיות",
         "סיכום חודשי של שעות ועלויות",
       ]}
-      icon={HardHat}
+      icon={EngineeringIcon}
     />
   ),
 });

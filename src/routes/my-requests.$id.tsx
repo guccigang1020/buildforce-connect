@@ -3,20 +3,18 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  Briefcase,
-  CheckCircle2,
-  Trophy,
-  Coins,
-  X,
-  Lock,
-  AlertTriangle,
-  Loader2,
-  TrendingDown,
-  Award,
-  Phone,
-  Mail,
-} from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import WorkIcon from "@mui/icons-material/Work";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import PaidIcon from "@mui/icons-material/Paid";
+import CloseIcon from "@mui/icons-material/Close";
+import LockIcon from "@mui/icons-material/Lock";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
+import PhoneIcon from "@mui/icons-material/Phone";
+import MailOutlineIcon from "@mui/icons-material/MailOutlined";
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers, closeJobRequest } from "@/lib/job-requests.functions";
@@ -115,7 +113,7 @@ function MyRequestPage() {
       <AppShell title="בקשה">
         <div className="enterprise-card p-10 text-center">
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-lg bg-destructive/10">
-            <AlertTriangle className="h-7 w-7 text-destructive" />
+            <WarningAmberIcon sx={{ fontSize: 28 }} className="text-destructive" />
           </div>
           <h2 className="text-xl font-semibold">הבקשה לא נמצאה</h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -186,7 +184,7 @@ function MyRequestPage() {
           onClick={() => setConfirmingClose(true)}
           className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/5"
         >
-          <X className="h-4 w-4" /> סגור בקשה
+          <CloseIcon sx={{ fontSize: 16 }} /> סגור בקשה
         </Button>
       )
     ) : undefined;
@@ -232,7 +230,7 @@ function MyRequestPage() {
         {items.length > 0 && (
           <div className="enterprise-card p-5">
             <h3 className="mb-3 border-b border-border pb-3 text-sm font-semibold">
-              <Briefcase className="mr-1.5 inline h-3.5 w-3.5 text-muted-foreground" />
+              <WorkIcon sx={{ fontSize: 14 }} className="mr-1.5 inline text-muted-foreground" />
               פרטי הבקשה
             </h3>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -276,7 +274,7 @@ function MyRequestPage() {
             {monthlySavings > 0 && (
               <div className="border-b border-border bg-savings-soft px-5 py-6 md:px-8">
                 <span className="savings-badge uppercase tracking-wider">
-                  <TrendingDown className="h-3.5 w-3.5" />
+                  <TrendingDownIcon sx={{ fontSize: 14 }} />
                   {winningOffer ? "החיסכון שהשגת" : "חיסכון חודשי מוערך"}
                 </span>
                 <div className="mt-3 text-5xl font-black leading-none tracking-tight text-savings md:text-6xl">
@@ -330,7 +328,7 @@ function MyRequestPage() {
             {minPrice > 0 && (
               <span className="mr-2">
                 <span className="savings-badge">
-                  <TrendingDown className="h-3 w-3" /> מינ׳ <span dir="ltr">₪{minPrice}</span> לשעה
+                  <TrendingDownIcon sx={{ fontSize: 12 }} /> מינ׳ <span dir="ltr">₪{minPrice}</span> לשעה
                 </span>
               </span>
             )}
@@ -339,7 +337,7 @@ function MyRequestPage() {
           {offers.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon mx-auto">
-                <Coins className="h-8 w-8 text-primary" />
+                <PaidIcon sx={{ fontSize: 32 }} className="text-primary" />
               </div>
               <h4 className="text-base font-semibold">ממתינים להצעות</h4>
               <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
@@ -402,7 +400,7 @@ function MyRequestPage() {
                             <div className="text-xs text-muted-foreground">
                               {isOwner && request.status === "open" ? (
                                 <span className="inline-flex items-center gap-1">
-                                  <Lock className="h-3 w-3" /> נחשף אחרי בחירה
+                                  <LockIcon sx={{ fontSize: 12 }} /> נחשף אחרי בחירה
                                 </span>
                               ) : (
                                 new Date(o.created_at).toLocaleDateString("he-IL")
@@ -440,7 +438,7 @@ function MyRequestPage() {
                           <td className="px-4 py-3">
                             {savedVsMax > 0 && !isRejected ? (
                               <span className="savings-badge">
-                                <TrendingDown className="h-3 w-3" /> זול ב-
+                                <TrendingDownIcon sx={{ fontSize: 12 }} /> זול ב-
                                 <span dir="ltr">{savedVsMax} ₪</span>
                               </span>
                             ) : (
@@ -452,7 +450,7 @@ function MyRequestPage() {
                           <td className="px-4 py-3">
                             {isWinner ? (
                               <span className="status-chip-approved">
-                                <Trophy className="h-3 w-3" /> זוכה
+                                <EmojiEventsIcon sx={{ fontSize: 12 }} /> זוכה
                               </span>
                             ) : o.status === "withdrawn" ? (
                               <span className="status-chip-muted">בוטלה</span>
@@ -478,10 +476,10 @@ function MyRequestPage() {
                                   className="h-7 gap-1 px-3 text-xs"
                                 >
                                   {actingId === o.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <CircularProgress size={12} color="inherit" />
                                   ) : (
                                     <>
-                                      <Trophy className="h-3 w-3" /> בחר כזוכה
+                                      <EmojiEventsIcon sx={{ fontSize: 12 }} /> בחר כזוכה
                                     </>
                                   )}
                                 </Button>
@@ -495,7 +493,7 @@ function MyRequestPage() {
                             <td colSpan={8} className="px-4 pb-4 pt-0">
                               <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
                                 <div className="mb-3 flex items-center gap-2">
-                                  <Award className="h-5 w-5 text-primary" />
+                                  <WorkspacePremiumIcon sx={{ fontSize: 20 }} className="text-primary" />
                                   <span className="text-sm font-semibold">
                                     אישור סופי — בחירת זוכה
                                   </span>
@@ -503,22 +501,13 @@ function MyRequestPage() {
                                 <div className="mb-4 space-y-1.5 text-xs text-muted-foreground">
                                   <div className="flex flex-wrap items-center gap-1">
                                     <span className="font-semibold text-foreground">
-                                      עלות חודשית מוערכת:
+                                      ההצעה הנבחרת:
                                     </span>
-                                    <span
-                                      dir="ltr"
-                                      className="font-extrabold text-primary"
-                                    >
-                                      ₪
-                                      {Math.round(
-                                        priceNum *
-                                          totalWorkers *
-                                          HOURS_PER_WORKER_MONTH,
-                                      ).toLocaleString()}
+                                    <span dir="ltr" className="font-extrabold text-primary">
+                                      ₪{priceNum}
                                     </span>
                                     <span>
-                                      ({totalWorkers} עובדים × <span dir="ltr">₪{priceNum}</span>{" "}
-                                      לשעה × 176 שעות)
+                                      לשעה · <span dir="ltr">{totalWorkers}</span> עובדים
                                     </span>
                                   </div>
                                   <div>
@@ -539,7 +528,7 @@ function MyRequestPage() {
                                     onClick={() => setConfirmingAwardId(null)}
                                     className="gap-1.5"
                                   >
-                                    <X className="h-4 w-4" /> ביטול
+                                    <CloseIcon sx={{ fontSize: 16 }} /> ביטול
                                   </Button>
                                   <Button
                                     size="sm"
@@ -549,12 +538,12 @@ function MyRequestPage() {
                                   >
                                     {actingId === o.id ? (
                                       <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                                        <CircularProgress size={16} color="inherit" />{" "}
                                         בוחר…
                                       </>
                                     ) : (
                                       <>
-                                        <Trophy className="h-4 w-4" /> אישור סופי
+                                        <EmojiEventsIcon sx={{ fontSize: 16 }} /> אישור סופי
                                       </>
                                     )}
                                   </Button>
@@ -571,7 +560,7 @@ function MyRequestPage() {
                               <td colSpan={8} className="px-4 pb-3 pt-0">
                                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                                   <div className="flex items-center gap-1.5 text-xs font-semibold text-status-pending">
-                                    <AlertTriangle className="h-3.5 w-3.5" /> תנאי התאגיד
+                                    <WarningAmberIcon sx={{ fontSize: 14 }} /> תנאי התאגיד
                                     לזכייה
                                   </div>
                                   <ul className="mt-1.5 space-y-0.5 text-xs text-status-pending">
@@ -633,7 +622,7 @@ function MyRequestPage() {
                             </span>
                             {isWinner && (
                               <span className="status-chip-approved">
-                                <Trophy className="h-3 w-3" /> זוכה
+                                <EmojiEventsIcon sx={{ fontSize: 12 }} /> זוכה
                               </span>
                             )}
                           </div>
@@ -678,10 +667,10 @@ function MyRequestPage() {
                                   className="h-7 gap-1 px-3 text-xs"
                                 >
                                   {actingId === o.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    <CircularProgress size={12} color="inherit" />
                                   ) : (
                                     <>
-                                      <Trophy className="h-3 w-3" /> אישור
+                                      <EmojiEventsIcon sx={{ fontSize: 12 }} /> אישור
                                     </>
                                   )}
                                 </Button>
@@ -695,7 +684,7 @@ function MyRequestPage() {
                               onClick={() => setConfirmingAwardId(o.id)}
                               className="h-7 gap-1 px-3 text-xs"
                             >
-                              <Trophy className="h-3 w-3" /> בחר כזוכה
+                              <EmojiEventsIcon sx={{ fontSize: 12 }} /> בחר כזוכה
                             </Button>
                           )}
                         </div>
@@ -712,7 +701,7 @@ function MyRequestPage() {
         {winningOffer && isOwner && (
           <div className="enterprise-card border-emerald-500/30 bg-emerald-500/10 p-5">
             <h4 className="mb-3 flex items-center gap-2 border-b border-border pb-3 text-sm font-semibold">
-              <CheckCircle2 className="h-4 w-4 text-status-approved" /> הזכייה הושלמה
+              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-status-approved" /> הזכייה הושלמה
             </h4>
             <p className="text-sm text-muted-foreground">
               פרטי הקשר נחשפו לשני הצדדים. אנא צרו קשר תוך 48 שעות.
@@ -736,12 +725,12 @@ function MyRequestPage() {
                         className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
                         dir="ltr"
                       >
-                        <Phone className="h-3.5 w-3.5" /> {w.corp_phone}
+                        <PhoneIcon sx={{ fontSize: 14 }} /> {w.corp_phone}
                       </a>
                     )}
                     {w.corp_email && (
                       <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                        <Mail className="h-3.5 w-3.5" /> {w.corp_email}
+                        <MailOutlineIcon sx={{ fontSize: 14 }} /> {w.corp_email}
                       </span>
                     )}
                   </div>
