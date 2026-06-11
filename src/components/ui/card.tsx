@@ -1,12 +1,14 @@
 import * as React from "react";
-
+import MuiPaper from "@mui/material/Paper";
 import { cn } from "@/lib/utils";
 
+/** MUI Paper–backed Card keeping the shadcn API. */
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
+    <MuiPaper
       ref={ref}
-      className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+      variant="outlined"
+      className={cn("!rounded-xl !border-border !bg-card !text-foreground", className)}
       {...props}
     />
   ),

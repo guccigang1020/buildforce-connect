@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieConsent } from "@/components/cookie-consent";
+import { MuiProvider } from "@/lib/mui-theme";
 
 function NotFoundComponent() {
   return (
@@ -159,12 +160,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-center" />
-        <ConditionalCookieConsent />
-      </AuthProvider>
-    </QueryClientProvider>
+    <MuiProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Outlet />
+          <Toaster richColors position="top-center" />
+          <ConditionalCookieConsent />
+        </AuthProvider>
+      </QueryClientProvider>
+    </MuiProvider>
   );
 }
