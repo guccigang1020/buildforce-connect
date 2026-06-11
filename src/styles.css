@@ -513,6 +513,20 @@
     align-items: center;
     gap: 0.3rem;
   }
+  /* Awarded/won — a true blue, clearly distinct from green "open" and the
+     teal brand color. */
+  .status-chip-info {
+    color: oklch(0.5 0.16 255);
+    background: oklch(0.5 0.16 255 / 0.12);
+    border: 1px solid oklch(0.5 0.16 255 / 0.32);
+    border-radius: 9999px;
+    padding: 0.15rem 0.6rem;
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-bold);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
 
   /* ── Status inline-start border accents (RTL-safe) ── */
   .status-bar-live     { border-inline-start: 3px solid var(--color-status-live);     }

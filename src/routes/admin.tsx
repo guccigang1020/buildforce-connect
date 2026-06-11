@@ -10,6 +10,10 @@ import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SearchIcon from "@mui/icons-material/Search";
 import GavelIcon from "@mui/icons-material/Gavel";
+import HardHatIcon from "@mui/icons-material/Engineering";
+import ApartmentIcon from "@mui/icons-material/Apartment";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import HandshakeIcon from "@mui/icons-material/Handshake";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -109,8 +113,9 @@ function AdminDashboard() {
   const profiles = (data?.profiles ?? []) as AdminProfile[];
   const roles = (data?.roles ?? []) as { user_id: string; role: string }[];
   const activeAuctions = (data?.activeAuctions ?? 0) as number;
-  const recentAwards = (data?.recentAwards ?? 0) as number;
+  const completedDeals = (data?.completedDeals ?? 0) as number;
   const totalCorporations = (data?.totalCorporations ?? 0) as number;
+  const totalContractors = (data?.totalContractors ?? 0) as number;
 
   useEffect(() => {
     if (!error) return;
@@ -196,52 +201,44 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* Pattern 2 — stat row */}
-      <div className="mb-6 grid grid-cols-2 rounded-lg border border-border divide-x divide-x-reverse divide-border lg:grid-cols-5">
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            סה״כ משתמשים
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {stats.total}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            תאגידים
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {totalCorporations}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            ממתינים לאישור
-          </div>
-          <div
-            className={`mt-1 text-2xl font-semibold tabular-nums ${stats.pending > 0 ? "text-primary" : ""}`}
-            dir="ltr"
-          >
-            {stats.pending}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            מכרזים פעילים
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {activeAuctions}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            זכיות
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-approved" dir="ltr">
-            {recentAwards}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">30 יום אחרון</div>
-        </div>
+      {/* Stat tiles — the five numbers that matter to an operator */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        <StatTile
+          icon={HardHatIcon}
+          tone="neutral"
+          label="קבלנים"
+          value={totalContractors}
+          sub="מזמיני כוח אדם"
+        />
+        <StatTile
+          icon={ApartmentIcon}
+          tone="neutral"
+          label="תאגידים"
+          value={totalCorporations}
+          sub="ספקי כוח אדם"
+        />
+        <StatTile
+          icon={HourglassEmptyIcon}
+          tone={stats.pending > 0 ? "pending" : "neutral"}
+          label="ממתינים לאישור"
+          value={stats.pending}
+          sub="תאגידים חדשים"
+          highlight={stats.pending > 0}
+        />
+        <StatTile
+          icon={GavelIcon}
+          tone="info"
+          label="מכרזים פתוחים"
+          value={activeAuctions}
+          sub="מקבלים הצעות"
+        />
+        <StatTile
+          icon={HandshakeIcon}
+          tone="success"
+          label="עסקאות שנסגרו"
+          value={completedDeals}
+          sub="זכיות בין קבלן לתאגיד"
+        />
       </div>
 
       {/* Primary view switch — the two admin responsibilities */}
@@ -300,6 +297,66 @@ function AdminDashboard() {
 }
 
 type Stats = { total: number; corps: number; pending: number; approved: number; rejected: number };
+
+const TILE_TONE: Record<
+  string,
+  { iconWrap: string; value: string; ring: string }
+> = {
+  neutral: { iconWrap: "bg-muted text-muted-foreground", value: "text-foreground", ring: "border-border" },
+  info: {
+    iconWrap: "bg-[oklch(0.6_0.095_205_/_0.14)] text-primary-glow",
+    value: "text-foreground",
+    ring: "border-border",
+  },
+  success: {
+    iconWrap: "bg-[oklch(0.55_0.1_152_/_0.14)] text-status-approved",
+    value: "text-status-approved",
+    ring: "border-border",
+  },
+  pending: {
+    iconWrap: "bg-[oklch(0.58_0.11_75_/_0.16)] text-status-pending",
+    value: "text-status-pending",
+    ring: "border-status-pending/40",
+  },
+};
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone = "neutral",
+  highlight = false,
+}: {
+  icon: React.ComponentType<{ sx?: object; className?: string }>;
+  label: string;
+  value: number;
+  sub?: string;
+  tone?: "neutral" | "info" | "success" | "pending";
+  highlight?: boolean;
+}) {
+  const t = TILE_TONE[tone] ?? TILE_TONE.neutral;
+  return (
+    <div
+      className={`rounded-lg border bg-card p-4 transition-shadow hover:shadow-sm-app ${
+        highlight ? t.ring : "border-border"
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <span className={`grid h-8 w-8 place-items-center rounded-md ${t.iconWrap}`}>
+          <Icon sx={{ fontSize: 18 }} />
+        </span>
+      </div>
+      <div className={`mt-2 text-3xl font-bold tabular-nums ${t.value}`} dir="ltr">
+        {value}
+      </div>
+      {sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>}
+    </div>
+  );
+}
 
 function CorporationsVerification({
   tab,
@@ -439,14 +496,14 @@ type AdminRequestRow = {
 
 const REQ_STATUS_META: Record<string, { label: string; chip: string }> = {
   open: { label: "פתוח", chip: "status-chip-live" },
-  awarded: { label: "נבחר זוכה", chip: "status-chip-approved" },
+  awarded: { label: "נבחר זוכה", chip: "status-chip-info" },
   closed: { label: "סגור", chip: "status-chip-muted" },
   cancelled: { label: "בוטל", chip: "status-chip-rejected" },
   expired: { label: "פג תוקף", chip: "status-chip-muted" },
 };
 const OFFER_STATUS_META: Record<string, { label: string; chip: string }> = {
   submitted: { label: "הוגשה", chip: "status-chip-pending" },
-  awarded: { label: "זוכה", chip: "status-chip-approved" },
+  awarded: { label: "זוכה", chip: "status-chip-info" },
   rejected: { label: "נדחתה", chip: "status-chip-rejected" },
   withdrawn: { label: "נמשכה", chip: "status-chip-muted" },
 };
@@ -539,14 +596,14 @@ function AuctionsOversight({ session }: { session: unknown }) {
                           return (
                             <tr key={o.id} className="premium-table-row">
                               <td className="px-3 py-2.5 font-medium">{o.corporation_name}</td>
-                              <td className="px-3 py-2.5 font-semibold tabular-nums" dir="ltr">
-                                ₪{Number(o.price_per_hour).toLocaleString()}
+                              <td className="px-3 py-2.5 font-semibold tabular-nums">
+                                <span dir="ltr">₪{Number(o.price_per_hour).toLocaleString()}</span>
                               </td>
-                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground" dir="ltr">
-                                {o.available_workers}
+                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground">
+                                <span dir="ltr">{o.available_workers}</span>
                               </td>
-                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground" dir="ltr">
-                                {o.start_date}
+                              <td className="px-3 py-2.5 tabular-nums text-muted-foreground">
+                                <span dir="ltr">{o.start_date}</span>
                               </td>
                               <td className="px-3 py-2.5">
                                 <span className={om.chip}>{om.label}</span>
@@ -652,6 +709,7 @@ function ReviewDialog({
   const [notes, setNotes] = useState(profile.admin_notes ?? "");
   const [busy, setBusy] = useState(false);
   const [docs, setDocs] = useState<{ label: string; url: string | null }[]>([]);
+  const [notesError, setNotesError] = useState<string | null>(null);
   const setStatusFn = useServerFn(adminSetVerificationStatus);
   const getDocUrlFn = useServerFn(adminGetDocumentUrl);
 
@@ -679,6 +737,11 @@ function ReviewDialog({
   }, [profile, getDocUrlFn]);
 
   const setStatus = async (status: "approved" | "rejected") => {
+    if (status === "rejected" && !notes.trim()) {
+      setNotesError("יש להזין סיבת דחייה לפני אישור הפעולה");
+      return;
+    }
+    setNotesError(null);
     setBusy(true);
     try {
       await setStatusFn({ data: { profileId: profile.id, status, notes: notes || null } });
@@ -758,11 +821,21 @@ function ReviewDialog({
             <h4 className="mb-2 font-semibold text-foreground/80">הערות אדמין</h4>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                if (notesError) setNotesError(null);
+              }}
               rows={3}
               placeholder="סיבת דחייה / הערות פנימיות..."
-              className="bg-card/60"
+              aria-invalid={notesError ? true : undefined}
+              className={`bg-card/60 ${notesError ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
+            {notesError && (
+              <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-destructive">
+                <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
+                {notesError}
+              </p>
+            )}
           </section>
 
           <section>

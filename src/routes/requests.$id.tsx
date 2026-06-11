@@ -131,7 +131,7 @@ function RequestPage() {
   const statusChipClass = isOpen
     ? "status-chip-live"
     : req.status === "awarded"
-      ? "status-chip-approved"
+      ? "status-chip-info"
       : "status-chip-muted";
 
   const statusLabel = isOpen
@@ -191,8 +191,8 @@ function RequestPage() {
               <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 תאריך התחלה
               </dt>
-              <dd className="mt-0.5 font-medium tabular-nums" dir="ltr">
-                {req.start_date}
+              <dd className="mt-0.5 font-medium tabular-nums">
+                <span dir="ltr">{req.start_date}</span>
               </dd>
             </div>
             <div>
@@ -237,8 +237,8 @@ function RequestPage() {
                       <tr key={it.id} className="premium-table-row">
                         <td className="px-3 py-2.5 font-medium">{it.role}</td>
                         <td className="px-3 py-2.5 text-muted-foreground">{it.nationality}</td>
-                        <td className="px-3 py-2.5 text-end tabular-nums" dir="ltr">
-                          {it.count}
+                        <td className="px-3 py-2.5 text-end tabular-nums">
+                          <span dir="ltr">{it.count}</span>
                         </td>
                       </tr>
                     ))}
@@ -301,8 +301,8 @@ function RequestPage() {
               </div>
               <div>
                 <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">עובדים</dt>
-                <dd className="mt-0.5 font-semibold tabular-nums" dir="ltr">
-                  {myOffer.available_workers}
+                <dd className="mt-0.5 font-semibold tabular-nums">
+                  <span dir="ltr">{myOffer.available_workers}</span>
                 </dd>
               </div>
               <div>
@@ -311,7 +311,7 @@ function RequestPage() {
                   <span
                     className={
                       myOffer.status === "awarded"
-                        ? "status-chip-approved"
+                        ? "status-chip-info"
                         : myOffer.status === "rejected"
                           ? "status-chip-rejected"
                           : "status-chip-pending"

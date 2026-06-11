@@ -34,7 +34,7 @@ export const Route = createFileRoute("/my-requests/$id")({
 
 const STATUS_META: Record<string, { label: string; chipClass: string }> = {
   open: { label: "פתוחה למכרז", chipClass: "status-chip-live" },
-  awarded: { label: "נבחר זוכה", chipClass: "status-chip-approved" },
+  awarded: { label: "נבחר זוכה", chipClass: "status-chip-info" },
   closed: { label: "סגורה", chipClass: "status-chip-muted" },
   cancelled: { label: "בוטלה", chipClass: "status-chip-rejected" },
 };
@@ -386,8 +386,8 @@ function MyRequestPage() {
                           } ${isRejected ? "opacity-50" : ""}`}
                         >
                           {/* Rank */}
-                          <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground" dir="ltr">
-                            #{idx + 1}
+                          <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
+                            <span dir="ltr">#{idx + 1}</span>
                           </td>
 
                           {/* Supplier */}
@@ -425,13 +425,13 @@ function MyRequestPage() {
                           </td>
 
                           {/* Workers */}
-                          <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
-                            {o.available_workers}
+                          <td className="px-4 py-3 text-sm tabular-nums">
+                            <span dir="ltr">{o.available_workers}</span>
                           </td>
 
                           {/* Start date */}
-                          <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
-                            {o.start_date}
+                          <td className="px-4 py-3 text-sm tabular-nums">
+                            <span dir="ltr">{o.start_date}</span>
                           </td>
 
                           {/* Savings */}
@@ -449,7 +449,7 @@ function MyRequestPage() {
                           {/* Status */}
                           <td className="px-4 py-3">
                             {isWinner ? (
-                              <span className="status-chip-approved">
+                              <span className="status-chip-info">
                                 <EmojiEventsIcon sx={{ fontSize: 12 }} /> זוכה
                               </span>
                             ) : o.status === "withdrawn" ? (
@@ -621,7 +621,7 @@ function MyRequestPage() {
                                 : "תאגיד אנונימי"}
                             </span>
                             {isWinner && (
-                              <span className="status-chip-approved">
+                              <span className="status-chip-info">
                                 <EmojiEventsIcon sx={{ fontSize: 12 }} /> זוכה
                               </span>
                             )}

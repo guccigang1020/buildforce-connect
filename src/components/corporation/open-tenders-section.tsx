@@ -133,8 +133,8 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                         </Link>
                       </td>
                       <td className="px-4 py-3 font-medium">{r.location}</td>
-                      <td className="px-4 py-3 tabular-nums text-muted-foreground" dir="ltr">
-                        {r.start_date}
+                      <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                        <span dir="ltr">{r.start_date}</span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{r.duration}</td>
                       <td className="px-4 py-3">

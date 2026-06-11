@@ -70,6 +70,9 @@ export async function fetchAdminDashboardData() {
   const totalCorporations = allRoles.filter(
     (r) => r.role === "corporation" && !adminUserIds.has(r.user_id),
   ).length;
+  const totalContractors = allRoles.filter(
+    (r) => r.role === "contractor" && !adminUserIds.has(r.user_id),
+  ).length;
 
   const attendanceRecs = monthlyAttendanceResult.data ?? [];
   const monthlyWorkforceValue = attendanceRecs.reduce(
@@ -91,5 +94,6 @@ export async function fetchAdminDashboardData() {
     monthlyWorkforceValue,
     monthlyWorkerHours,
     totalCorporations,
+    totalContractors,
   };
 }

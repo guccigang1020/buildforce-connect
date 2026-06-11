@@ -32,7 +32,7 @@ type StatusFilter = "all" | "open" | "awarded" | "closed" | "cancelled";
 
 const STATUS_META: Record<string, { label: string; chipClass: string }> = {
   open: { label: "פתוחה למכרז", chipClass: "status-chip-live" },
-  awarded: { label: "נבחר זוכה", chipClass: "status-chip-approved" },
+  awarded: { label: "נבחר זוכה", chipClass: "status-chip-info" },
   closed: { label: "סגורה", chipClass: "status-chip-muted" },
   cancelled: { label: "בוטלה", chipClass: "status-chip-rejected" },
 };
@@ -311,21 +311,23 @@ function RequestsTable({ requests }: { requests: MyRequest[] }) {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm">{r.location}</td>
-                <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
-                  {r.workers_count}
+                <td className="px-4 py-3 text-sm tabular-nums">
+                  <span dir="ltr">{r.workers_count}</span>
                 </td>
-                <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
-                  {r.start_date}
+                <td className="px-4 py-3 text-sm tabular-nums">
+                  <span dir="ltr">{r.start_date}</span>
                 </td>
-                <td className="px-4 py-3 text-sm tabular-nums font-medium" dir="ltr">
-                  {r.offers_count}
+                <td className="px-4 py-3 text-sm tabular-nums font-medium">
+                  <span dir="ltr">{r.offers_count}</span>
                 </td>
                 <td className="px-4 py-3">
                   <span className={meta.chipClass}>{meta.label}</span>
                 </td>
-                <td className="px-4 py-3 text-sm tabular-nums" dir="ltr">
+                <td className="px-4 py-3 text-sm tabular-nums">
                   {r.min_price != null ? (
-                    <span className="font-medium text-status-approved">₪{r.min_price}</span>
+                    <span className="font-medium text-status-approved" dir="ltr">
+                      ₪{r.min_price}
+                    </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}

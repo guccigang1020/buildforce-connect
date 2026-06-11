@@ -1,14 +1,10 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
 import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import UndoIcon from "@mui/icons-material/Undo";
-import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
-import { listMyOffers, withdrawOffer } from "@/lib/job-offers.functions";
+import { listMyOffers } from "@/lib/job-offers.functions";
 import { maskedRequestId } from "@/lib/anonymize";
 
 type MyOffer = {
@@ -29,7 +25,7 @@ const STATUS_META: Record<
 > = {
   submitted: { label: "נשלחה", chipClass: "status-chip-pending" },
   withdrawn: { label: "נסוגה", chipClass: "status-chip-muted" },
-  awarded:   { label: "נבחרה", chipClass: "status-chip-approved" },
+  awarded:   { label: "נבחרה", chipClass: "status-chip-info" },
   rejected:  { label: "נדחתה", chipClass: "status-chip-rejected" },
 };
 
@@ -47,33 +43,12 @@ function formatDate(iso: string) {
 
 export function MyOffersSection() {
   const fetchMine = useServerFn(listMyOffers);
-  const withdrawFn = useServerFn(withdrawOffer);
-  const qc = useQueryClient();
-  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-offers"],
     queryFn: () => fetchMine(),
   });
 
   const offers = (data?.offers ?? []) as MyOffer[];
-
-  const handleWithdraw = async (offerId: string) => {
-    setConfirmingId(null);
-    setWithdrawingId(offerId);
-    try {
-      await withdrawFn({ data: { offerId } });
-      toast.success("ההצעה נמשכה — המכרז חזר לרשימת המכרזים הפתוחים");
-      // Refresh both the offers list AND the open-tenders list (the tender
-      // becomes available to bid on again).
-      qc.invalidateQueries({ queryKey: ["my-offers"] });
-      qc.invalidateQueries({ queryKey: ["open-job-requests"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "שגיאה במשיכת ההצעה");
-    } finally {
-      setWithdrawingId(null);
-    }
-  };
 
   return (
     <div className="mt-8 scroll-mt-24 space-y-3" id="my-offers">
@@ -153,59 +128,21 @@ export function MyOffersSection() {
                           ₪{Number(o.price_per_hour).toLocaleString()}
                         </span>
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-muted-foreground" dir="ltr">
-                        {o.available_workers}
+                      <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                        <span dir="ltr">{o.available_workers}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={meta.chipClass}>{meta.label}</span>
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-xs text-muted-foreground" dir="ltr">
-                        {formatDate(o.created_at)}
+                      <td className="px-4 py-3 tabular-nums text-xs text-muted-foreground">
+                        <span dir="ltr">{formatDate(o.created_at)}</span>
                       </td>
                       <td className="px-4 py-3 text-end">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button asChild variant="ghost" size="sm">
-                            <Link to="/requests/$id" params={{ id: o.request_id }}>
-                              <VisibilityIcon sx={{ fontSize: 14 }} />
-                            </Link>
-                          </Button>
-                          {o.status === "submitted" &&
-                            (confirmingId === o.id ? (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-muted-foreground">למשוך?</span>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs"
-                                  onClick={() => handleWithdraw(o.id)}
-                                  disabled={withdrawingId === o.id}
-                                >
-                                  {withdrawingId === o.id ? (
-                                    <CircularProgress size={12} color="inherit" />
-                                  ) : (
-                                    "כן, משוך"
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs"
-                                  onClick={() => setConfirmingId(null)}
-                                >
-                                  ביטול
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setConfirmingId(o.id)}
-                                title="משוך הצעה"
-                              >
-                                <UndoIcon sx={{ fontSize: 14 }} /> משוך
-                              </Button>
-                            ))}
-                        </div>
+                        <Button asChild variant="ghost" size="sm" title="צפייה במכרז">
+                          <Link to="/requests/$id" params={{ id: o.request_id }}>
+                            <VisibilityIcon sx={{ fontSize: 14 }} />
+                          </Link>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -251,49 +188,11 @@ export function MyOffersSection() {
                         <span dir="ltr">{o.available_workers}</span> עובדים
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Button asChild variant="ghost" size="sm" className="h-8">
-                        <Link to="/requests/$id" params={{ id: o.request_id }}>
-                          <VisibilityIcon sx={{ fontSize: 14 }} />
-                        </Link>
-                      </Button>
-                      {o.status === "submitted" &&
-                        (confirmingId === o.id ? (
-                          <>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="h-8 px-2 text-xs"
-                              onClick={() => handleWithdraw(o.id)}
-                              disabled={withdrawingId === o.id}
-                            >
-                              {withdrawingId === o.id ? (
-                                <CircularProgress size={12} color="inherit" />
-                              ) : (
-                                "משוך"
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 text-xs"
-                              onClick={() => setConfirmingId(null)}
-                            >
-                              ביטול
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8"
-                            onClick={() => setConfirmingId(o.id)}
-                            title="משוך הצעה"
-                          >
-                            <UndoIcon sx={{ fontSize: 14 }} />
-                          </Button>
-                        ))}
-                    </div>
+                    <Button asChild variant="ghost" size="sm" className="h-8" title="צפייה במכרז">
+                      <Link to="/requests/$id" params={{ id: o.request_id }}>
+                        <VisibilityIcon sx={{ fontSize: 14 }} />
+                      </Link>
+                    </Button>
                   </div>
                   {isAwarded && (
                     <p className="mt-2 text-[11px] font-semibold text-primary">

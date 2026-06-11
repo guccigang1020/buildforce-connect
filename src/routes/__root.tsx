@@ -134,10 +134,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Critical inline CSS — applied on the very first paint, before the main
+// stylesheet (and, in dev, before Vite injects Tailwind) so there is no flash
+// of unstyled content: cream background is set immediately and MUI icons are
+// constrained so they never appear as giant black circles for a frame.
+const CRITICAL_CSS = `
+  html,body{background:#EFEDE7;color:#22363B;margin:0;
+    font-family:"Rubik","Heebo",system-ui,sans-serif}
+  svg.MuiSvgIcon-root{width:1em;height:1em;font-size:1.25rem;fill:currentColor}
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="he" dir="rtl">
       <head>
+        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
         <HeadContent />
       </head>
       <body>

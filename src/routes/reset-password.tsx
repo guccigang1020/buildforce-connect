@@ -2,9 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import LockIcon from "@mui/icons-material/Lock";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import CircularProgress from "@mui/material/CircularProgress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { mapAuthError } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +21,9 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [ready, setReady] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     // Supabase auto-handles the recovery hash; wait for session
@@ -33,6 +38,9 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError(null);
+    setConfirmError(null);
+    setFormError(null);
     const parsed = z
       .object({
         password: z.string().min(6, "סיסמה לפחות 6 תווים").max(72),
@@ -41,14 +49,23 @@ function ResetPasswordPage() {
       .refine((d) => d.password === d.confirm, { message: "הסיסמאות לא תואמות", path: ["confirm"] })
       .safeParse({ password, confirm });
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "פרטים לא תקינים");
+      for (const issue of parsed.error.issues) {
+        if (issue.path[0] === "password") setPasswordError(issue.message);
+        else if (issue.path[0] === "confirm") setConfirmError(issue.message);
+        else setFormError(issue.message);
+      }
       return;
     }
     setSubmitting(true);
     const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
     setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      const mapped = mapAuthError(error.message);
+      if (mapped.target === "password") {
+        setPasswordError(mapped.message);
+      } else {
+        setFormError(mapped.message);
+      }
       return;
     }
     toast.success("הסיסמה עודכנה בהצלחה!");
@@ -76,17 +93,25 @@ function ResetPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {formError && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
+                  <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <PasswordField
                 id="password"
                 label="סיסמה חדשה"
                 value={password}
-                onChange={setPassword}
+                onChange={(v) => { setPassword(v); if (passwordError) setPasswordError(null); }}
+                error={passwordError}
               />
               <PasswordField
                 id="confirm"
                 label="אימות סיסמה"
                 value={confirm}
-                onChange={setConfirm}
+                onChange={(v) => { setConfirm(v); if (confirmError) setConfirmError(null); }}
+                error={confirmError}
               />
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? (
@@ -116,11 +141,13 @@ function PasswordField({
   label,
   value,
   onChange,
+  error,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
+  error?: string | null;
 }) {
   return (
     <div className="space-y-1.5">
@@ -135,10 +162,17 @@ function PasswordField({
           required
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 pr-10"
+          aria-invalid={error ? true : undefined}
+          className={`h-10 pr-10 ${error ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30" : ""}`}
           placeholder="••••••••"
         />
       </div>
+      {error && (
+        <p className="flex items-center gap-1 text-xs font-medium text-destructive">
+          <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
