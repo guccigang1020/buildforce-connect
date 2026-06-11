@@ -63,6 +63,22 @@ export const submitOffer = createServerFn({ method: "POST" })
       .single();
     if (error || !offer) throw new Error(error?.message || "Failed to submit offer");
 
+    // Race guard (double-click / two tabs): if two inserts slipped past the
+    // pre-check concurrently, keep only the FIRST active offer and roll back
+    // this one. (The DB unique index in the hardening migration makes this
+    // impossible at the schema level once applied.)
+    const { data: actives } = await supabaseAdmin
+      .from("job_offers")
+      .select("id, created_at")
+      .eq("request_id", data.requestId)
+      .eq("corporation_id", userId)
+      .neq("status", "withdrawn")
+      .order("created_at", { ascending: true });
+    if ((actives?.length ?? 0) > 1 && actives![0].id !== offer.id) {
+      await supabaseAdmin.from("job_offers").delete().eq("id", offer.id);
+      throw new Error("כבר הגשת הצעה למכרז זה — ניתן להגיש הצעה אחת בלבד לכל מכרז.");
+    }
+
     // Notify request owner
     const { data: req } = await supabaseAdmin
       .from("job_requests")
