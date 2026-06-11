@@ -20,6 +20,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    optimizeDeps: {
+      exclude: ["react-is", "hoist-non-react-statics"],
+    },
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(
