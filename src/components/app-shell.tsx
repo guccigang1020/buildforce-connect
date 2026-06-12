@@ -14,6 +14,9 @@ import EngineeringIcon from "@mui/icons-material/Engineering";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { CommandPalette } from "@/components/command-palette";
+import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
+import { ThemeSwitch } from "@/components/theme-switch";
 
 export interface AppShellProps {
   children: React.ReactNode;
@@ -79,6 +82,8 @@ export function AppShell({ children, title, action, noPad }: AppShellProps) {
 
           <div className="flex-1" />
 
+          <ThemeSwitch />
+
           {action && <div className="flex shrink-0 items-center gap-3">{action}</div>}
         </header>
 
@@ -86,9 +91,13 @@ export function AppShell({ children, title, action, noPad }: AppShellProps) {
         <main
           className={`flex-1 overflow-y-auto ${noPad ? "" : "px-4 py-6 md:px-6 md:py-7 lg:px-8"}`}
         >
+          {!noPad && <AppBreadcrumbs className="mb-4" />}
           {children}
         </main>
       </div>
+
+      {/* Global ⌘K command palette */}
+      <CommandPalette />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -423,18 +424,16 @@ function SubmitOfferDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="sd">תאריך התחלה *</Label>
-              <Input
+              <DatePicker
                 id="sd"
-                type="date"
                 min={todayISO}
-                dir="ltr"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
+                onChange={(v) => {
+                  setStartDate(v);
                   setDateError(null);
                 }}
-                required
-                className={`h-11 ${dateError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                invalid={!!dateError}
+                className="h-11"
               />
               {dateError && <p className="text-xs text-destructive">{dateError}</p>}
             </div>

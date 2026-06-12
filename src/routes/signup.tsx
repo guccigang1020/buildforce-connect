@@ -26,6 +26,7 @@ import { mapAuthError } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AuthShell } from "@/components/auth-shell";
 
 const baseSchema = z.object({
   full_name: z.string().trim().min(2, "שם מלא נדרש").max(100),
@@ -170,223 +171,228 @@ function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
-      <div className="w-full max-w-lg py-8">
-        {/* Logo */}
-        <div className="mb-6 flex flex-col items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-card text-sm font-bold text-foreground">
-            B
+    <AuthShell size="lg">
+      <Link to="/" className="mb-6 flex flex-col items-center gap-2.5">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-primary shadow-elegant">
+          <EngineeringIcon sx={{ fontSize: 22 }} className="text-primary-foreground" />
+        </div>
+        <span className="text-base font-extrabold tracking-tight text-foreground">
+          Build<span className="text-primary">Force</span>
+        </span>
+      </Link>
+
+      <h1 className="mb-1 text-center text-2xl font-bold text-foreground">הצטרף ל-BuildForce</h1>
+      <p className="mb-6 text-center text-sm text-muted-foreground">
+        פתיחת חשבון חינם — וקבלת הצעות תוך שעות
+      </p>
+
+      {/* Glass form card */}
+      <div className="space-y-5 rounded-2xl border border-border/60 bg-card/70 p-6 shadow-2xl backdrop-blur-xl">
+        {/* Role picker */}
+        <div>
+          <Label className="mb-2.5 block text-sm font-medium">אני מצטרף/ת כ…</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <RoleCard
+              active={role === "contractor"}
+              onClick={() => setValue("role", "contractor", { shouldValidate: true })}
+              icon={EngineeringIcon}
+              title="קבלן / יזם"
+              sub="פותח בקשות לפועלים"
+            />
+            <RoleCard
+              active={role === "corporation"}
+              onClick={() => setValue("role", "corporation", { shouldValidate: true })}
+              icon={WorkIcon}
+              title="תאגיד כוח אדם"
+              sub="שולח הצעות לקבלנים"
+            />
           </div>
-          <span className="text-sm font-semibold tracking-tight text-foreground">BuildForce</span>
         </div>
 
-        <h1 className="mb-6 text-center text-xl font-semibold text-foreground">
-          הצטרף ל-BuildForce
-        </h1>
-
-        {/* Form card */}
-        <div className="rounded-lg border border-border p-6 space-y-5">
-          {/* Role picker */}
-          <div>
-            <Label className="mb-2.5 block text-sm font-medium">אני מצטרף/ת כ…</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <RoleCard
-                active={role === "contractor"}
-                onClick={() => setValue("role", "contractor", { shouldValidate: true })}
-                icon={EngineeringIcon}
-                title="קבלן / יזם"
-                sub="פותח בקשות לפועלים"
-              />
-              <RoleCard
-                active={role === "corporation"}
-                onClick={() => setValue("role", "corporation", { shouldValidate: true })}
-                icon={WorkIcon}
-                title="תאגיד כוח אדם"
-                sub="שולח הצעות לקבלנים"
-              />
-            </div>
+        {formError && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
+            <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
+            <span>{formError}</span>
           </div>
+        )}
 
-          {formError && (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
-              <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
-              <span>{formError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <Field
+            id="full_name"
+            label="שם מלא"
+            icon={PersonIcon}
+            required
+            registration={register("full_name")}
+            error={errors.full_name?.message}
+          />
+          <div className="grid gap-4 md:grid-cols-2">
             <Field
-              id="full_name"
-              label="שם מלא"
-              icon={PersonIcon}
+              id="email"
+              label="אימייל"
+              type="email"
+              icon={MailOutlineIcon}
               required
-              registration={register("full_name")}
-              error={errors.full_name?.message}
+              registration={register("email")}
+              error={errors.email?.message}
             />
+            <Field
+              id="phone"
+              label="טלפון"
+              type="tel"
+              icon={PhoneIcon}
+              required
+              registration={register("phone")}
+              error={errors.phone?.message}
+              placeholder="050-1234567"
+            />
+          </div>
+          <Field
+            id="password"
+            label="סיסמה"
+            type="password"
+            icon={LockIcon}
+            required
+            registration={register("password")}
+            error={errors.password?.message}
+            placeholder="לפחות 6 תווים"
+          />
+
+          {/* Business details */}
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <ApartmentIcon sx={{ fontSize: 16 }} className="text-muted-foreground" />
+              פרטי העסק
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Field
-                id="email"
-                label="אימייל"
-                type="email"
-                icon={MailOutlineIcon}
+                id="business_name"
+                label={role === "corporation" ? "שם התאגיד" : "שם העסק"}
+                icon={ApartmentIcon}
                 required
-                registration={register("email")}
-                error={errors.email?.message}
+                registration={register("business_name")}
+                error={errors.business_name?.message}
               />
               <Field
-                id="phone"
-                label="טלפון"
-                type="tel"
-                icon={PhoneIcon}
+                id="business_id"
+                label="ח.פ / ע.מ"
+                icon={TagIcon}
                 required
-                registration={register("phone")}
-                error={errors.phone?.message}
-                placeholder="050-1234567"
+                registration={register("business_id")}
+                error={errors.business_id?.message}
+                placeholder="9 ספרות"
               />
             </div>
             <Field
-              id="password"
-              label="סיסמה"
-              type="password"
-              icon={LockIcon}
+              id="city"
+              label="עיר"
+              icon={PlaceIcon}
               required
-              registration={register("password")}
-              error={errors.password?.message}
-              placeholder="לפחות 6 תווים"
+              registration={register("city")}
+              error={errors.city?.message}
             />
+          </div>
 
-            {/* Business details */}
+          {/* Contractor verification */}
+          {role === "contractor" && (
             <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <ApartmentIcon sx={{ fontSize: 16 }} className="text-muted-foreground" />
-                פרטי העסק
+              <div className="flex items-start gap-2.5">
+                <VerifiedUserIcon
+                  sx={{ fontSize: 16 }}
+                  className="mt-0.5 shrink-0 text-muted-foreground"
+                />
+                <div>
+                  <div className="text-sm font-medium">אימות קבלן רשום (חובה)</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    רק קבלנים רשומים מקבלים שירותים. הפרטים נבדקים ע"י הצוות תוך 24 שעות.
+                  </div>
+                </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
-                  id="business_name"
-                  label={role === "corporation" ? "שם התאגיד" : "שם העסק"}
-                  icon={ApartmentIcon}
+                  id="contractor_license_number"
+                  label="מס' קבלן רשום"
+                  icon={WorkspacePremiumIcon}
                   required
-                  registration={register("business_name")}
-                  error={errors.business_name?.message}
+                  registration={register("contractor_license_number")}
+                  error={errors.contractor_license_number?.message}
+                  placeholder="לדוגמה: 12345"
                 />
                 <Field
-                  id="business_id"
-                  label="ח.פ / ע.מ"
-                  icon={TagIcon}
+                  id="contractor_classification"
+                  label="סיווג"
+                  icon={WorkIcon}
                   required
-                  registration={register("business_id")}
-                  error={errors.business_id?.message}
-                  placeholder="9 ספרות"
+                  registration={register("contractor_classification")}
+                  error={errors.contractor_classification?.message}
+                  placeholder="100 / 131 / ..."
                 />
               </div>
-              <Field
-                id="city"
-                label="עיר"
-                icon={PlaceIcon}
-                required
-                registration={register("city")}
-                error={errors.city?.message}
+              <ComingSoonDoc icon={DescriptionIcon} label="תעודת קבלן רשום" />
+              <ComingSoonDoc icon={MenuBookIcon} label="אישור ניהול ספרים" />
+            </div>
+          )}
+
+          {/* Corporation verification */}
+          {role === "corporation" && (
+            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+              <div className="flex items-start gap-2.5">
+                <VerifiedUserIcon
+                  sx={{ fontSize: 16 }}
+                  className="mt-0.5 shrink-0 text-muted-foreground"
+                />
+                <div>
+                  <div className="text-sm font-medium">אימות תאגיד</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    הפרטים נבדקים ע"י הצוות תוך 24 שעות.
+                  </div>
+                </div>
+              </div>
+              <ComingSoonDoc icon={HandshakeIcon} label="הסכם התקשרות מול קבלנים" />
+            </div>
+          )}
+
+          {/* Terms */}
+          <div className="space-y-1.5">
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/10 p-3.5">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => {
+                  setAgreed(e.target.checked);
+                  if (e.target.checked) setAgreedError(null);
+                }}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-primary"
               />
-            </div>
+              <span className="text-xs leading-relaxed text-muted-foreground">
+                אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת הפלטפורמה
+                (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס לפי המוסכם.
+              </span>
+            </label>
+            {agreedError && <FieldError message={agreedError} />}
+          </div>
 
-            {/* Contractor verification */}
-            {role === "contractor" && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
-                <div className="flex items-start gap-2.5">
-                  <VerifiedUserIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">אימות קבלן רשום (חובה)</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      רק קבלנים רשומים מקבלים שירותים. הפרטים נבדקים ע"י הצוות תוך 24 שעות.
-                    </div>
-                  </div>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field
-                    id="contractor_license_number"
-                    label="מס' קבלן רשום"
-                    icon={WorkspacePremiumIcon}
-                    required
-                    registration={register("contractor_license_number")}
-                    error={errors.contractor_license_number?.message}
-                    placeholder="לדוגמה: 12345"
-                  />
-                  <Field
-                    id="contractor_classification"
-                    label="סיווג"
-                    icon={WorkIcon}
-                    required
-                    registration={register("contractor_classification")}
-                    error={errors.contractor_classification?.message}
-                    placeholder="100 / 131 / ..."
-                  />
-                </div>
-                <ComingSoonDoc icon={DescriptionIcon} label="תעודת קבלן רשום" />
-                <ComingSoonDoc icon={MenuBookIcon} label="אישור ניהול ספרים" />
-              </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <CircularProgress size={16} color="inherit" className="ms-2" /> יוצר חשבון…
+              </>
+            ) : (
+              "צור חשבון בחינם"
             )}
-
-            {/* Corporation verification */}
-            {role === "corporation" && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
-                <div className="flex items-start gap-2.5">
-                  <VerifiedUserIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-muted-foreground" />
-                  <div>
-                    <div className="text-sm font-medium">אימות תאגיד</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      הפרטים נבדקים ע"י הצוות תוך 24 שעות.
-                    </div>
-                  </div>
-                </div>
-                <ComingSoonDoc icon={HandshakeIcon} label="הסכם התקשרות מול קבלנים" />
-              </div>
-            )}
-
-            {/* Terms */}
-            <div className="space-y-1.5">
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted/10 p-3.5">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => {
-                    setAgreed(e.target.checked);
-                    if (e.target.checked) setAgreedError(null);
-                  }}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-border accent-primary"
-                />
-                <span className="text-xs leading-relaxed text-muted-foreground">
-                  אני מאשר/ת שכל ההתקשרות מול הצד השני תתבצע אך ורק דרך BuildForce. עקיפת
-                  הפלטפורמה (יצירת קשר ישיר או התקשרות חיצונית) מהווה הפרת תנאי שימוש ומחייבת בקנס
-                  לפי המוסכם.
-                </span>
-              </label>
-              {agreedError && <FieldError message={agreedError} />}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <CircularProgress size={16} color="inherit" className="ms-2" /> יוצר חשבון…
-                </>
-              ) : (
-                "צור חשבון בחינם"
-              )}
-            </Button>
-          </form>
-        </div>
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          כבר יש לך חשבון?{" "}
-          <Link to="/login" className="font-medium text-primary hover:underline">
-            התחבר
-          </Link>
-        </p>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          © BuildForce {new Date().getFullYear()} · כל הזכויות שמורות
-        </p>
+          </Button>
+        </form>
       </div>
-    </div>
+
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        כבר יש לך חשבון?{" "}
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          התחבר
+        </Link>
+      </p>
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        © BuildForce {new Date().getFullYear()} · כל הזכויות שמורות
+      </p>
+    </AuthShell>
   );
 }
 
@@ -457,7 +463,10 @@ function Field({
         {required && <span className="ms-1 text-destructive">*</span>}
       </Label>
       <div className="relative">
-        <Icon sx={{ fontSize: 16 }} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Icon
+          sx={{ fontSize: 16 }}
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
           id={id}
           type={type}

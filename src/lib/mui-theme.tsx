@@ -32,12 +32,14 @@ export const muiTheme = createTheme({
   direction: "rtl",
   palette: {
     mode: "light",
-    primary: { main: "#146C78", light: "#0E91A1", dark: "#0E4E57", contrastText: "#FDFCFA" },
-    secondary: { main: "#0E91A1", contrastText: "#FDFCFA" },
+    // Indigo → violet accent (matches the --primary / --primary-glow CSS tokens).
+    // MUI `contained primary` buttons read these, so they must stay in sync.
+    primary: { main: "#5B57F0", light: "#8B7CF8", dark: "#4038C0", contrastText: "#FDFCFA" },
+    secondary: { main: "#8B5CF6", contrastText: "#FDFCFA" },
     success: { main: "#3F8D5C", light: "#7DCE94" },
     warning: { main: "#A8761B" },
     error: { main: "#A8442E" },
-    info: { main: "#0E91A1" },
+    info: { main: "#6366F1" },
     background: { default: "#EFEDE7", paper: "#FFFFFF" },
     text: { primary: "#22363B", secondary: "#5C6B6E" },
     divider: "#DCD8CC",

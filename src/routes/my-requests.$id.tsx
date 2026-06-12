@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import CircularProgress from "@mui/material/CircularProgress";
 import WorkIcon from "@mui/icons-material/Work";
+import TimelineIcon from "@mui/icons-material/Timeline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import PaidIcon from "@mui/icons-material/Paid";
@@ -16,6 +17,8 @@ import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import PhoneIcon from "@mui/icons-material/Phone";
 import MailOutlineIcon from "@mui/icons-material/MailOutlined";
 import { Button } from "@/components/ui/button";
+import { Timeline, type TimelineItem } from "@/components/ui/timeline";
+import { OffersInsight } from "@/components/ui/offers-insight";
 import { AppShell } from "@/components/app-shell";
 import { getJobRequestWithOffers } from "@/lib/job-requests.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -139,6 +142,51 @@ function MyRequestPage() {
       )
     : null;
 
+  // Request lifecycle — drives the status Timeline
+  const createdAt = (request as { created_at?: string }).created_at;
+  const deadlineAt = (request as { deadline_at?: string }).deadline_at;
+  const isCancelled = request.status === "cancelled";
+  const offersReceived = offers.length > 0;
+  const lifecycle: TimelineItem[] = [
+    {
+      id: "created",
+      title: "הבקשה נוצרה",
+      description: "הבקשה פורסמה למכרז מול תאגידים מאומתים",
+      timestamp: createdAt,
+      status: "completed",
+    },
+    {
+      id: "offers",
+      title: "קבלת הצעות",
+      description: offersReceived
+        ? `${offers.length} הצעות התקבלו · ממוצע ${avgPrice} ₪/שעה`
+        : "ממתין להצעות מתאגידים",
+      status: offersReceived ? "completed" : isCancelled ? "default" : "active",
+    },
+    {
+      id: "deadline",
+      title: "מועד סגירת המכרז",
+      description:
+        request.status === "open" && deadlineHours !== null && deadlineHours > 0
+          ? deadlineHours < 24
+            ? `נסגר בעוד ${deadlineHours} שעות`
+            : `נסגר בעוד ${Math.round(deadlineHours / 24)} ימים`
+          : "המכרז נסגר",
+      timestamp: deadlineAt,
+      status: request.status === "open" ? "pending" : isCancelled ? "error" : "completed",
+    },
+    {
+      id: "awarded",
+      title: isCancelled ? "הבקשה בוטלה" : "בחירת זוכה",
+      description: winningOffer
+        ? `נבחר זוכה · ₪${Number(winningOffer.price_per_hour)} לשעה`
+        : isCancelled
+          ? "הבקשה בוטלה ולא נבחר זוכה"
+          : "טרם נבחר זוכה",
+      status: winningOffer ? "completed" : isCancelled ? "error" : "pending",
+    },
+  ];
+
   return (
     <AppShell title={`בקשה ${maskedRequestId(request.id)}`}>
       <div className="space-y-6">
@@ -153,26 +201,32 @@ function MyRequestPage() {
                 <span className={statusMeta.chipClass}>{statusMeta.label}</span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                {request.location} · התחלה{" "}
-                <span dir="ltr">{request.start_date}</span> · {request.duration} · {totalWorkers}{" "}
-                עובדים
-                {deadlineHours !== null &&
-                  deadlineHours > 0 &&
-                  request.status === "open" && (
-                    <span
-                      className={`mr-2 font-medium ${
-                        deadlineHours < 24 ? "text-destructive" : "text-status-pending"
-                      }`}
-                    >
-                      ·{" "}
-                      {deadlineHours < 24
-                        ? `נסגר בעוד ${deadlineHours}ש׳`
-                        : `${Math.round(deadlineHours / 24)} ימים לסגירה`}
-                    </span>
-                  )}
+                {request.location} · התחלה <span dir="ltr">{request.start_date}</span> ·{" "}
+                {request.duration} · {totalWorkers} עובדים
+                {deadlineHours !== null && deadlineHours > 0 && request.status === "open" && (
+                  <span
+                    className={`mr-2 font-medium ${
+                      deadlineHours < 24 ? "text-destructive" : "text-status-pending"
+                    }`}
+                  >
+                    ·{" "}
+                    {deadlineHours < 24
+                      ? `נסגר בעוד ${deadlineHours}ש׳`
+                      : `${Math.round(deadlineHours / 24)} ימים לסגירה`}
+                  </span>
+                )}
               </p>
             </div>
           </div>
+        </div>
+
+        {/* ── Lifecycle ── */}
+        <div className="enterprise-card p-5">
+          <h3 className="mb-4 border-b border-border pb-3 text-sm font-semibold">
+            <TimelineIcon sx={{ fontSize: 14 }} className="mr-1.5 inline text-muted-foreground" />
+            מסלול הבקשה
+          </h3>
+          <Timeline items={lifecycle} />
         </div>
 
         {/* ── Items ── */}
@@ -206,66 +260,12 @@ function MyRequestPage() {
           </div>
         )}
 
-        {/* ── Savings Engine ── */}
+        {/* ── Offers insight (cheapest + monthly savings + distribution) ── */}
         {sortedOffers.length > 0 && (
-          <div className="enterprise-card overflow-hidden">
-            <div className="border-b border-border px-5 py-4">
-              <h3 className="text-sm font-semibold">
-                מנוע החיסכון
-                <span className="mr-2 font-normal text-xs text-muted-foreground">
-                  {offers.length} הצעות · ממוצע{" "}
-                  <span dir="ltr">{avgPrice} ₪/שעה</span>
-                </span>
-              </h3>
-            </div>
-
-            {/* Hero savings number — intentionally orange and large (business plan) */}
-            {hourlySavings > 0 && (
-              <div className="border-b border-border bg-savings-soft px-5 py-6 md:px-8">
-                <span className="savings-badge uppercase tracking-wider">
-                  <TrendingDownIcon sx={{ fontSize: 14 }} />
-                  {winningOffer ? "החיסכון שהשגת" : "חיסכון לשעה מוערך"}
-                </span>
-                <div className="mt-3 text-5xl font-black leading-none tracking-tight text-savings md:text-6xl">
-                  <span dir="ltr">₪{hourlySavings.toLocaleString()}</span>
-                  <span className="mr-2 align-middle text-lg font-bold text-savings/80">
-                    / שעה
-                  </span>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  <span dir="ltr">₪{savingsPerHour}</span> לשעה ×{" "}
-                  <span dir="ltr">{totalWorkers}</span> עובדים
-                </p>
-              </div>
-            )}
-
-            {/* Price range stats */}
-            <div className="p-5">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-lg border border-border p-3 text-center">
-                  <div className="text-xs text-muted-foreground">מינימום</div>
-                  <div
-                    className="mt-1 text-base font-semibold tabular-nums text-savings"
-                    dir="ltr"
-                  >
-                    ₪{minPrice}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border p-3 text-center">
-                  <div className="text-xs text-muted-foreground">ממוצע</div>
-                  <div className="mt-1 text-base font-semibold tabular-nums" dir="ltr">
-                    ₪{avgPrice}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border p-3 text-center">
-                  <div className="text-xs text-muted-foreground">מקסימום</div>
-                  <div className="mt-1 text-base font-semibold tabular-nums" dir="ltr">
-                    ₪{maxPrice}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <OffersInsight
+            prices={sortedOffers.map((o) => Number(o.price_per_hour))}
+            totalWorkers={totalWorkers}
+          />
         )}
 
         {/* ── Offers section ── */}
@@ -273,13 +273,6 @@ function MyRequestPage() {
           <h3 className="mb-3 border-b border-border pb-3 text-sm font-semibold">
             הצעות שהתקבלו
             <span className="mr-1.5 font-normal text-muted-foreground">({offers.length})</span>
-            {minPrice > 0 && (
-              <span className="mr-2">
-                <span className="savings-badge">
-                  <TrendingDownIcon sx={{ fontSize: 12 }} /> מינ׳ <span dir="ltr">₪{minPrice}</span> לשעה
-                </span>
-              </span>
-            )}
           </h3>
 
           {offers.length === 0 ? (
@@ -313,8 +306,7 @@ function MyRequestPage() {
                 <tbody>
                   {sortedOffers.map((o, idx) => {
                     const isWinner = o.status === "awarded";
-                    const isRejected =
-                      o.status === "rejected" || o.status === "withdrawn";
+                    const isRejected = o.status === "rejected" || o.status === "withdrawn";
                     const priceNum = Number(o.price_per_hour);
                     const savedVsMax = maxPrice > priceNum ? maxPrice - priceNum : 0;
                     const reveal = o as {
@@ -328,9 +320,7 @@ function MyRequestPage() {
                       <Fragment key={o.id}>
                         <tr
                           className={`premium-table-row ${
-                            isWinner
-                              ? "bg-emerald-500/10"
-                              : ""
+                            isWinner ? "bg-emerald-500/10" : ""
                           } ${isRejected ? "opacity-50" : ""}`}
                         >
                           {/* Rank */}
@@ -341,9 +331,7 @@ function MyRequestPage() {
                           {/* Supplier */}
                           <td className="px-4 py-3">
                             <div className="text-sm font-medium">
-                              {isWinner && reveal.corp_name
-                                ? reveal.corp_name
-                                : "תאגיד אנונימי"}
+                              {isWinner && reveal.corp_name ? reveal.corp_name : "תאגיד אנונימי"}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               {isOwner && request.status === "open" ? (
@@ -411,27 +399,23 @@ function MyRequestPage() {
 
                           {/* Action */}
                           <td className="px-4 py-3">
-                            {isOwner &&
-                              request.status === "open" &&
-                              o.status === "submitted" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={actingId !== null}
-                                  onClick={() =>
-                                    setConfirmingAwardId(isConfirming ? null : o.id)
-                                  }
-                                  className="h-7 gap-1 px-3 text-xs"
-                                >
-                                  {actingId === o.id ? (
-                                    <CircularProgress size={12} color="inherit" />
-                                  ) : (
-                                    <>
-                                      <EmojiEventsIcon sx={{ fontSize: 12 }} /> בחר כזוכה
-                                    </>
-                                  )}
-                                </Button>
-                              )}
+                            {isOwner && request.status === "open" && o.status === "submitted" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={actingId !== null}
+                                onClick={() => setConfirmingAwardId(isConfirming ? null : o.id)}
+                                className="h-7 gap-1 px-3 text-xs"
+                              >
+                                {actingId === o.id ? (
+                                  <CircularProgress size={12} color="inherit" />
+                                ) : (
+                                  <>
+                                    <EmojiEventsIcon sx={{ fontSize: 12 }} /> בחר כזוכה
+                                  </>
+                                )}
+                              </Button>
+                            )}
                           </td>
                         </tr>
 
@@ -441,7 +425,10 @@ function MyRequestPage() {
                             <td colSpan={8} className="px-4 pb-4 pt-0">
                               <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
                                 <div className="mb-3 flex items-center gap-2">
-                                  <WorkspacePremiumIcon sx={{ fontSize: 20 }} className="text-primary" />
+                                  <WorkspacePremiumIcon
+                                    sx={{ fontSize: 20 }}
+                                    className="text-primary"
+                                  />
                                   <span className="text-sm font-semibold">
                                     אישור סופי — בחירת זוכה
                                   </span>
@@ -458,13 +445,8 @@ function MyRequestPage() {
                                       לשעה · <span dir="ltr">{totalWorkers}</span> עובדים
                                     </span>
                                   </div>
-                                  <div>
-                                    זהות התאגיד ופרטי הקשר שלו יחשפו בפניך מיד לאחר
-                                    האישור.
-                                  </div>
-                                  <div>
-                                    כל שאר ההצעות יסומנו כ״לא נבחרו״ ותישלח להן הודעה.
-                                  </div>
+                                  <div>זהות התאגיד ופרטי הקשר שלו יחשפו בפניך מיד לאחר האישור.</div>
+                                  <div>כל שאר ההצעות יסומנו כ״לא נבחרו״ ותישלח להן הודעה.</div>
                                   <div className="font-semibold text-foreground">
                                     הפעולה סופית — אין אפשרות לביטול.
                                   </div>
@@ -486,8 +468,7 @@ function MyRequestPage() {
                                   >
                                     {actingId === o.id ? (
                                       <>
-                                        <CircularProgress size={16} color="inherit" />{" "}
-                                        בוחר…
+                                        <CircularProgress size={16} color="inherit" /> בוחר…
                                       </>
                                     ) : (
                                       <>
@@ -508,16 +489,11 @@ function MyRequestPage() {
                               <td colSpan={8} className="px-4 pb-3 pt-0">
                                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                                   <div className="flex items-center gap-1.5 text-xs font-semibold text-status-pending">
-                                    <WarningAmberIcon sx={{ fontSize: 14 }} /> תנאי התאגיד
-                                    לזכייה
+                                    <WarningAmberIcon sx={{ fontSize: 14 }} /> תנאי התאגיד לזכייה
                                   </div>
                                   <ul className="mt-1.5 space-y-0.5 text-xs text-status-pending">
-                                    {o.requires_personal_guarantee && (
-                                      <li>• ערבות אישית מהקבלן</li>
-                                    )}
-                                    {o.requires_security_check && (
-                                      <li>• צ׳ק לביטחון מהקבלן</li>
-                                    )}
+                                    {o.requires_personal_guarantee && <li>• ערבות אישית מהקבלן</li>}
+                                    {o.requires_security_check && <li>• צ׳ק לביטחון מהקבלן</li>}
                                   </ul>
                                 </div>
                               </td>
@@ -544,8 +520,7 @@ function MyRequestPage() {
               <div className="divide-y divide-border md:hidden">
                 {sortedOffers.map((o, idx) => {
                   const isWinner = o.status === "awarded";
-                  const isRejected =
-                    o.status === "rejected" || o.status === "withdrawn";
+                  const isRejected = o.status === "rejected" || o.status === "withdrawn";
                   const priceNum = Number(o.price_per_hour);
                   const reveal = o as { corp_name?: string };
                   const isConfirming = confirmingAwardId === o.id;
@@ -560,13 +535,14 @@ function MyRequestPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-medium tabular-nums text-muted-foreground" dir="ltr">
+                            <span
+                              className="text-xs font-medium tabular-nums text-muted-foreground"
+                              dir="ltr"
+                            >
                               #{idx + 1}
                             </span>
                             <span className="text-sm font-medium">
-                              {isWinner && reveal.corp_name
-                                ? reveal.corp_name
-                                : "תאגיד אנונימי"}
+                              {isWinner && reveal.corp_name ? reveal.corp_name : "תאגיד אנונימי"}
                             </span>
                             {isWinner && (
                               <span className="status-chip-info">
@@ -649,7 +625,8 @@ function MyRequestPage() {
         {winningOffer && isOwner && (
           <div className="enterprise-card border-emerald-500/30 bg-emerald-500/10 p-5">
             <h4 className="mb-3 flex items-center gap-2 border-b border-border pb-3 text-sm font-semibold">
-              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-status-approved" /> הזכייה הושלמה
+              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-status-approved" /> הזכייה
+              הושלמה
             </h4>
             <p className="text-sm text-muted-foreground">
               פרטי הקשר נחשפו לשני הצדדים. אנא צרו קשר תוך 48 שעות.

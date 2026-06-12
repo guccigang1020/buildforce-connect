@@ -35,6 +35,10 @@ import EngineeringIcon from "@mui/icons-material/Engineering";
 import WorkIcon from "@mui/icons-material/Work";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Button } from "@/components/ui/button";
+import { HeroGeometric } from "@/components/ui/shape-landing-hero";
+import { BackgroundPaths } from "@/components/ui/background-paths";
+import { MinimalistHero } from "@/components/ui/minimalist-hero";
+import { BookingCalendar } from "@/components/ui/booking-calendar";
 import heroImg from "@/assets/hero-construction.jpg";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -67,6 +71,14 @@ function Home() {
       <TrustBar />
       <CompetitionAdvantage />
       <HowItWorks />
+      <MinimalistHero
+        headline={{ part1: "פחות.", part2: "יותר." }}
+        mainText="פלטפורמה אחת, ממשק נקי, והחלטה אחת פשוטה — הזוכה במחיר הטוב ביותר. בלי עומס, בלי עמלות נסתרות."
+        readMoreLabel="גלה איך זה עובד"
+        readMoreHref="#how"
+        imageSrc={heroImg}
+        imageAlt="אתר בנייה"
+      />
       <PlatformShowcase />
       <SiteAttendance />
       <PeaceOfMind />
@@ -74,6 +86,7 @@ function Home() {
       <WhyTrust />
       <SavingsShowcase />
       <EarlyAccess />
+      <BookingCalendar />
       <CTABanner />
       <SiteFooter />
     </div>
@@ -84,72 +97,56 @@ function Home() {
 function Hero() {
   const heroCta = usePrimaryCta();
   return (
-    <section className="relative overflow-hidden">
-      {/* Background image with flat overlay */}
-      <div className="absolute inset-0">
-        <img
-          src={heroImg}
-          alt="אתר בנייה"
-          className="h-full w-full object-cover opacity-20"
-          width={1920}
-          height={1080}
-        />
-        <div className="absolute inset-0 bg-background/80" />
-      </div>
-
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-20 md:px-6 md:py-28 lg:grid-cols-12 lg:py-32">
-        <div className="lg:col-span-7">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/8 px-4 py-1.5 text-xs font-semibold text-primary animate-fade-in">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-            </span>
-            מכרז חי · תאגידים נלחמים על העבודה שלך
-          </div>
-          <h1 className="text-display animate-fade-in">
-            הם נלחמים.
-            <br />
-            <span className="text-gradient-accent">אתה מרוויח.</span>
-            <br />
-            <span className="opacity-90">במחיר הכי נמוך.</span>
-          </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            פרסם בקשה אחת — תאגידי כוח אדם מאומתים מתחרים על הזכות לעבוד איתך. כל הצעה חדשה דוחפת את
-            המחיר למטה. שקיפות מלאה, החלטה אצלך, ללא עמלה לקבלן.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="h-12 px-8 text-base font-semibold shadow-elegant">
-              <Link to={heroCta}>
-                פרסם בקשת כוח אדם
-                <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-2 transition-transform group-hover:-translate-x-1" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 px-8 text-base font-semibold"
-            >
-              <Link to="/" hash="how">
-                איך זה עובד
-              </Link>
-            </Button>
-          </div>
-          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-2">
-              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-primary" /> שימוש חינם לקבלנים
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-primary" /> תאגידים מאומתים בלבד
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <CheckCircleIcon sx={{ fontSize: 16 }} className="text-primary" /> נתונים מאובטחים בתקן בנקאי
-            </span>
-          </div>
+    <>
+      <HeroGeometric
+        badge="מכרז חי · תאגידים נלחמים על העבודה שלך"
+        title1="הם נלחמים, אתה מרוויח."
+        title2="במחיר הכי נמוך."
+        subtitle="פרסם בקשה אחת — תאגידי כוח אדם מאומתים מתחרים על הזכות לעבוד איתך. כל הצעה חדשה דוחפת את המחיר למטה. שקיפות מלאה, החלטה אצלך, ללא עמלה לקבלן."
+      >
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button
+            asChild
+            size="lg"
+            className="group h-12 px-8 text-base font-semibold shadow-elegant"
+          >
+            <Link to={heroCta}>
+              פרסם בקשת כוח אדם
+              <ArrowBackIcon
+                sx={{ fontSize: 16 }}
+                className="mr-2 transition-transform group-hover:-translate-x-1"
+              />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="h-12 border-white/20 bg-white/5 px-8 text-base font-semibold text-white hover:bg-white/10 hover:text-white"
+          >
+            <Link to="/" hash="how">
+              איך זה עובד
+            </Link>
+          </Button>
         </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-white/55">
+          <span className="inline-flex items-center gap-2">
+            <CheckCircleIcon sx={{ fontSize: 16 }} className="text-indigo-400" /> שימוש חינם לקבלנים
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <CheckCircleIcon sx={{ fontSize: 16 }} className="text-indigo-400" /> תאגידים מאומתים
+            בלבד
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <CheckCircleIcon sx={{ fontSize: 16 }} className="text-indigo-400" /> נתונים מאובטחים
+            בתקן בנקאי
+          </span>
+        </div>
+      </HeroGeometric>
 
-        {/* Sample request card — masked-bidders hero card */}
-        <div className="lg:col-span-5">
+      {/* Sample request card — masked-bidders showcase */}
+      <section className="bg-background px-4 pb-16 pt-12 md:px-6 md:pb-24">
+        <div className="mx-auto max-w-lg">
           <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm animate-fade-in">
             <div className="absolute -top-3 right-6 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
               <span className="relative flex h-2 w-2">
@@ -211,7 +208,9 @@ function Hero() {
                         <span className="truncate" dir="ltr">
                           {c.name}
                         </span>
-                        {c.badge && <VerifiedIcon sx={{ fontSize: 16 }} className="shrink-0 text-primary" />}
+                        {c.badge && (
+                          <VerifiedIcon sx={{ fontSize: 16 }} className="shrink-0 text-primary" />
+                        )}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <StarIcon sx={{ fontSize: 12 }} className="text-primary" /> {c.rating}
@@ -243,8 +242,8 @@ function Hero() {
             </Button>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
 
@@ -387,9 +386,7 @@ function HowItWorks() {
           <div className="grid gap-0 lg:grid-cols-4">
             {steps.map((s, i) => (
               <div key={s.n} className="flex flex-col items-center">
-                {i > 0 && (
-                  <div className="h-8 w-px bg-border lg:hidden" />
-                )}
+                {i > 0 && <div className="h-8 w-px bg-border lg:hidden" />}
 
                 <div className="relative z-10 grid h-16 w-16 shrink-0 place-items-center rounded-full bg-primary text-xl font-bold text-primary-foreground transition-transform duration-200 hover:scale-105">
                   {s.n}
@@ -526,7 +523,10 @@ function WhyTrust() {
                 <div className="mt-0.5 text-xs text-muted-foreground">רישוי ביטוח ובטיחות</div>
               </div>
               <div className="rounded-lg border border-border bg-card p-5">
-                <div className="text-2xl font-bold text-status-approved md:text-3xl tabular-nums" dir="ltr">
+                <div
+                  className="text-2xl font-bold text-status-approved md:text-3xl tabular-nums"
+                  dir="ltr"
+                >
                   &lt;24h
                 </div>
                 <div className="mt-1.5 text-sm font-semibold text-foreground">עד הצעה ראשונה</div>
@@ -589,9 +589,7 @@ function SavingsShowcase() {
             </div>
             <div className="mt-4 text-6xl font-black tracking-tight text-savings md:text-7xl">
               <span dir="ltr">₪18,000</span>
-              <span className="mr-2 align-middle text-2xl font-bold text-savings/90">
-                / חודש
-              </span>
+              <span className="mr-2 align-middle text-2xl font-bold text-savings/90">/ חודש</span>
             </div>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
               לעומת ההצעה היקרה ביותר שקיבלת. כל ₪ של פער, כפול כל שעת עבודה — חוזר אליך.
@@ -667,10 +665,7 @@ function EarlyAccess() {
         />
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           {benefits.map((b) => (
-            <div
-              key={b.title}
-              className="enterprise-card rounded-xl p-6"
-            >
+            <div key={b.title} className="enterprise-card rounded-xl p-6">
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
                 <b.icon sx={{ fontSize: 20 }} />
               </div>
@@ -688,38 +683,24 @@ function EarlyAccess() {
 function CTABanner() {
   const bannerCta = usePrimaryCta();
   return (
-    <section className="px-4 pb-20 md:px-6 md:pb-28">
-      <div className="mx-auto max-w-7xl rounded-2xl border border-border bg-card p-8 md:p-14">
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-          <div>
-            <h2 className="text-2xl font-bold leading-tight md:text-4xl">
-              מוכן לקבל את הצוות הבא שלך?
-            </h2>
-            <p className="mt-4 max-w-lg text-base text-muted-foreground">
-              פרסום בקשה לוקח 60 שניות. הצעות הראשונות מגיעות תוך שעות. פתיחת חשבון חינם.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 lg:justify-end">
-            <Button asChild size="lg" className="h-12 px-7 text-base font-semibold">
-              <Link to={bannerCta}>
-                פרסם בקשה עכשיו
-                <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-2" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 px-7 text-base"
-            >
-              <a href="mailto:support@buildforceprime.com" aria-label="צור קשר עם הצוות במייל">
-                <MailOutlineIcon sx={{ fontSize: 16 }} className="ml-2" /> צור קשר עם הצוות
-              </a>
-            </Button>
-          </div>
-        </div>
+    <BackgroundPaths
+      title="מוכן להתחיל?"
+      subtitle="פרסום בקשה לוקח 60 שניות. ההצעות הראשונות מגיעות תוך שעות. פתיחת חשבון חינם."
+    >
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button asChild size="lg" className="h-12 px-7 text-base font-semibold shadow-elegant">
+          <Link to={bannerCta}>
+            פרסם בקשה עכשיו
+            <ArrowBackIcon sx={{ fontSize: 16 }} className="mr-2" />
+          </Link>
+        </Button>
+        <Button asChild size="lg" variant="outline" className="h-12 px-7 text-base">
+          <a href="mailto:support@buildforceprime.com" aria-label="צור קשר עם הצוות במייל">
+            <MailOutlineIcon sx={{ fontSize: 16 }} className="ml-2" /> צור קשר עם הצוות
+          </a>
+        </Button>
       </div>
-    </section>
+    </BackgroundPaths>
   );
 }
 
@@ -738,9 +719,7 @@ function SectionHeader({
       <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground">
         {eyebrow}
       </div>
-      <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight md:text-3xl">
-        {title}
-      </h2>
+      <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight md:text-3xl">{title}</h2>
       {subtitle && <p className="mt-4 text-base text-muted-foreground">{subtitle}</p>}
     </div>
   );
@@ -814,15 +793,7 @@ function SiteAttendance() {
   );
 }
 
-function Benefit({
-  icon: Icon,
-  title,
-  desc,
-}: {
-  icon: ElementType;
-  title: string;
-  desc: string;
-}) {
+function Benefit({ icon: Icon, title, desc }: { icon: ElementType; title: string; desc: string }) {
   return (
     <div className="flex items-start gap-3">
       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -928,7 +899,9 @@ function PeaceOfMind() {
 
         {/* Daily flow strip */}
         <div className="mt-16">
-          <h3 className="mb-6 text-center text-lg font-semibold">איך נראה יום עבודה אחד בפלטפורמה</h3>
+          <h3 className="mb-6 text-center text-lg font-semibold">
+            איך נראה יום עבודה אחד בפלטפורמה
+          </h3>
           <div className="grid gap-4 md:grid-cols-4">
             {flow.map((f, i) => (
               <div key={f.time} className="relative rounded-xl border border-border bg-card p-5">
@@ -980,9 +953,7 @@ function SideCard({
   items: { icon: ElementType; title: string; desc: string }[];
 }) {
   const iconCls =
-    color === "primary"
-      ? "bg-primary/10 text-primary"
-      : "bg-emerald-500/10 text-status-approved";
+    color === "primary" ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-status-approved";
   return (
     <div className="enterprise-card rounded-xl p-6 md:p-8">
       <div className="flex items-center gap-3">
@@ -999,7 +970,9 @@ function SideCard({
       <ul className="mt-6 space-y-4">
         {items.map((it) => (
           <li key={it.title} className="flex items-start gap-3">
-            <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${iconCls}`}>
+            <div
+              className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${iconCls}`}
+            >
               <it.icon sx={{ fontSize: 16 }} />
             </div>
             <div>
