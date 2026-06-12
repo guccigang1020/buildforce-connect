@@ -41,3 +41,7 @@ dist-ssr
 
 # Local Playwright screenshots (test evidence)
 /*.png
+
+# Python cache
+__pycache__/
+*.pyc

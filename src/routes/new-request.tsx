@@ -17,6 +17,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import BoltIcon from "@mui/icons-material/Bolt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AppShell } from "@/components/app-shell";
@@ -174,9 +175,7 @@ function NewRequestPage() {
   };
 
   const canGoNext = canNext();
-  const nextHint = !canGoNext
-    ? computeNextHint(step, form, isPhoneValid, isStartDateValid)
-    : null;
+  const nextHint = !canGoNext ? computeNextHint(step, form, isPhoneValid, isStartDateValid) : null;
 
   const isStepComplete = (n: number) => {
     if (n === 1) return itemsValid && form.items.length > 0;
@@ -308,9 +307,7 @@ function NewRequestPage() {
                       {s.label}
                     </span>
                   </div>
-                  {i < STEPS.length - 1 && (
-                    <div className="mx-2 h-px min-w-2 flex-1 bg-border" />
-                  )}
+                  {i < STEPS.length - 1 && <div className="mx-2 h-px min-w-2 flex-1 bg-border" />}
                 </div>
               );
             })}
@@ -394,12 +391,12 @@ function NewRequestPage() {
                   <Label htmlFor="start" className="mb-2 block">
                     תאריך התחלה
                   </Label>
-                  <Input
+                  <DatePicker
                     id="start"
-                    type="date"
                     min={TODAY}
                     value={form.startDate}
-                    onChange={(e) => update("startDate", e.target.value)}
+                    onChange={(v) => update("startDate", v)}
+                    invalid={!!form.startDate && !isStartDateValid}
                     className="h-12"
                   />
                   {form.startDate && !isStartDateValid && (
@@ -554,8 +551,8 @@ function NewRequestPage() {
                     <span className="font-semibold text-foreground">
                       אני מתחייב לסעיף אי-עקיפה (Non-Circumvention):
                     </span>{" "}
-                    כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך
-                    הפלטפורמה למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק.
+                    כל ההתקשרות, התשלומים והעסקת העובדים שאתאם דרך BuildForce — יבוצעו דרך הפלטפורמה
+                    למשך {form.commitmentMonths || "X"} חודשים מבחירת ספק.
                   </span>
                 </label>
               </div>
@@ -626,7 +623,12 @@ function NewRequestPage() {
             </div>
             <ul className="mt-4 space-y-2.5 text-sm">
               <PreviewRow icon={PlaceIcon} label="מיקום" value={form.location || "—"} />
-              <PreviewRow icon={CalendarMonthIcon} label="התחלה" value={form.startDate || "—"} ltr />
+              <PreviewRow
+                icon={CalendarMonthIcon}
+                label="התחלה"
+                value={form.startDate || "—"}
+                ltr
+              />
               <PreviewRow
                 icon={LockIcon}
                 label="משך"

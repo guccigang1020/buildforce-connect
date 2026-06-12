@@ -16,6 +16,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AppShell } from "@/components/app-shell";
@@ -205,9 +206,7 @@ function RequestPage() {
               <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 התחייבות
               </dt>
-              <dd className="mt-0.5 font-medium">
-                {req.commitment_months} חודשים
-              </dd>
+              <dd className="mt-0.5 font-medium">{req.commitment_months} חודשים</dd>
             </div>
           </dl>
 
@@ -256,7 +255,8 @@ function RequestPage() {
 
           {(req as { deadline_at?: string }).deadline_at && !deadlineUrgent && (
             <p className="mt-3 text-[11px] text-muted-foreground">
-              <ScheduleIcon sx={{ fontSize: 12 }} className="inline me-0.5 align-[-1px]" /> סגירת המכרז:{" "}
+              <ScheduleIcon sx={{ fontSize: 12 }} className="inline me-0.5 align-[-1px]" /> סגירת
+              המכרז:{" "}
               {new Date((req as { deadline_at: string }).deadline_at).toLocaleString("he-IL")}
             </p>
           )}
@@ -300,7 +300,9 @@ function RequestPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">עובדים</dt>
+                <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  עובדים
+                </dt>
                 <dd className="mt-0.5 font-semibold tabular-nums">
                   <span dir="ltr">{myOffer.available_workers}</span>
                 </dd>
@@ -493,18 +495,16 @@ function SubmitOfferCard({ requestId, totalWorkers }: { requestId: string; total
 
       <div className="space-y-1.5">
         <Label htmlFor="sd">תאריך התחלה אפשרי *</Label>
-        <Input
+        <DatePicker
           id="sd"
-          type="date"
           min={todayISO}
-          dir="ltr"
           value={startDate}
-          onChange={(e) => {
-            setStartDate(e.target.value);
+          onChange={(v) => {
+            setStartDate(v);
             setDateError(null);
           }}
-          required
-          className={`h-11 ${dateError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+          invalid={!!dateError}
+          className="h-11"
         />
         {dateError && <p className="text-xs text-destructive">{dateError}</p>}
       </div>

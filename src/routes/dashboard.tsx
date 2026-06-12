@@ -7,8 +7,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import InboxIcon from "@mui/icons-material/Inbox";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import GavelIcon from "@mui/icons-material/Gavel";
+import MailOutlineIcon from "@mui/icons-material/Mail";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { KpiCard } from "@/components/ui/kpi-card";
 import { AppShell } from "@/components/app-shell";
 import { listMyJobRequests } from "@/lib/job-requests.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -85,7 +90,7 @@ function DashboardPage() {
   });
 
   const isAdmin = hasRole("admin");
-  const requests = (data?.requests ?? []) as MyRequest[];
+  const requests = useMemo(() => (data?.requests ?? []) as MyRequest[], [data]);
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [q, setQ] = useState("");
 
@@ -93,8 +98,8 @@ function DashboardPage() {
     return requests.filter((r) => {
       if (filter !== "all" && r.status !== filter) return false;
       if (q) {
-        const hay = `${r.location} ${r.roles.join(" ")} ${r.id}`.toLowerCase();
-        if (!hay.includes(q.toLowerCase())) return false;
+        // Search by city only.
+        if (!r.location.toLowerCase().includes(q.toLowerCase())) return false;
       }
       return true;
     });
@@ -118,8 +123,7 @@ function DashboardPage() {
     [requests],
   );
 
-  const firstName =
-    profile?.full_name?.split(" ")[0] ?? profile?.company_name?.split(" ")[0] ?? "";
+  const firstName = profile?.full_name?.split(" ")[0] ?? profile?.company_name?.split(" ")[0] ?? "";
   const greeting = getGreeting();
 
   return (
@@ -153,32 +157,32 @@ function DashboardPage() {
         </Button>
       </div>
 
-      {/* ── Stat row (pattern 2) ── */}
-      <div className="mb-6 grid grid-cols-3 overflow-hidden rounded-lg border border-border divide-x divide-x-reverse divide-border">
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            סה"כ בקשות
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {isLoading ? "…" : stats.total}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            פתוחות למכרז
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {isLoading ? "…" : stats.open}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            נבחר זוכה
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-info" dir="ltr">
-            {isLoading ? "…" : stats.awarded}
-          </div>
-        </div>
+      {/* ── KPI row ── */}
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiCard
+          label='סה"כ בקשות'
+          value={isLoading ? "…" : stats.total}
+          tone="default"
+          icon={<FormatListBulletedIcon sx={{ fontSize: 20 }} />}
+        />
+        <KpiCard
+          label="פתוחות למכרז"
+          value={isLoading ? "…" : stats.open}
+          tone="primary"
+          icon={<GavelIcon sx={{ fontSize: 20 }} />}
+        />
+        <KpiCard
+          label="הצעות שהתקבלו"
+          value={isLoading ? "…" : stats.totalOffers}
+          tone="info"
+          icon={<MailOutlineIcon sx={{ fontSize: 20 }} />}
+        />
+        <KpiCard
+          label="נבחר זוכה"
+          value={isLoading ? "…" : stats.awarded}
+          tone="filled"
+          icon={<EmojiEventsIcon sx={{ fontSize: 20 }} />}
+        />
       </div>
 
       {/* ── Section title + filter + search ── */}
@@ -215,11 +219,14 @@ function DashboardPage() {
               ))}
             </div>
             <div className="relative w-full sm:w-64">
-              <SearchIcon sx={{ fontSize: 16 }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <SearchIcon
+                sx={{ fontSize: 16 }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="חפש לפי עיר, תפקיד…"
+                placeholder="חפש לפי עיר…"
                 className="h-9 pr-9"
               />
             </div>

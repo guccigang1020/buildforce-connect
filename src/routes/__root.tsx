@@ -14,6 +14,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieConsent } from "@/components/cookie-consent";
 import { MuiProvider } from "@/lib/mui-theme";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function NotFoundComponent() {
   return (
@@ -139,15 +140,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 // of unstyled content: cream background is set immediately and MUI icons are
 // constrained so they never appear as giant black circles for a frame.
 const CRITICAL_CSS = `
-  html,body{background:#EFEDE7;color:#22363B;margin:0;
-    font-family:"Rubik","Heebo",system-ui,sans-serif}
+  html,body{margin:0;font-family:"Rubik","Heebo",system-ui,sans-serif}
+  html.dark body{background:#14181B;color:#F1F3F4}
+  html:not(.dark) body{background:#F6F5FC;color:#211E3D}
   svg.MuiSvgIcon-root{width:1em;height:1em;font-size:1.25rem;fill:currentColor}
 `;
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="he" dir="rtl">
+    // The pre-hydration script below rewrites <html>'s class/color-scheme from
+    // localStorage before React hydrates, so its attributes intentionally differ
+    // from this SSR default — suppress the resulting hydration warning.
+    <html
+      lang="he"
+      dir="rtl"
+      className="dark"
+      style={{ colorScheme: "dark" }}
+      suppressHydrationWarning
+    >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('bf-theme');var d=document.documentElement;if(t==='light'){d.classList.remove('dark');d.style.colorScheme='light';}else{d.classList.add('dark');d.style.colorScheme='dark';}}catch(e){}})();`,
+          }}
+        />
         <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
         <HeadContent />
       </head>
@@ -171,14 +187,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <MuiProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Outlet />
-          <Toaster richColors position="top-center" />
-          <ConditionalCookieConsent />
-        </AuthProvider>
-      </QueryClientProvider>
-    </MuiProvider>
+    <ThemeProvider>
+      <MuiProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Outlet />
+            <Toaster richColors position="top-center" />
+            <ConditionalCookieConsent />
+          </AuthProvider>
+        </QueryClientProvider>
+      </MuiProvider>
+    </ThemeProvider>
   );
 }

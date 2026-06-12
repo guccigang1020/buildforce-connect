@@ -5,7 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import CircularProgress from "@mui/material/CircularProgress";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import InsightsIcon from "@mui/icons-material/Insights";
 import { AppShell } from "@/components/app-shell";
+import { KpiCard } from "@/components/ui/kpi-card";
 import { OpenTendersSection } from "@/components/corporation/open-tenders-section";
 import { MyOffersSection } from "@/components/corporation/my-offers-section";
 import { useAuth } from "@/hooks/use-auth";
@@ -44,7 +49,7 @@ function CorporationDashboard() {
     enabled: Boolean(user),
   });
 
-  const offers = data?.offers ?? [];
+  const offers = useMemo(() => data?.offers ?? [], [data]);
 
   const stats = useMemo(() => {
     const open = offers.filter((o) => o.status === "submitted").length;
@@ -103,56 +108,41 @@ function CorporationDashboard() {
       )}
 
       {/* ── Stat row ── */}
-      <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 rounded-lg border border-border divide-x divide-x-reverse divide-border">
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            הצעות פתוחות
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {isLoading ? "…" : stats.open}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">ממתינות לתשובה</div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            סה"כ הצעות
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
-            {isLoading ? "…" : stats.total}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">כל הזמנים</div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            זכיות
-          </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums text-status-approved" dir="ltr">
-            {isLoading ? "…" : stats.won}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {!isLoading && stats.decided > 0
-              ? `מתוך ${stats.decided} שהוכרעו`
-              : "כל הזמנים"}
-          </div>
-        </div>
-        <div className="px-5 py-4">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            שיעור הצלחה
-          </div>
-          <div
-            className={`mt-1 text-2xl font-semibold tabular-nums ${
-              !isLoading && stats.winRate > 0 ? "text-status-approved" : ""
-            }`}
-            dir="ltr"
-          >
-            {isLoading ? "…" : `${stats.winRate}%`}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {!isLoading && stats.decided > 0
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiCard
+          label="הצעות פתוחות"
+          value={isLoading ? "…" : stats.open}
+          tone="primary"
+          icon={<HourglassEmptyIcon sx={{ fontSize: 20 }} />}
+          caption="ממתינות לתשובה"
+        />
+        <KpiCard
+          label='סה"כ הצעות'
+          value={isLoading ? "…" : stats.total}
+          tone="default"
+          icon={<FormatListBulletedIcon sx={{ fontSize: 20 }} />}
+          caption="כל הזמנים"
+        />
+        <KpiCard
+          label="זכיות"
+          value={isLoading ? "…" : stats.won}
+          tone="info"
+          icon={<EmojiEventsIcon sx={{ fontSize: 20 }} />}
+          caption={!isLoading && stats.decided > 0 ? `מתוך ${stats.decided} שהוכרעו` : "כל הזמנים"}
+        />
+        <KpiCard
+          label="שיעור הצלחה"
+          value={isLoading ? "…" : `${stats.winRate}%`}
+          tone="filled"
+          numeric={false}
+          icon={<InsightsIcon sx={{ fontSize: 20 }} />}
+          trend={!isLoading && stats.winRate > 0 ? "up" : "flat"}
+          caption={
+            !isLoading && stats.decided > 0
               ? `מ-${stats.decided} הצעות שהוכרעו`
-              : "עדיין אין נתונים"}
-          </div>
-        </div>
+              : "עדיין אין נתונים"
+          }
+        />
       </div>
 
       {/* ── Sub-sections ── */}
@@ -161,4 +151,3 @@ function CorporationDashboard() {
     </AppShell>
   );
 }
-
