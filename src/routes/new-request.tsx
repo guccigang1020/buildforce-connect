@@ -222,6 +222,28 @@ function NewRequestPage() {
     }
   };
 
+  // Gate: a contractor must be admin-verified before publishing any request.
+  // The server enforces this too — this just avoids a dead-end form.
+  if (profile && !profile.is_verified) {
+    return (
+      <AppShell title="בקשה חדשה">
+        <div className="flex flex-col items-center py-16 text-center">
+          <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-amber-500/40 bg-amber-500/10">
+            <LockIcon sx={{ fontSize: 32 }} className="text-amber-500" />
+          </div>
+          <h2 className="mt-6 text-xl font-semibold">החשבון ממתין לאימות אדמין</h2>
+          <p className="mt-3 max-w-md text-sm text-muted-foreground">
+            לפני פרסום בקשת כוח אדם ראשונה, אדמין צריך לאמת את החשבון שלך. נעדכן אותך במייל ברגע
+            שהאישור יושלם — לאחר מכן תוכל לפרסם בקשות ולקבל הצעות.
+          </p>
+          <Button asChild size="lg" variant="outline" className="mt-8">
+            <Link to="/dashboard">חזרה ללוח הבקרה</Link>
+          </Button>
+        </div>
+      </AppShell>
+    );
+  }
+
   if (submitted) {
     return (
       <AppShell title="בקשה חדשה">

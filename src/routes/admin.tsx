@@ -134,17 +134,17 @@ function AdminDashboard() {
     return m;
   }, [roles]);
 
-  // Verification applies ONLY to corporations (manpower suppliers).
-  // Contractors don't need admin approval — listing them in this queue was
-  // confusing ("why is a contractor pending?").
-  const corporations = useMemo(
-    () => profiles.filter((p) => (rolesByUser.get(p.user_id) ?? []).includes("corporation")),
+  // Verification applies ONLY to contractors (manpower requesters).
+  // Corporations bid freely — listing them in this queue was confusing
+  // ("why is a corporation pending?").
+  const contractors = useMemo(
+    () => profiles.filter((p) => (rolesByUser.get(p.user_id) ?? []).includes("contractor")),
     [profiles, rolesByUser],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return corporations.filter((p) => {
+    return contractors.filter((p) => {
       if (tab === "pending" && p.verification_status !== "pending") return false;
       if (tab === "approved" && p.verification_status !== "approved") return false;
       if (tab === "rejected" && p.verification_status !== "rejected") return false;
@@ -158,19 +158,19 @@ function AdminDashboard() {
         p.city,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [corporations, tab, search]);
+  }, [contractors, tab, search]);
 
   const stats = useMemo(
     () => ({
       total: profiles.length,
-      corps: corporations.length,
-      pending: corporations.filter((p) => p.verification_status === "pending").length,
-      approved: corporations.filter((p) => p.verification_status === "approved").length,
-      rejected: corporations.filter(
+      corps: contractors.length,
+      pending: contractors.filter((p) => p.verification_status === "pending").length,
+      approved: contractors.filter((p) => p.verification_status === "approved").length,
+      rejected: contractors.filter(
         (p) => p.verification_status !== "approved" && p.verification_status !== "pending",
       ).length,
     }),
-    [profiles, corporations],
+    [profiles, contractors],
   );
 
   const refresh = () => {
@@ -193,8 +193,8 @@ function AdminDashboard() {
         <div>
           <h2 className="text-xl font-semibold text-foreground">לוח בקרה — מנהל מערכת</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {stats.pending > 0 ? `${stats.pending} תאגידים ממתינים לאישור · ` : ""}
-            {stats.corps} תאגידים · {stats.total} משתמשים רשומים
+            {stats.pending > 0 ? `${stats.pending} קבלנים ממתינים לאישור · ` : ""}
+            {stats.corps} קבלנים · {stats.total} משתמשים רשומים
           </p>
         </div>
       </div>
@@ -220,7 +220,7 @@ function AdminDashboard() {
           tone={stats.pending > 0 ? "pending" : "neutral"}
           label="ממתינים לאישור"
           value={stats.pending}
-          sub="תאגידים חדשים"
+          sub="קבלנים חדשים"
           highlight={stats.pending > 0}
         />
         <StatTile
@@ -250,7 +250,7 @@ function AdminDashboard() {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          אימות תאגידים
+          אימות קבלנים
           {stats.pending > 0 && (
             <span
               className={`ms-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
@@ -277,7 +277,7 @@ function AdminDashboard() {
       {view === "auctions" ? (
         <AuctionsOversight session={session} />
       ) : (
-        <CorporationsVerification
+        <ContractorsVerification
           tab={tab}
           setTab={setTab}
           stats={stats}
@@ -356,7 +356,7 @@ function StatTile({
   );
 }
 
-function CorporationsVerification({
+function ContractorsVerification({
   tab,
   setTab,
   stats,
@@ -395,7 +395,7 @@ function CorporationsVerification({
             </TabsTrigger>
             <TabsTrigger value="approved">מאושרים ({stats.approved})</TabsTrigger>
             <TabsTrigger value="rejected">נדחו ({stats.rejected})</TabsTrigger>
-            <TabsTrigger value="all">כל התאגידים ({stats.corps})</TabsTrigger>
+            <TabsTrigger value="all">כל הקבלנים ({stats.corps})</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="relative w-full md:w-72">

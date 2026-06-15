@@ -28,7 +28,7 @@ const ContractorApprovedEmail = ({ name }: Props) => (
           שלום{name ? ` ${name}` : ""}, החשבון שלך ב-{SITE_NAME} אומת ופעיל.
         </Text>
         <Text style={text}>
-          אתה יכול כעת להגיש הצעות לבקשות עבודה פעילות, או לפרסם בקשות חדשות.
+          אתה יכול כעת לפרסם בקשות כוח אדם ולקבל הצעות תחרותיות מתאגידים מאומתים.
         </Text>
         <Button style={button} href={`${SITE_URL}/dashboard`}>
           כניסה לדשבורד

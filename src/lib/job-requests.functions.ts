@@ -30,6 +30,17 @@ export const createJobRequest = createServerFn({ method: "POST" })
       import("@/lib/email/send.server"),
     ]);
 
+    // Reject unapproved contractors at the server boundary — a contractor must
+    // be verified by an admin before publishing any manpower request.
+    const { data: contractorProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("is_verified, verification_status")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!contractorProfile?.is_verified || contractorProfile.verification_status !== "approved") {
+      throw new Error("חשבונך טרם אומת על ידי אדמין. לא ניתן לפרסם בקשות לפני קבלת אישור.");
+    }
+
     // `duration` is NOT NULL in the DB; the form no longer collects it
     // directly, so derive it from the commitment period when absent.
     const duration = data.duration || `${data.commitmentMonths} חודשים`;
