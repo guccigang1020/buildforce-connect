@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import CircularProgress from "@mui/material/CircularProgress";
-import VerifiedIcon from "@mui/icons-material/Verified";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
@@ -71,7 +70,6 @@ function CorporationDashboard() {
   }
 
   const isCorporation = hasRole("corporation");
-  const isApproved = profile?.is_verified;
   const companyName = profile?.company_name || profile?.full_name || "התאגיד שלי";
 
   return (
@@ -80,11 +78,6 @@ function CorporationDashboard() {
       <div className="border-b border-border pb-5 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-semibold text-foreground">{companyName}</h2>
-          {isApproved && (
-            <span className="status-chip-approved">
-              <VerifiedIcon sx={{ fontSize: 12 }} /> מאומת
-            </span>
-          )}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           תאגיד כוח אדם
@@ -100,13 +93,6 @@ function CorporationDashboard() {
           <span>חשבונך אינו רשום כתאגיד כוח אדם. פנה לאדמין להפעלת התפקיד.</span>
         </div>
       )}
-      {isCorporation && !isApproved && (
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm status-bar-pending">
-          <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-amber-500" />
-          <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל להגיש הצעות במכרזים.</span>
-        </div>
-      )}
-
       {/* ── Stat row ── */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
@@ -146,7 +132,7 @@ function CorporationDashboard() {
       </div>
 
       {/* ── Sub-sections ── */}
-      <OpenTendersSection isApproved={Boolean(isApproved)} />
+      <OpenTendersSection />
       <MyOffersSection />
     </AppShell>
   );

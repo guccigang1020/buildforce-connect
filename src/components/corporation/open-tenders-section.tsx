@@ -5,7 +5,6 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import SendIcon from "@mui/icons-material/Send";
-import LockIcon from "@mui/icons-material/Lock";
 import GroupIcon from "@mui/icons-material/Group";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from "@/components/ui/button";
@@ -54,7 +53,7 @@ function deadlineLabel(deadline_at: string | null): { text: string; urgent: bool
   return { text: `${daysLeft} ימים`, urgent: daysLeft <= 2 };
 }
 
-export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
+export function OpenTendersSection() {
   const fetchOpen = useServerFn(listOpenJobRequests);
   const fetchMyOffers = useServerFn(listMyOffers);
   const { data, isLoading } = useQuery({
@@ -168,7 +167,6 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                       <td className="px-4 py-3 text-end">
                         <SubmitOfferDialog
                           requestId={r.id}
-                          isApproved={isApproved}
                           items={r.items}
                           totalWorkers={r.workers_count}
                         />
@@ -205,7 +203,6 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
                   </div>
                   <SubmitOfferDialog
                     requestId={r.id}
-                    isApproved={isApproved}
                     items={r.items}
                     totalWorkers={r.workers_count}
                     compact
@@ -222,13 +219,11 @@ export function OpenTendersSection({ isApproved }: { isApproved: boolean }) {
 
 function SubmitOfferDialog({
   requestId,
-  isApproved,
   items,
   totalWorkers,
   compact = false,
 }: {
   requestId: string;
-  isApproved: boolean;
   items: RequestItem[];
   totalWorkers: number;
   compact?: boolean;
@@ -312,21 +307,6 @@ function SubmitOfferDialog({
       setSubmitting(false);
     }
   };
-
-  if (!isApproved) {
-    return (
-      <Button
-        type="button"
-        disabled
-        size={compact ? "sm" : "default"}
-        title="החשבון ממתין לאימות אדמין — לא ניתן להגיש הצעות עדיין"
-        variant="outline"
-      >
-        <LockIcon sx={{ fontSize: 14 }} />
-        {!compact && " ממתין לאישור"}
-      </Button>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

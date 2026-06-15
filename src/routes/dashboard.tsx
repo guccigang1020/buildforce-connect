@@ -90,6 +90,10 @@ function DashboardPage() {
   });
 
   const isAdmin = hasRole("admin");
+  const isContractor = hasRole("contractor");
+  // Contractors must be verified by an admin before they can publish requests.
+  const isApproved = Boolean(profile?.is_verified);
+  const showPendingGate = isContractor && !isApproved;
   const requests = useMemo(() => (data?.requests ?? []) as MyRequest[], [data]);
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [q, setQ] = useState("");
@@ -150,12 +154,26 @@ function DashboardPage() {
                 : `${stats.open} בקשות פתוחות · ${stats.totalOffers} הצעות שהתקבלו`}
           </p>
         </div>
-        <Button asChild size="sm">
-          <Link to="/new-request">
+        {showPendingGate ? (
+          <Button size="sm" disabled title="החשבון ממתין לאימות אדמין — לא ניתן לפרסם בקשות עדיין">
             <AddIcon sx={{ fontSize: 16 }} /> בקשה חדשה
-          </Link>
-        </Button>
+          </Button>
+        ) : (
+          <Button asChild size="sm">
+            <Link to="/new-request">
+              <AddIcon sx={{ fontSize: 16 }} /> בקשה חדשה
+            </Link>
+          </Button>
+        )}
       </div>
+
+      {/* ── Pending-approval gate ── */}
+      {showPendingGate && (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm status-bar-pending">
+          <WarningAmberIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0 text-amber-500" />
+          <span>חשבונך ממתין לאימות אדמין. לאחר האישור תוכל לפרסם בקשות כוח אדם ולקבל הצעות.</span>
+        </div>
+      )}
 
       {/* ── KPI row ── */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -255,7 +273,7 @@ function DashboardPage() {
           </Button>
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState hasAny={requests.length > 0} />
+        <EmptyState hasAny={requests.length > 0} canCreate={!showPendingGate} />
       ) : (
         <RequestsTable requests={filtered} />
       )}
@@ -365,21 +383,27 @@ function RequestsTable({ requests }: { requests: MyRequest[] }) {
   );
 }
 
-function EmptyState({ hasAny }: { hasAny: boolean }) {
+function EmptyState({ hasAny, canCreate }: { hasAny: boolean; canCreate: boolean }) {
   return (
     <div className="empty-state">
       <div className="empty-state-icon mx-auto">
         <InboxIcon sx={{ fontSize: 32 }} className="text-primary" />
       </div>
       <h3 className="text-lg font-semibold">
-        {hasAny ? "אין בקשות מתאימות לסינון" : "ברוך הבא ל-BuildForce"}
+        {hasAny
+          ? "אין בקשות מתאימות לסינון"
+          : canCreate
+            ? "ברוך הבא ל-BuildForce"
+            : "החשבון ממתין לאימות"}
       </h3>
       <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
         {hasAny
           ? "נסה לשנות את הסינון או החיפוש."
-          : "פרסם בקשת כוח אדם ראשונה. תאגידים מאומתים ישלחו הצעות תחרותיות — ממוצע 3+ הצעות תוך 24 שעות."}
+          : canCreate
+            ? "פרסם בקשת כוח אדם ראשונה. תאגידים מאומתים ישלחו הצעות תחרותיות — ממוצע 3+ הצעות תוך 24 שעות."
+            : "לאחר שאדמין יאמת את החשבון תוכל לפרסם בקשות כוח אדם ולקבל הצעות תחרותיות."}
       </p>
-      {!hasAny && (
+      {!hasAny && canCreate && (
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button asChild>
             <Link to="/new-request">

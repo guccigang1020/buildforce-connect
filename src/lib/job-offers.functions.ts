@@ -25,15 +25,7 @@ export const submitOffer = createServerFn({ method: "POST" })
       import("@/lib/email/send.server"),
     ]);
 
-    // Reject unverified corporations at the server boundary
-    const { data: corpProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("is_verified, verification_status")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!corpProfile?.is_verified || corpProfile.verification_status !== "approved") {
-      throw new Error("חשבונך טרם אומת על ידי אדמין. לא ניתן להגיש הצעות לפני קבלת אישור.");
-    }
+    // Corporations bid freely — no admin approval is required to submit offers.
 
     // One bid per corporation per request — a second submission is rejected
     // (a withdrawn bid may be replaced by a new one).
