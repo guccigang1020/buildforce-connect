@@ -770,6 +770,7 @@ export type Database = {
       }
       project_workers: {
         Row: {
+          added_by_role: string
           corporation_id: string
           created_at: string
           first_name: string
@@ -782,6 +783,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          added_by_role?: string
           corporation_id: string
           created_at?: string
           first_name: string
@@ -794,6 +796,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          added_by_role?: string
           corporation_id?: string
           created_at?: string
           first_name?: string
@@ -908,6 +911,10 @@ export type Database = {
     }
     Functions: {
       can_access_project_chat: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_write_project_chat: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
