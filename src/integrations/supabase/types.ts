@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_corrections: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          reason: string
+          record_id: string
+          requested_by: string
+          requested_change: Json
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          reason: string
+          record_id: string
+          requested_by: string
+          requested_change: Json
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          reason?: string
+          record_id?: string
+          requested_by?: string
+          requested_change?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_corrections_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          kind: string
+          payload: Json | null
+          photo_url: string | null
+          record_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          kind: string
+          payload?: Json | null
+          photo_url?: string | null
+          record_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          kind?: string
+          payload?: Json | null
+          photo_url?: string | null
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_events_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_notifications: {
+        Row: {
+          channel: string
+          id: string
+          kind: string
+          payload: Json | null
+          recipient_phone: string
+          recipient_role: string
+          record_id: string
+          sent_at: string
+        }
+        Insert: {
+          channel?: string
+          id?: string
+          kind: string
+          payload?: Json | null
+          recipient_phone: string
+          recipient_role: string
+          record_id: string
+          sent_at?: string
+        }
+        Update: {
+          channel?: string
+          id?: string
+          kind?: string
+          payload?: Json | null
+          recipient_phone?: string
+          recipient_role?: string
+          record_id?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           approved_at: string | null
@@ -166,6 +290,48 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "project_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_workers: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          present: boolean
+          record_id: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          present?: boolean
+          record_id: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          present?: boolean
+          record_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_workers_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "project_workers"
             referencedColumns: ["id"]
           },
         ]
@@ -488,6 +654,76 @@ export type Database = {
         }
         Relationships: []
       }
+      project_members: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          phone: string | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone?: string | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone?: string | null
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          project_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          project_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_teams: {
         Row: {
           created_at: string
@@ -532,6 +768,53 @@ export type Database = {
           },
         ]
       }
+      project_workers: {
+        Row: {
+          corporation_id: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          nationality: string | null
+          passport_number: string
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          corporation_id: string
+          created_at?: string
+          first_name: string
+          id?: string
+          last_name: string
+          nationality?: string | null
+          passport_number: string
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          corporation_id?: string
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          nationality?: string | null
+          passport_number?: string
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_workers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           address: string | null
@@ -539,6 +822,7 @@ export type Database = {
           corporation_id: string
           created_at: string
           expected_workers: number
+          geofence_enforced: boolean
           hourly_rate: number | null
           id: string
           name: string
@@ -559,6 +843,7 @@ export type Database = {
           corporation_id: string
           created_at?: string
           expected_workers?: number
+          geofence_enforced?: boolean
           hourly_rate?: number | null
           id?: string
           name: string
@@ -579,6 +864,7 @@ export type Database = {
           corporation_id?: string
           created_at?: string
           expected_workers?: number
+          geofence_enforced?: boolean
           hourly_rate?: number | null
           id?: string
           name?: string
@@ -621,6 +907,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_project_chat: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       ensure_user_bootstrap: { Args: never; Returns: undefined }
       has_bid_on_request: {
         Args: { _corporation_id: string; _request_id: string }
@@ -632,6 +922,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      is_project_member: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      log_audit: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _entity_type: string
+          _metadata?: Json
+        }
+        Returns: string
       }
       set_own_role: { Args: { _role: string }; Returns: undefined }
     }
