@@ -642,6 +642,7 @@ export type Database = {
         | "admin"
         | "team_leader"
         | "site_manager"
+        | "operations_manager"
       verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -776,6 +777,7 @@ export const Constants = {
         "admin",
         "team_leader",
         "site_manager",
+        "operations_manager",
       ],
       verification_status: ["pending", "approved", "rejected"],
     },
