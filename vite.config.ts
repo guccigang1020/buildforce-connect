@@ -21,6 +21,12 @@ export default defineConfig({
   },
   vite: {
     optimizeDeps: {
+      include: [
+        "prop-types",
+        "cssjanus",
+        "@babel/runtime/helpers/esm/extends",
+        "@babel/runtime/helpers/extends",
+      ],
       exclude: ["react-is", "hoist-non-react-statics", "zod"],
     },
     resolve: {
