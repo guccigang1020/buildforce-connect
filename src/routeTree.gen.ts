@@ -25,9 +25,12 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CorporationDashboardRouteImport } from './routes/corporation-dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as RequestsIdRouteImport } from './routes/requests.$id'
+import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 import { Route as MyRequestsIdRouteImport } from './routes/my-requests.$id'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as CorporationProjectsRouteImport } from './routes/corporation.projects'
 import { Route as CorporationAttendanceRouteImport } from './routes/corporation.attendance'
 import { Route as CorporationAccountsRouteImport } from './routes/corporation.accounts'
 import { Route as ContractorProjectsRouteImport } from './routes/contractor.projects'
@@ -123,9 +126,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
+  id: '/projects/',
+  path: '/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RequestsIdRoute = RequestsIdRouteImport.update({
   id: '/requests/$id',
   path: '/requests/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsIdRoute = ProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyRequestsIdRoute = MyRequestsIdRouteImport.update({
@@ -136,6 +149,11 @@ const MyRequestsIdRoute = MyRequestsIdRouteImport.update({
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CorporationProjectsRoute = CorporationProjectsRouteImport.update({
+  id: '/corporation/projects',
+  path: '/corporation/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CorporationAttendanceRoute = CorporationAttendanceRouteImport.update({
@@ -237,9 +255,12 @@ export interface FileRoutesByFullPath {
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
   '/corporation/attendance': typeof CorporationAttendanceRoute
+  '/corporation/projects': typeof CorporationProjectsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
+  '/projects/$id': typeof ProjectsIdRoute
   '/requests/$id': typeof RequestsIdRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
@@ -272,9 +293,12 @@ export interface FileRoutesByTo {
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
   '/corporation/attendance': typeof CorporationAttendanceRoute
+  '/corporation/projects': typeof CorporationProjectsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
+  '/projects/$id': typeof ProjectsIdRoute
   '/requests/$id': typeof RequestsIdRoute
+  '/projects': typeof ProjectsIndexRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
@@ -308,9 +332,12 @@ export interface FileRoutesById {
   '/contractor/projects': typeof ContractorProjectsRoute
   '/corporation/accounts': typeof CorporationAccountsRoute
   '/corporation/attendance': typeof CorporationAttendanceRoute
+  '/corporation/projects': typeof CorporationProjectsRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/my-requests/$id': typeof MyRequestsIdRoute
+  '/projects/$id': typeof ProjectsIdRoute
   '/requests/$id': typeof RequestsIdRoute
+  '/projects/': typeof ProjectsIndexRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/api/public/hooks/auto-approve-attendance': typeof ApiPublicHooksAutoApproveAttendanceRoute
   '/api/public/hooks/close-expired-requests': typeof ApiPublicHooksCloseExpiredRequestsRoute
@@ -345,9 +372,12 @@ export interface FileRouteTypes {
     | '/contractor/projects'
     | '/corporation/accounts'
     | '/corporation/attendance'
+    | '/corporation/projects'
     | '/email/unsubscribe'
     | '/my-requests/$id'
+    | '/projects/$id'
     | '/requests/$id'
+    | '/projects/'
     | '/lovable/email/suppression'
     | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
@@ -380,9 +410,12 @@ export interface FileRouteTypes {
     | '/contractor/projects'
     | '/corporation/accounts'
     | '/corporation/attendance'
+    | '/corporation/projects'
     | '/email/unsubscribe'
     | '/my-requests/$id'
+    | '/projects/$id'
     | '/requests/$id'
+    | '/projects'
     | '/lovable/email/suppression'
     | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
@@ -415,9 +448,12 @@ export interface FileRouteTypes {
     | '/contractor/projects'
     | '/corporation/accounts'
     | '/corporation/attendance'
+    | '/corporation/projects'
     | '/email/unsubscribe'
     | '/my-requests/$id'
+    | '/projects/$id'
     | '/requests/$id'
+    | '/projects/'
     | '/lovable/email/suppression'
     | '/api/public/hooks/auto-approve-attendance'
     | '/api/public/hooks/close-expired-requests'
@@ -451,9 +487,12 @@ export interface RootRouteChildren {
   ContractorProjectsRoute: typeof ContractorProjectsRoute
   CorporationAccountsRoute: typeof CorporationAccountsRoute
   CorporationAttendanceRoute: typeof CorporationAttendanceRoute
+  CorporationProjectsRoute: typeof CorporationProjectsRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   MyRequestsIdRoute: typeof MyRequestsIdRoute
+  ProjectsIdRoute: typeof ProjectsIdRoute
   RequestsIdRoute: typeof RequestsIdRoute
+  ProjectsIndexRoute: typeof ProjectsIndexRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksAutoApproveAttendanceRoute: typeof ApiPublicHooksAutoApproveAttendanceRoute
   ApiPublicHooksCloseExpiredRequestsRoute: typeof ApiPublicHooksCloseExpiredRequestsRoute
@@ -579,11 +618,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects/': {
+      id: '/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof ProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/requests/$id': {
       id: '/requests/$id'
       path: '/requests/$id'
       fullPath: '/requests/$id'
       preLoaderRoute: typeof RequestsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects/$id': {
+      id: '/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof ProjectsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-requests/$id': {
@@ -598,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/email/unsubscribe'
       fullPath: '/email/unsubscribe'
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/corporation/projects': {
+      id: '/corporation/projects'
+      path: '/corporation/projects'
+      fullPath: '/corporation/projects'
+      preLoaderRoute: typeof CorporationProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/corporation/attendance': {
@@ -723,9 +783,12 @@ const rootRouteChildren: RootRouteChildren = {
   ContractorProjectsRoute: ContractorProjectsRoute,
   CorporationAccountsRoute: CorporationAccountsRoute,
   CorporationAttendanceRoute: CorporationAttendanceRoute,
+  CorporationProjectsRoute: CorporationProjectsRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   MyRequestsIdRoute: MyRequestsIdRoute,
+  ProjectsIdRoute: ProjectsIdRoute,
   RequestsIdRoute: RequestsIdRoute,
+  ProjectsIndexRoute: ProjectsIndexRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksAutoApproveAttendanceRoute:
     ApiPublicHooksAutoApproveAttendanceRoute,

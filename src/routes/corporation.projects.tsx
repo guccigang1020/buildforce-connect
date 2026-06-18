@@ -7,10 +7,10 @@ import PlaceIcon from "@mui/icons-material/Place";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
-import { listContractorProjects } from "@/lib/attendance.functions";
+import { listCorporationProjects } from "@/lib/projects.functions";
 
-export const Route = createFileRoute("/contractor/projects")({
-  component: ContractorProjectsPage,
+export const Route = createFileRoute("/corporation/projects")({
+  component: CorporationProjectsPage,
 });
 
 const STATUS_META: Record<string, { label: string; chip: string }> = {
@@ -19,17 +19,17 @@ const STATUS_META: Record<string, { label: string; chip: string }> = {
   completed: { label: "הושלם", chip: "status-chip-muted" },
 };
 
-function ContractorProjectsPage() {
+function CorporationProjectsPage() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
-  const listFn = useServerFn(listContractorProjects);
+  const listFn = useServerFn(listCorporationProjects);
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/login", replace: true });
   }, [loading, session, navigate]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["contractor-projects"],
+    queryKey: ["corporation-projects"],
     queryFn: () => listFn({}),
     enabled: !!session,
   });
@@ -39,8 +39,7 @@ function ContractorProjectsPage() {
     <AppShell title="פרויקטים">
       <div className="space-y-4" dir="rtl">
         <p className="text-sm text-muted-foreground">
-          פרויקטים נפתחים אוטומטית מכל מכרז שבחרת בו זוכה. הגדר את מיקום האתר ומנהלי העבודה, וצפה
-          בדיווחי הנוכחות.
+          פרויקטים שבהם זכית. השלם את הפרטים: רכז, מנהל תפעול ורשימת העובדים, וצפה בדיווחי הנוכחות.
         </p>
 
         {isLoading ? (
@@ -56,17 +55,19 @@ function ContractorProjectsPage() {
             </div>
             <h2 className="text-base font-semibold">אין עדיין פרויקטים</h2>
             <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
-              כשתבחר זוכה באחד המכרזים שלך, ייפתח כאן פרויקט חדש באופן אוטומטי.
+              כשקבלן יבחר בהצעתך כזוכה, ייפתח כאן פרויקט חדש באופן אוטומטי.
             </p>
-            <Link to="/dashboard" className="mt-5 inline-block text-sm font-medium text-primary">
-              למעבר ללוח הבקרה
+            <Link
+              to="/corporation-dashboard"
+              className="mt-5 inline-block text-sm font-medium text-primary"
+            >
+              למעבר ללוח התאגיד
             </Link>
           </div>
         ) : (
           <div className="space-y-2.5">
             {projects.map((p) => {
               const meta = STATUS_META[p.status] ?? STATUS_META.active;
-              const siteSet = p.site_lat != null && p.site_lng != null;
               return (
                 <Link
                   key={p.id}
@@ -86,9 +87,6 @@ function ContractorProjectsPage() {
                           {p.address}
                         </span>
                       )}
-                      <span className={siteSet ? "text-status-approved" : "text-status-pending"}>
-                        {siteSet ? "מיקום אתר הוגדר" : "טרם הוגדר מיקום אתר"}
-                      </span>
                       <span>עובדים צפויים: {p.expected_workers}</span>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import MailOutlineIcon from "@mui/icons-material/MailOutlined";
 import LockIcon from "@mui/icons-material/Lock";
+import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import CircularProgress from "@mui/material/CircularProgress";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
@@ -24,6 +25,16 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
+// IL phone → E.164 (+9725XXXXXXXX) for Supabase phone OTP.
+function toE164(raw: string): string | null {
+  const d = raw.replace(/\D/g, "");
+  if (d.length < 8) return null;
+  if (d.startsWith("0")) return "+972" + d.slice(1);
+  if (d.startsWith("972")) return "+" + d;
+  if (raw.trim().startsWith("+")) return "+" + d;
+  return "+972" + d;
+}
+
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
@@ -42,6 +53,7 @@ function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
   const [formError, setFormError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"email" | "phone">("email");
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/go" });
@@ -78,6 +90,24 @@ function LoginPage() {
 
       {/* Glass form card */}
       <div className="space-y-5 rounded-2xl border border-border/60 bg-card/70 p-6 shadow-2xl backdrop-blur-xl">
+        {/* Email/password (חברות, קבלנים) vs phone OTP (רכז, מנהל עבודה, מנהל תפעול) */}
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/50 p-1 text-sm">
+          <button
+            type="button"
+            onClick={() => setMode("email")}
+            className={`rounded-md py-1.5 font-medium transition-colors ${mode === "email" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"}`}
+          >
+            אימייל וסיסמה
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("phone")}
+            className={`rounded-md py-1.5 font-medium transition-colors ${mode === "phone" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"}`}
+          >
+            טלפון (קוד SMS)
+          </button>
+        </div>
+
         {formError && (
           <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
             <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
@@ -85,87 +115,91 @@ function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-sm font-medium">
-              כתובת אימייל
-            </Label>
-            <div className="relative">
-              <MailOutlineIcon
-                sx={{ fontSize: 16 }}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                aria-invalid={errors.email ? true : undefined}
-                {...register("email")}
-                className={`h-10 pr-10 ${
-                  errors.email
-                    ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
-                    : ""
-                }`}
-                placeholder="you@example.com"
-              />
-            </div>
-            {errors.email && (
-              <p className="flex items-center gap-1 text-xs font-medium text-destructive">
-                <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
-                {errors.email.message}
-              </p>
-            )}
-          </div>
+        {mode === "phone" && <PhoneOtpForm onAuthed={() => navigate({ to: "/go" })} />}
 
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-medium">
-                סיסמה
+        {mode === "email" && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium">
+                כתובת אימייל
               </Label>
-              <Link
-                to="/forgot-password"
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                שכחת סיסמה?
-              </Link>
+              <div className="relative">
+                <MailOutlineIcon
+                  sx={{ fontSize: 16 }}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  aria-invalid={errors.email ? true : undefined}
+                  {...register("email")}
+                  className={`h-10 pr-10 ${
+                    errors.email
+                      ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
+                      : ""
+                  }`}
+                  placeholder="you@example.com"
+                />
+              </div>
+              {errors.email && (
+                <p className="flex items-center gap-1 text-xs font-medium text-destructive">
+                  <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
+                  {errors.email.message}
+                </p>
+              )}
             </div>
-            <div className="relative">
-              <LockIcon
-                sx={{ fontSize: 16 }}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                aria-invalid={errors.password ? true : undefined}
-                {...register("password")}
-                className={`h-10 pr-10 ${
-                  errors.password
-                    ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
-                    : ""
-                }`}
-                placeholder="••••••••"
-              />
-            </div>
-            {errors.password && (
-              <p className="flex items-center gap-1 text-xs font-medium text-destructive">
-                <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
-                {errors.password.message}
-              </p>
-            )}
-          </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <CircularProgress size={16} color="inherit" className="ms-2" /> מתחבר…
-              </>
-            ) : (
-              "התחבר לחשבון"
-            )}
-          </Button>
-        </form>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  סיסמה
+                </Label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  שכחת סיסמה?
+                </Link>
+              </div>
+              <div className="relative">
+                <LockIcon
+                  sx={{ fontSize: 16 }}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  aria-invalid={errors.password ? true : undefined}
+                  {...register("password")}
+                  className={`h-10 pr-10 ${
+                    errors.password
+                      ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
+                      : ""
+                  }`}
+                  placeholder="••••••••"
+                />
+              </div>
+              {errors.password && (
+                <p className="flex items-center gap-1 text-xs font-medium text-destructive">
+                  <ErrorOutlineIcon sx={{ fontSize: 12 }} className="shrink-0" />
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <CircularProgress size={16} color="inherit" className="ms-2" /> מתחבר…
+                </>
+              ) : (
+                "התחבר לחשבון"
+              )}
+            </Button>
+          </form>
+        )}
       </div>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
@@ -176,8 +210,130 @@ function LoginPage() {
       </p>
 
       <p className="mt-3 text-center text-xs text-muted-foreground/70">
-        מנהלי מערכת מתחברים מדף זה עם חשבון המנהל הייעודי — ומועברים אוטומטית ללוח הניהול.
+        רכזים, מנהלי עבודה ומנהלי תפעול מתחברים בעזרת מספר הטלפון שהוזן עבורם בפרויקט.
       </p>
     </AuthShell>
+  );
+}
+
+// Phone OTP path for provisioned sub-users (רכז / מנהל עבודה / מנהל תפעול).
+// Step 1: send a one-time code by SMS. Step 2: verify it.
+function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const sendCode = async () => {
+    setErr(null);
+    const e164 = toE164(phone);
+    if (!e164) {
+      setErr("מספר טלפון לא תקין");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
+    setBusy(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    setSent(true);
+    toast.success("נשלח קוד אימות ב-SMS");
+  };
+
+  const verify = async () => {
+    setErr(null);
+    const e164 = toE164(phone);
+    if (!e164) {
+      setErr("מספר טלפון לא תקין");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: e164,
+      token: code.trim(),
+      type: "sms",
+    });
+    setBusy(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    toast.success("התחברת בהצלחה!");
+    onAuthed();
+  };
+
+  return (
+    <div className="space-y-4">
+      {err && (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive">
+          <ErrorOutlineIcon sx={{ fontSize: 16 }} className="mt-0.5 shrink-0" />
+          <span>{err}</span>
+        </div>
+      )}
+      <div className="space-y-1.5">
+        <Label htmlFor="phone" className="text-sm font-medium">
+          מספר טלפון
+        </Label>
+        <div className="relative">
+          <PhoneIphoneIcon
+            sx={{ fontSize: 16 }}
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            id="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            disabled={sent}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="h-10 pr-10"
+            placeholder="05X-XXXXXXX"
+          />
+        </div>
+      </div>
+
+      {sent && (
+        <div className="space-y-1.5">
+          <Label htmlFor="otp" className="text-sm font-medium">
+            קוד אימות
+          </Label>
+          <Input
+            id="otp"
+            inputMode="numeric"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="h-10 tracking-[0.3em]"
+            placeholder="______"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setSent(false);
+              setCode("");
+            }}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            שינוי מספר טלפון
+          </button>
+        </div>
+      )}
+
+      <Button type="button" className="w-full" disabled={busy} onClick={sent ? verify : sendCode}>
+        {busy ? (
+          <>
+            <CircularProgress size={16} color="inherit" className="ms-2" />
+            {sent ? "מאמת…" : "שולח…"}
+          </>
+        ) : sent ? (
+          "אימות והתחברות"
+        ) : (
+          "שליחת קוד ב-SMS"
+        )}
+      </Button>
+    </div>
   );
 }

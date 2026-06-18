@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { roleSide } from "@/lib/sides";
+import { israelToday } from "@/lib/dates";
 
 async function getSupabaseAdmin() {
   const mod = await import("@/integrations/supabase/client.server");
@@ -38,6 +40,24 @@ async function logNotification(
   });
 }
 
+// Approval may be performed by the contractor account OR a project foreman
+// (a site_manager project_member). Mirrors the attendance_records RLS policy.
+async function canApproveRecord(
+  supabase: { from: (t: string) => any },
+  rec: { contractor_id: string; project_id: string },
+  userId: string,
+): Promise<boolean> {
+  if (rec.contractor_id === userId) return true;
+  const { data } = await (supabase as any)
+    .from("project_members")
+    .select("id")
+    .eq("project_id", rec.project_id)
+    .eq("user_id", userId)
+    .eq("role", "site_manager")
+    .maybeSingle();
+  return !!data;
+}
+
 function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -50,10 +70,18 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
 }
 
 async function assertWithinSite(
-  project: { site_lat: number | null; site_lng: number | null; site_radius_meters: number | null },
+  project: {
+    site_lat: number | null;
+    site_lng: number | null;
+    site_radius_meters: number | null;
+    geofence_enforced?: boolean | null;
+  },
   lat: number,
   lng: number,
 ) {
+  // Geofence enforcement ships OFF ("Coming Soon"); only block check-in by
+  // location once the contractor turns it on for the project.
+  if (!project.geofence_enforced) return;
   if (project.site_lat == null || project.site_lng == null) {
     throw new Error("הקבלן עדיין לא הגדיר את מיקום האתר. לא ניתן לפתוח/לסגור יום עבודה.");
   }
@@ -102,13 +130,13 @@ export const startWorkday = createServerFn({ method: "POST" })
     const { data: team, error: tErr } = await supabase
       .from("project_teams")
       .select(
-        "id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id, site_lat, site_lng, site_radius_meters)",
+        "id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id, site_lat, site_lng, site_radius_meters, geofence_enforced)",
       )
       .eq("id", data.teamId)
       .single();
     if (tErr || !team) throw new Error("צוות לא נמצא");
     if (team.team_leader_id !== userId) throw new Error("רק ראש הצוות יכול לפתוח יום עבודה");
-    const proj = team.projects as {
+    const proj = team.projects as unknown as {
       contractor_id: string;
       corporation_id: string;
       site_lat: number | null;
@@ -116,7 +144,7 @@ export const startWorkday = createServerFn({ method: "POST" })
       site_radius_meters: number | null;
     };
     await assertWithinSite(proj, data.gpsLat, data.gpsLng);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = israelToday();
 
     // upsert pending record
     const { data: existing } = await supabase
@@ -208,7 +236,7 @@ export const endWorkday = createServerFn({ method: "POST" })
     const { data: rec } = await supabase
       .from("attendance_records")
       .select(
-        "id, team_leader_id, end_time, frozen_at, project_id, start_time, workers_actual, hourly_rate, projects:project_id(site_lat, site_lng, site_radius_meters)",
+        "id, team_leader_id, end_time, frozen_at, project_id, start_time, workers_actual, hourly_rate, projects:project_id(site_lat, site_lng, site_radius_meters, geofence_enforced)",
       )
       .eq("id", data.recordId)
       .single();
@@ -217,7 +245,7 @@ export const endWorkday = createServerFn({ method: "POST" })
     if (rec.frozen_at) throw new Error("הרשומה הוקפאה");
     if (rec.end_time) throw new Error("יום העבודה כבר נסגר");
     await assertWithinSite(
-      rec.projects as {
+      rec.projects as unknown as {
         site_lat: number | null;
         site_lng: number | null;
         site_radius_meters: number | null;
@@ -366,11 +394,12 @@ export const approveAttendance = createServerFn({ method: "POST" })
     const supabaseAdmin = await getSupabaseAdmin();
     const { data: rec } = await supabase
       .from("attendance_records")
-      .select("id, contractor_id, frozen_at, end_time")
+      .select("id, contractor_id, project_id, frozen_at, end_time")
       .eq("id", data.recordId)
       .single();
     if (!rec) throw new Error("רשומה לא נמצאה");
-    if (rec.contractor_id !== userId) throw new Error("רק הקבלן יכול לאשר");
+    if (!(await canApproveRecord(supabase, rec, userId)))
+      throw new Error("רק הקבלן או מנהל העבודה יכולים לאשר");
     if (rec.frozen_at) throw new Error("הרשומה כבר אושרה");
     await supabase
       .from("attendance_records")
@@ -423,7 +452,7 @@ export const rejectAttendance = createServerFn({ method: "POST" })
       .select("contractor_id, frozen_at, project_id, team_id")
       .eq("id", data.recordId)
       .single();
-    if (!rec || rec.contractor_id !== userId) throw new Error("Unauthorized");
+    if (!rec || !(await canApproveRecord(supabase, rec, userId))) throw new Error("Unauthorized");
     if (rec.frozen_at) throw new Error("הרשומה הוקפאה");
     await supabase
       .from("attendance_records")
@@ -499,6 +528,126 @@ export const requestCorrection = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ── Two-phase approval: entry (morning arrival) and exit (end of day) are
+// approved separately by the contractor/foreman. The record freezes as
+// 'approved' only once BOTH have been approved. Either rejection rejects (and
+// freezes) the whole day's record.
+export const approveEntry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ recordId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rec } = await supabase
+      .from("attendance_records")
+      .select("id, contractor_id, project_id, start_time, frozen_at, exit_approved_at")
+      .eq("id", data.recordId)
+      .single();
+    if (!rec) throw new Error("רשומה לא נמצאה");
+    if (!(await canApproveRecord(supabase, rec, userId)))
+      throw new Error("רק הקבלן או מנהל העבודה יכולים לאשר");
+    if (!rec.start_time) throw new Error("הכניסה טרם דווחה");
+    if (rec.frozen_at) throw new Error("הרשומה כבר נסגרה");
+    const update: Record<string, unknown> = {
+      entry_approved_at: new Date().toISOString(),
+      entry_approved_by: userId,
+      entry_rejection_reason: null,
+    };
+    if (rec.exit_approved_at) update.status = "approved"; // exit already approved → close
+    await (supabase as any).from("attendance_records").update(update).eq("id", data.recordId);
+    await (supabase as any).from("attendance_events").insert({
+      record_id: data.recordId,
+      kind: "approval",
+      actor_id: userId,
+      payload: { phase: "entry" },
+    });
+    return { ok: true };
+  });
+
+export const approveExit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ recordId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rec } = await supabase
+      .from("attendance_records")
+      .select("id, contractor_id, project_id, end_time, frozen_at, entry_approved_at")
+      .eq("id", data.recordId)
+      .single();
+    if (!rec) throw new Error("רשומה לא נמצאה");
+    if (!(await canApproveRecord(supabase, rec, userId)))
+      throw new Error("רק הקבלן או מנהל העבודה יכולים לאשר");
+    if (!rec.end_time) throw new Error("היציאה טרם דווחה");
+    if (rec.frozen_at) throw new Error("הרשומה כבר נסגרה");
+    const update: Record<string, unknown> = {
+      exit_approved_at: new Date().toISOString(),
+      exit_approved_by: userId,
+      exit_rejection_reason: null,
+    };
+    if (rec.entry_approved_at) update.status = "approved"; // both approved → close+freeze
+    await (supabase as any).from("attendance_records").update(update).eq("id", data.recordId);
+    await (supabase as any).from("attendance_events").insert({
+      record_id: data.recordId,
+      kind: "approval",
+      actor_id: userId,
+      payload: { phase: "exit" },
+    });
+    return { ok: true };
+  });
+
+export const rejectEntry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ recordId: z.string().uuid(), reason: z.string().min(3).max(500) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rec } = await supabase
+      .from("attendance_records")
+      .select("id, contractor_id, project_id, frozen_at")
+      .eq("id", data.recordId)
+      .single();
+    if (!rec || !(await canApproveRecord(supabase, rec, userId))) throw new Error("Unauthorized");
+    if (rec.frozen_at) throw new Error("הרשומה כבר נסגרה");
+    await supabase
+      .from("attendance_records")
+      .update({ status: "rejected", entry_rejection_reason: data.reason, approved_by: userId })
+      .eq("id", data.recordId);
+    await (supabase as any).from("attendance_events").insert({
+      record_id: data.recordId,
+      kind: "rejection",
+      actor_id: userId,
+      payload: { phase: "entry", reason: data.reason },
+    });
+    return { ok: true };
+  });
+
+export const rejectExit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ recordId: z.string().uuid(), reason: z.string().min(3).max(500) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rec } = await supabase
+      .from("attendance_records")
+      .select("id, contractor_id, project_id, frozen_at")
+      .eq("id", data.recordId)
+      .single();
+    if (!rec || !(await canApproveRecord(supabase, rec, userId))) throw new Error("Unauthorized");
+    if (rec.frozen_at) throw new Error("הרשומה כבר נסגרה");
+    await supabase
+      .from("attendance_records")
+      .update({ status: "rejected", exit_rejection_reason: data.reason, approved_by: userId })
+      .eq("id", data.recordId);
+    await (supabase as any).from("attendance_events").insert({
+      record_id: data.recordId,
+      kind: "rejection",
+      actor_id: userId,
+      payload: { phase: "exit", reason: data.reason },
+    });
+    return { ok: true };
+  });
+
 // Listings
 export const listMyTeamLeaderProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -510,19 +659,33 @@ export const listMyTeamLeaderProjects = createServerFn({ method: "GET" })
         "id, name, expected_workers, hourly_rate, project_id, projects:project_id(id, name, address, status)",
       )
       .eq("team_leader_id", userId);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = israelToday();
     const teamIds = (teams ?? []).map((t) => t.id);
-    let todayMap = new Map<
-      string,
-      { id: string; status: string; start_time: string | null; end_time: string | null }
-    >();
+    type TodayRec = {
+      id: string;
+      team_id: string;
+      status: string;
+      start_time: string | null;
+      end_time: string | null;
+      workers_actual: number | null;
+      start_photo_url: string | null;
+      end_photo_url: string | null;
+      entry_approved_at: string | null;
+      exit_approved_at: string | null;
+      entry_rejection_reason: string | null;
+      exit_rejection_reason: string | null;
+      frozen_at: string | null;
+    };
+    let todayMap = new Map<string, TodayRec>();
     if (teamIds.length) {
-      const { data: recs } = await supabase
+      const { data: recs } = await (supabase as any)
         .from("attendance_records")
-        .select("id, team_id, status, start_time, end_time")
+        .select(
+          "id, team_id, status, start_time, end_time, workers_actual, start_photo_url, end_photo_url, entry_approved_at, exit_approved_at, entry_rejection_reason, exit_rejection_reason, frozen_at",
+        )
         .in("team_id", teamIds)
         .eq("work_date", today);
-      todayMap = new Map((recs ?? []).map((r) => [r.team_id, r]));
+      todayMap = new Map(((recs ?? []) as TodayRec[]).map((r) => [r.team_id, r]));
     }
     return {
       teams: (teams ?? []).map((t) => ({
@@ -555,7 +718,7 @@ export const listContractorAttendance = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const date = data.date ?? new Date().toISOString().slice(0, 10);
+    const date = data.date ?? israelToday();
     let q = supabase
       .from("attendance_records")
       .select("*, project_teams:team_id(name), projects:project_id(name)")
@@ -573,7 +736,7 @@ export const listCorporationAttendance = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ date: z.string().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const date = data.date ?? new Date().toISOString().slice(0, 10);
+    const date = data.date ?? israelToday();
     const { data: records, error } = await supabase
       .from("attendance_records")
       .select("*, project_teams:team_id(name), projects:project_id(name, address)")
@@ -596,13 +759,79 @@ export const getAttendanceRecord = createServerFn({ method: "POST" })
       .eq("id", data.recordId)
       .single();
     if (!rec) throw new Error("רשומה לא נמצאה");
-    if (
-      rec.contractor_id !== userId &&
-      rec.corporation_id !== userId &&
-      rec.team_leader_id !== userId
-    ) {
-      throw new Error("אין לך הרשאה לצפות ברשומה זו");
+    const recRow = rec as {
+      contractor_id: string;
+      corporation_id: string;
+      team_leader_id: string;
+      project_id: string;
+      entry_approved_by: string | null;
+      exit_approved_by: string | null;
+    };
+    // Any project party may view: the two owners, the coordinator, OR a member
+    // (foreman / ops manager). Members aren't on the record's id columns.
+    let allowed =
+      recRow.contractor_id === userId ||
+      recRow.corporation_id === userId ||
+      recRow.team_leader_id === userId;
+    if (!allowed) {
+      const { data: m } = await (supabase as any)
+        .from("project_members")
+        .select("id")
+        .eq("project_id", recRow.project_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+      allowed = !!m;
     }
+    if (!allowed) {
+      // Admin is a read-only observer of every project.
+      const { data: isAdmin } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      allowed = !!isAdmin;
+    }
+    if (!allowed) throw new Error("אין לך הרשאה לצפות ברשומה זו");
+
+    // Resolve who approved entry/exit (name + side) for clear accountability.
+    const ROLE_HE: Record<string, string> = {
+      operations_manager: "מנהל תפעול",
+      site_manager: "מנהל עבודה",
+      team_leader: "רכז",
+      contractor: "קבלן",
+      corporation: "תאגיד",
+    };
+    async function resolveApprover(uid: string | null) {
+      if (!uid) return null;
+      if (uid === recRow.contractor_id || uid === recRow.corporation_id) {
+        const isContractor = uid === recRow.contractor_id;
+        const { data: prof } = await supabaseAdmin
+          .from("profiles")
+          .select("full_name, company_name")
+          .eq("user_id", uid)
+          .maybeSingle();
+        return {
+          name: prof?.company_name || prof?.full_name || (isContractor ? "קבלן" : "תאגיד"),
+          side: isContractor ? "contractor" : "corp",
+          role: isContractor ? "קבלן" : "תאגיד",
+        };
+      }
+      const { data: mem } = await (supabaseAdmin as any)
+        .from("project_members")
+        .select("name, role")
+        .eq("project_id", recRow.project_id)
+        .eq("user_id", uid)
+        .maybeSingle();
+      return {
+        name: mem?.name || "משתמש",
+        side: roleSide(mem?.role),
+        role: ROLE_HE[mem?.role ?? ""] ?? "",
+      };
+    }
+    const [entryApprover, exitApprover] = await Promise.all([
+      resolveApprover(recRow.entry_approved_by),
+      resolveApprover(recRow.exit_approved_by),
+    ]);
+
     const { data: events } = await (supabase as any)
       .from("attendance_events")
       .select("*")
@@ -623,7 +852,7 @@ export const getAttendanceRecord = createServerFn({ method: "POST" })
         if (s.path && s.signedUrl) signedUrls[s.path] = s.signedUrl;
       });
     }
-    return { record: rec, events: events ?? [], signedUrls };
+    return { record: rec, events: events ?? [], signedUrls, entryApprover, exitApprover };
   });
 
 // Monthly summary
@@ -894,18 +1123,18 @@ export const getTeamForCheckin = createServerFn({ method: "POST" })
     const { data: team } = await supabaseAdmin
       .from("project_teams")
       .select(
-        "id, name, expected_workers, team_leader_name, projects:project_id(name, site_lat, site_lng, site_radius_meters)",
+        "id, name, expected_workers, team_leader_name, projects:project_id(name, site_lat, site_lng, site_radius_meters, geofence_enforced)",
       )
       .eq("id", data.teamId)
       .maybeSingle();
     if (!team) throw new Error("צוות לא נמצא — בדוק את קוד ה-QR.");
-    const proj = team.projects as {
+    const proj = team.projects as unknown as {
       name?: string | null;
       site_lat: number | null;
       site_lng: number | null;
       site_radius_meters: number | null;
     } | null;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = israelToday();
     const { data: rec } = await supabaseAdmin
       .from("attendance_records")
       .select("id, status, start_time, end_time, workers_actual")
@@ -942,15 +1171,15 @@ export const startWorkdayByToken = createServerFn({ method: "POST" })
     const { data: team } = await supabaseAdmin
       .from("project_teams")
       .select(
-        "id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id, site_lat, site_lng, site_radius_meters)",
+        "id, project_id, team_leader_id, expected_workers, hourly_rate, projects:project_id(contractor_id, corporation_id, site_lat, site_lng, site_radius_meters, geofence_enforced)",
       )
       .eq("id", data.teamId)
       .single();
     if (!team) throw new Error("צוות לא נמצא");
-    const proj = team.projects as TokenProject;
+    const proj = team.projects as unknown as TokenProject;
     await assertWithinSite(proj, data.gpsLat, data.gpsLng);
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = israelToday();
     const { data: existing } = await supabaseAdmin
       .from("attendance_records")
       .select("id, start_time")
@@ -1021,7 +1250,7 @@ export const endWorkdayByToken = createServerFn({ method: "POST" })
     const { data: rec } = await supabaseAdmin
       .from("attendance_records")
       .select(
-        "id, end_time, frozen_at, start_time, workers_actual, hourly_rate, team_leader_id, projects:project_id(site_lat, site_lng, site_radius_meters)",
+        "id, end_time, frozen_at, start_time, workers_actual, hourly_rate, team_leader_id, projects:project_id(site_lat, site_lng, site_radius_meters, geofence_enforced)",
       )
       .eq("id", data.recordId)
       .single();
@@ -1029,7 +1258,7 @@ export const endWorkdayByToken = createServerFn({ method: "POST" })
     if (rec.frozen_at) throw new Error("הרשומה הוקפאה");
     if (rec.end_time) throw new Error("יום העבודה כבר נסגר");
     await assertWithinSite(
-      rec.projects as {
+      rec.projects as unknown as {
         site_lat: number | null;
         site_lng: number | null;
         site_radius_meters: number | null;

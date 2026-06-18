@@ -1,20 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { ComingSoonPage } from "@/components/coming-soon-page";
+import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-// Full implementation (entry/exit approval, exceptions, corrections, audit
-// trail) exists in git history — gated until the field pilot.
+// Attendance now lives inside each project workspace (the נוכחות tab), reachable
+// from "הפרויקטים שלי". This standalone route is kept only as a redirect so old
+// links/bookmarks don't 404.
 export const Route = createFileRoute("/contractor/attendance")({
-  component: () => (
-    <ComingSoonPage
-      title="נוכחות"
-      description="אישור נוכחות יומי של הצוותים באתר — כל שעת עבודה מתועדת ב-GPS ותמונה."
-      bullets={[
-        "צ'ק-אין וצ'ק-אאוט יומי של ראש הצוות עם GPS ותמונה",
-        "אישור או דחייה של דיווחי נוכחות",
-        "דיווח חריגים ובקשות תיקון עם תיעוד מלא",
-      ]}
-      icon={CheckCircleIcon}
-    />
-  ),
+  component: RedirectToProjects,
 });
+
+function RedirectToProjects() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    void navigate({ to: "/projects", replace: true });
+  }, [navigate]);
+  return null;
+}

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -7,10 +7,11 @@ import PlaceIcon from "@mui/icons-material/Place";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/hooks/use-auth";
-import { listContractorProjects } from "@/lib/attendance.functions";
+import { listMyProjects } from "@/lib/projects.functions";
 
-export const Route = createFileRoute("/contractor/projects")({
-  component: ContractorProjectsPage,
+export const Route = createFileRoute("/projects/")({
+  head: () => ({ meta: [{ title: "הפרויקטים שלי — BuildForce" }] }),
+  component: MyProjectsPage,
 });
 
 const STATUS_META: Record<string, { label: string; chip: string }> = {
@@ -19,29 +20,51 @@ const STATUS_META: Record<string, { label: string; chip: string }> = {
   completed: { label: "הושלם", chip: "status-chip-muted" },
 };
 
-function ContractorProjectsPage() {
+const ROLE_LABEL: Record<string, string> = {
+  contractor: "קבלן",
+  corporation: "תאגיד",
+  site_manager: "מנהל עבודה",
+  operations_manager: "מנהל תפעול",
+  admin: "מנהל מערכת — צפייה",
+};
+
+function MyProjectsPage() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
-  const listFn = useServerFn(listContractorProjects);
+  const listFn = useServerFn(listMyProjects);
+  const [tab, setTab] = useState<"active" | "history">("active");
 
   useEffect(() => {
     if (!loading && !session) void navigate({ to: "/login", replace: true });
   }, [loading, session, navigate]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["contractor-projects"],
+    queryKey: ["my-projects"],
     queryFn: () => listFn({}),
     enabled: !!session,
   });
-  const projects = data?.projects ?? [];
+  const all = data?.projects ?? [];
+  const active = all.filter((p) => p.status !== "completed");
+  const history = all.filter((p) => p.status === "completed");
+  const shown = tab === "active" ? active : history;
 
   return (
-    <AppShell title="פרויקטים">
+    <AppShell title="הפרויקטים שלי">
       <div className="space-y-4" dir="rtl">
-        <p className="text-sm text-muted-foreground">
-          פרויקטים נפתחים אוטומטית מכל מכרז שבחרת בו זוכה. הגדר את מיקום האתר ומנהלי העבודה, וצפה
-          בדיווחי הנוכחות.
-        </p>
+        <div className="pill-tabs inline-flex">
+          <button
+            className={`pill-tab ${tab === "active" ? "pill-tab-active" : ""}`}
+            onClick={() => setTab("active")}
+          >
+            פעילים <span className="pill-tab-count">{active.length}</span>
+          </button>
+          <button
+            className={`pill-tab ${tab === "history" ? "pill-tab-active" : ""}`}
+            onClick={() => setTab("history")}
+          >
+            היסטוריה <span className="pill-tab-count">{history.length}</span>
+          </button>
+        </div>
 
         {isLoading ? (
           <div className="space-y-3">
@@ -49,24 +72,22 @@ function ContractorProjectsPage() {
               <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
-        ) : projects.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div className="enterprise-card p-10 text-center">
             <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-lg bg-muted">
               <FolderOpenIcon sx={{ fontSize: 22 }} className="text-muted-foreground" />
             </div>
-            <h2 className="text-base font-semibold">אין עדיין פרויקטים</h2>
+            <h2 className="text-base font-semibold">
+              {tab === "active" ? "אין פרויקטים פעילים" : "אין פרויקטים בהיסטוריה"}
+            </h2>
             <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
-              כשתבחר זוכה באחד המכרזים שלך, ייפתח כאן פרויקט חדש באופן אוטומטי.
+              פרויקט נפתח אוטומטית כשמכרז מסתיים בבחירת זוכה.
             </p>
-            <Link to="/dashboard" className="mt-5 inline-block text-sm font-medium text-primary">
-              למעבר ללוח הבקרה
-            </Link>
           </div>
         ) : (
           <div className="space-y-2.5">
-            {projects.map((p) => {
+            {shown.map((p) => {
               const meta = STATUS_META[p.status] ?? STATUS_META.active;
-              const siteSet = p.site_lat != null && p.site_lng != null;
               return (
                 <Link
                   key={p.id}
@@ -80,16 +101,18 @@ function ContractorProjectsPage() {
                       <span className={`${meta.chip} shrink-0`}>{meta.label}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      {ROLE_LABEL[p.my_role] && (
+                        <span className="rounded bg-muted px-1.5 py-px font-medium">
+                          התפקיד שלי: {ROLE_LABEL[p.my_role]}
+                        </span>
+                      )}
+                      {p.counterparty && <span>מול: {p.counterparty}</span>}
                       {p.address && (
                         <span className="inline-flex items-center gap-1">
                           <PlaceIcon sx={{ fontSize: 13 }} />
                           {p.address}
                         </span>
                       )}
-                      <span className={siteSet ? "text-status-approved" : "text-status-pending"}>
-                        {siteSet ? "מיקום אתר הוגדר" : "טרם הוגדר מיקום אתר"}
-                      </span>
-                      <span>עובדים צפויים: {p.expected_workers}</span>
                     </div>
                   </div>
                   <ChevronLeftIcon
