@@ -43,7 +43,9 @@ function getRoleLabel(hasRole: (role: AppRole) => boolean): string {
   if (hasRole("admin")) return "מנהל מערכת";
   if (hasRole("corporation")) return "תאגיד כוח אדם";
   if (hasRole("contractor")) return "קבלן";
-  if (hasRole("team_leader")) return "ראש צוות";
+  if (hasRole("operations_manager")) return "מנהל תפעול";
+  if (hasRole("site_manager")) return "מנהל עבודה";
+  if (hasRole("team_leader")) return "רכז";
   return "";
 }
 
@@ -114,6 +116,8 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
   // "בקרוב" tag and lead to a polished coming-soon screen.
   const sections: NavSection[] = [];
 
+  // Contractor + corporation: their tender dashboard + the unified project list
+  // (attendance, hours/cost and chat all live INSIDE each project workspace).
   if (hasRole("contractor")) {
     sections.push({
       label: "מכרזים",
@@ -121,16 +125,7 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
     });
     sections.push({
       label: "ביצוע",
-      items: [
-        { to: "/contractor/projects", label: "פרויקטים", icon: FolderOpenIcon, comingSoon: true },
-        { to: "/contractor/attendance", label: "נוכחות", icon: CheckCircleIcon, comingSoon: true },
-        {
-          to: "/contractor/accounts",
-          label: "חשבון יומי",
-          icon: AssignmentIcon,
-          comingSoon: true,
-        },
-      ],
+      items: [{ to: "/projects", label: "הפרויקטים שלי", icon: FolderOpenIcon }],
     });
   }
 
@@ -143,29 +138,34 @@ function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
     });
     sections.push({
       label: "ביצוע",
-      items: [
-        {
-          to: "/corporation/attendance",
-          label: "נוכחות צוותים",
-          icon: EngineeringIcon,
-          comingSoon: true,
-        },
-        { to: "/corporation/accounts", label: "חשבונות", icon: ReceiptLongIcon, comingSoon: true },
-      ],
+      items: [{ to: "/projects", label: "הפרויקטים שלי", icon: FolderOpenIcon }],
     });
   }
 
+  // Operations manager (מנהל תפעול) + site foreman (מנהל עבודה): both can be on
+  // several projects → the same unified list, then the per-project workspace.
+  if (hasRole("operations_manager") || hasRole("site_manager")) {
+    sections.push({
+      label: "ביצוע",
+      items: [{ to: "/projects", label: "הפרויקטים שלי", icon: FolderOpenIcon }],
+    });
+  }
+
+  // Coordinator (רכז) — single project, field-focused daily entry/exit report.
   if (hasRole("team_leader")) {
     sections.push({
       label: "צוות",
-      items: [{ to: "/team-leader", label: "ראש צוות", icon: GroupIcon, comingSoon: true }],
+      items: [{ to: "/team-leader", label: "דיווח נוכחות", icon: GroupIcon }],
     });
   }
 
   if (hasRole("admin")) {
     sections.push({
       label: "ניהול",
-      items: [{ to: "/admin", label: "מנהל מערכת", icon: VerifiedUserIcon, exact: true }],
+      items: [
+        { to: "/admin", label: "מנהל מערכת", icon: VerifiedUserIcon, exact: true },
+        { to: "/projects", label: "כל הפרויקטים", icon: FolderOpenIcon },
+      ],
     });
   }
 

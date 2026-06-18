@@ -11,6 +11,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
+import { PageCrumbProvider } from "@/components/page-crumb";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieConsent } from "@/components/cookie-consent";
 import { MuiProvider } from "@/lib/mui-theme";
@@ -191,9 +192,11 @@ function RootComponent() {
       <MuiProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <Outlet />
-            <Toaster richColors position="top-center" />
-            <ConditionalCookieConsent />
+            <PageCrumbProvider>
+              <Outlet />
+              <Toaster richColors position="top-center" />
+              <ConditionalCookieConsent />
+            </PageCrumbProvider>
           </AuthProvider>
         </QueryClientProvider>
       </MuiProvider>

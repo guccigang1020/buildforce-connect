@@ -20,12 +20,20 @@ function GoPage() {
       void navigate({ to: "/login", replace: true });
       return;
     }
-    // Roles load right after the session; wait for them (loading covers it,
-    // but guard against an empty roles array → safe default to landing).
+    // Roles are fetched asynchronously right after the session is set. There is
+    // a render where session exists but roles is still []; redirecting then sent
+    // users to "/". Wait for roles to resolve (every real account has ≥1 role)
+    // instead of falling through to the landing page.
+    if (roles.length === 0) return;
     if (roles.includes("admin")) void navigate({ to: "/admin", replace: true });
     else if (roles.includes("corporation"))
       void navigate({ to: "/corporation-dashboard", replace: true });
     else if (roles.includes("contractor")) void navigate({ to: "/dashboard", replace: true });
+    // Foreman + ops manager can have several projects → the unified project list.
+    else if (roles.includes("operations_manager") || roles.includes("site_manager"))
+      void navigate({ to: "/projects", replace: true });
+    // Coordinator is single-project, field-focused → their daily report screen.
+    else if (roles.includes("team_leader")) void navigate({ to: "/team-leader", replace: true });
     else void navigate({ to: "/", replace: true });
   }, [loading, session, roles, navigate]);
 

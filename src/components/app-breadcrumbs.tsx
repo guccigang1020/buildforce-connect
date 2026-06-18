@@ -10,6 +10,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { usePageCrumb } from "@/components/page-crumb";
 import { maskedRequestId } from "@/lib/anonymize";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ const LINKABLE_PATHS = new Set([
   "/admin",
   "/team-leader",
   "/new-request",
+  "/projects",
   "/contractor/projects",
   "/contractor/attendance",
   "/contractor/accounts",
@@ -68,6 +70,7 @@ type Crumb = { label: string; href?: string };
 
 export function AppBreadcrumbs({ className }: { className?: string }) {
   const { hasRole } = useAuth();
+  const { label: pageLabel } = usePageCrumb();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const home = homeTarget(hasRole);
@@ -83,8 +86,12 @@ export function AppBreadcrumbs({ className }: { className?: string }) {
     const parent = segments[i - 1];
     let label = SEGMENT_LABELS[seg];
     if (!label) {
-      // Unknown segment: treat ids under requests/my-requests as masked ids.
-      label = parent === "my-requests" || parent === "requests" ? maskedRequestId(seg) : seg;
+      // Unknown segment: ids under requests/my-requests are masked; a project
+      // id shows a neutral placeholder ("פרויקט") until the page supplies the
+      // real name via pageLabel — avoids briefly flashing the raw UUID.
+      if (parent === "my-requests" || parent === "requests") label = maskedRequestId(seg);
+      else if (parent === "projects") label = "פרויקט";
+      else label = seg;
     }
     // "הבקשות שלי" / "מכרזים" have no index route of their own — point them at
     // the role home (which is the list of requests/tenders for that role).
@@ -96,6 +103,12 @@ export function AppBreadcrumbs({ className }: { className?: string }) {
           : undefined;
     crumbs.push({ label, href });
   });
+
+  // A page can override its own (last) crumb label — e.g. show the project
+  // name instead of the id in the URL.
+  if (pageLabel && crumbs.length > 1) {
+    crumbs[crumbs.length - 1] = { label: pageLabel };
+  }
 
   // Nothing meaningful beyond the home crumb → don't render.
   if (crumbs.length <= 1) return null;

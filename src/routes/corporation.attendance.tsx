@@ -1,20 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
-import EngineeringIcon from "@mui/icons-material/Engineering";
-import { ComingSoonPage } from "@/components/coming-soon-page";
+import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-// Corporation-side attendance review exists in git history — gated until the
-// field pilot.
+// Attendance + chat now live inside each project workspace, reachable from
+// "הפרויקטים שלי". This standalone route is kept only as a redirect.
 export const Route = createFileRoute("/corporation/attendance")({
-  component: () => (
-    <ComingSoonPage
-      title="נוכחות צוותים"
-      description="מעקב אחרי דיווחי הנוכחות של הצוותים שלך בפרויקטים פעילים."
-      bullets={[
-        "סטטוס נוכחות יומי לכל צוות ופרויקט",
-        "התראות על חריגים ודחיות",
-        "סיכום חודשי של שעות ועלויות",
-      ]}
-      icon={EngineeringIcon}
-    />
-  ),
+  component: RedirectToProjects,
 });
+
+function RedirectToProjects() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    void navigate({ to: "/projects", replace: true });
+  }, [navigate]);
+  return null;
+}

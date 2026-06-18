@@ -10,7 +10,13 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "contractor" | "corporation" | "admin" | "team_leader";
+export type AppRole =
+  | "contractor"
+  | "corporation"
+  | "admin"
+  | "team_leader"
+  | "site_manager"
+  | "operations_manager";
 
 export type Profile = {
   id: string;
@@ -105,7 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       if (newSession?.user) {
-        // Defer to avoid deadlocks inside the listener
+        // Mark loading SYNCHRONOUSLY so consumers that gate on `loading`
+        // (e.g. /go's role redirect) don't observe the window where the session
+        // is set but roles haven't loaded yet — that window sent freshly
+        // logged-in users to "/" instead of their role home.
+        setLoading(true);
+        // Defer the actual fetch to avoid deadlocks inside the listener
         setTimeout(() => {
           void loadUserData(newSession.user.id);
         }, 0);
