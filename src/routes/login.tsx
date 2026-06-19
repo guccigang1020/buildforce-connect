@@ -247,15 +247,16 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
 
   const sendCode = async () => {
     setErr(null);
-    const e164 = toE164(phone);
-    if (!e164) {
-      setErr("מספר טלפון לא תקין");
-      return;
-    }
-    // Demo phones bypass Twilio entirely.
+    // Demo phones bypass Twilio entirely — check BEFORE E.164 validation
+    // so any input format (0500…, +97250…, 972 50…) hits the mock path.
     if (demoEmailForPhone(phone)) {
       setSent(true);
       toast.success("מצב דמו: הזן את הקוד 123456");
+      return;
+    }
+    const e164 = toE164(phone);
+    if (!e164) {
+      setErr("מספר טלפון לא תקין");
       return;
     }
     setBusy(true);
@@ -271,12 +272,7 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
 
   const verify = async () => {
     setErr(null);
-    const e164 = toE164(phone);
-    if (!e164) {
-      setErr("מספר טלפון לא תקין");
-      return;
-    }
-    // Mock-OTP path for the three seeded demo phones.
+    // Mock-OTP path for the three seeded demo phones — check first.
     const demoEmail = demoEmailForPhone(phone);
     if (demoEmail) {
       if (code.trim() !== DEMO_OTP) {
@@ -295,6 +291,11 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
       }
       toast.success("התחברת בהצלחה!");
       onAuthed();
+      return;
+    }
+    const e164 = toE164(phone);
+    if (!e164) {
+      setErr("מספר טלפון לא תקין");
       return;
     }
     setBusy(true);
