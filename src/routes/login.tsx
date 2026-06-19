@@ -249,6 +249,12 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
       setErr("מספר טלפון לא תקין");
       return;
     }
+    // Demo phones bypass Twilio entirely.
+    if (demoEmailForPhone(phone)) {
+      setSent(true);
+      toast.success("מצב דמו: הזן את הקוד 123456");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
     setBusy(false);
@@ -265,6 +271,27 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
     const e164 = toE164(phone);
     if (!e164) {
       setErr("מספר טלפון לא תקין");
+      return;
+    }
+    // Mock-OTP path for the three seeded demo phones.
+    const demoEmail = demoEmailForPhone(phone);
+    if (demoEmail) {
+      if (code.trim() !== DEMO_OTP) {
+        setErr("קוד שגוי (במצב דמו: 123456)");
+        return;
+      }
+      setBusy(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: DEMO_PASSWORD,
+      });
+      setBusy(false);
+      if (error) {
+        setErr("חשבון הדמו לא נמצא — הרץ את scripts/seed-demo.mjs");
+        return;
+      }
+      toast.success("התחברת בהצלחה!");
+      onAuthed();
       return;
     }
     setBusy(true);
