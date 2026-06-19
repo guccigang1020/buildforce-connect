@@ -35,6 +35,23 @@ function toE164(raw: string): string | null {
   return "+972" + d;
 }
 
+// Demo / mock-OTP shortcut. While Twilio (or any SMS provider) is not
+// configured, the three seeded phone-actor accounts can be entered with
+// the fixed code "123456" — the form transparently signs them in via
+// email+password against the synthetic email assigned by the seed script
+// (see scripts/seed-demo.mjs).
+const DEMO_OTP = "123456";
+const DEMO_PHONES: Record<string, string> = {
+  "0500000001": "tl-0500000001@demo.test",
+  "0500000002": "fm-0500000002@demo.test",
+  "0500000003": "om-0500000003@demo.test",
+};
+const DEMO_PASSWORD = "Test123456";
+function demoEmailForPhone(raw: string): string | null {
+  const d = raw.replace(/\D/g, "");
+  return DEMO_PHONES[d] ?? null;
+}
+
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
@@ -232,6 +249,12 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
       setErr("מספר טלפון לא תקין");
       return;
     }
+    // Demo phones bypass Twilio entirely.
+    if (demoEmailForPhone(phone)) {
+      setSent(true);
+      toast.success("מצב דמו: הזן את הקוד 123456");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
     setBusy(false);
@@ -248,6 +271,27 @@ function PhoneOtpForm({ onAuthed }: { onAuthed: () => void }) {
     const e164 = toE164(phone);
     if (!e164) {
       setErr("מספר טלפון לא תקין");
+      return;
+    }
+    // Mock-OTP path for the three seeded demo phones.
+    const demoEmail = demoEmailForPhone(phone);
+    if (demoEmail) {
+      if (code.trim() !== DEMO_OTP) {
+        setErr("קוד שגוי (במצב דמו: 123456)");
+        return;
+      }
+      setBusy(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: DEMO_PASSWORD,
+      });
+      setBusy(false);
+      if (error) {
+        setErr("חשבון הדמו לא נמצא — הרץ את scripts/seed-demo.mjs");
+        return;
+      }
+      toast.success("התחברת בהצלחה!");
+      onAuthed();
       return;
     }
     setBusy(true);
