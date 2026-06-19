@@ -42,13 +42,16 @@ function toE164(raw: string): string | null {
 // (see scripts/seed-demo.mjs).
 const DEMO_OTP = "123456";
 const DEMO_PHONES: Record<string, string> = {
-  "0500000001": "tl-0500000001@demo.test",
-  "0500000002": "fm-0500000002@demo.test",
-  "0500000003": "om-0500000003@demo.test",
+  "500000001": "tl-0500000001@demo.test",
+  "500000002": "fm-0500000002@demo.test",
+  "500000003": "om-0500000003@demo.test",
 };
 const DEMO_PASSWORD = "Test123456";
+// Match any of: 0500000001, 500000001, 972500000001, +972 50-000-0001 …
 function demoEmailForPhone(raw: string): string | null {
-  const d = raw.replace(/\D/g, "");
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("972")) d = d.slice(3);
+  if (d.startsWith("0")) d = d.slice(1);
   return DEMO_PHONES[d] ?? null;
 }
 
